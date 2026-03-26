@@ -1,0 +1,77 @@
+{
+  "name": "@fusioni/client-sdk",
+  "version": "1.1.0",
+  "description": "Fusioni Chat SDK for React applications",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./dist/index.css": "./dist/index.css"
+  },
+  "unpkg": "dist/fusioni-sdk.umd.js",
+  "jsdelivr": "dist/fusioni-sdk.umd.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "node scripts/generate-logo-base64.js",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "jest",
+    "lint": "eslint src --ext .ts,.tsx",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "fusioni",
+    "chat",
+    "sdk",
+    "react",
+    "typescript"
+  ],
+  "author": "Fusioni Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "tslib": "^2.6.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.2",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@rollup/plugin-url": "^8.0.2",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jest": "^29.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rollup": "^4.18.0",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-postcss": "^4.0.2",
+    "typescript": "^5.4.5"
+  },
+  "overrides": {
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.5",
+    "inflight": "npm:@isaacs/inflight@^1.0.6",
+    "@humanwhocodes/config-array": "npm:@eslint/config-array@^0.18.0",
+    "@humanwhocodes/object-schema": "npm:@eslint/object-schema@^2.1.0"
+  }
+}

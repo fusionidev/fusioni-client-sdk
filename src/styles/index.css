@@ -1,0 +1,3691 @@
+/* Fusioni Chat SDK Styles */
+/* Based on fusioni-backoffice design with Tailwind-like utilities */
+
+/* CSS Variables for theming */
+:root {
+  --fusioni-primary: #2563eb;
+  --fusioni-primary-light: #3b82f6;
+  --fusioni-primary-dark: #1d4ed8;
+  --fusioni-secondary: #64748b;
+  --fusioni-success: #059669;
+  --fusioni-warning: #d97706;
+  --fusioni-error: #dc2626;
+  --fusioni-info: #0284c7;
+  
+  --fusioni-bg-primary: #ffffff;
+  --fusioni-bg-secondary: #e7e7e7;
+  --fusioni-bg-tertiary: #f1f5f9;
+  --fusioni-bg-accent: #f0f9ff;
+  --fusioni-bg-dark: #0f172a;
+  --fusioni-bg-darker: #020617;
+  
+  --fusioni-text-primary: #0f172a;
+  --fusioni-text-secondary: #475569;
+  --fusioni-text-muted: #94a3b8;
+  --fusioni-text-light: #ffffff;
+  
+  --fusioni-border: #e2e8f0;
+  --fusioni-border-light: #f1f5f9;
+  --fusioni-border-dark: #334155;
+  
+  --fusioni-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --fusioni-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --fusioni-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --fusioni-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --fusioni-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  
+  --fusioni-radius: 0.375rem;
+  --fusioni-radius-md: 0.5rem;
+  --fusioni-radius-lg: 0.75rem;
+  --fusioni-radius-xl: 1rem;
+  --fusioni-radius-2xl: 1.5rem;
+  
+  --fusioni-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --fusioni-transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fusioni Chat Widget - Override with custom primary color */
+.fusioni-chat-widget {
+  --fusioni-primary: var(--primary-color, #2563eb);
+  --fusioni-primary-light: var(--primary-color, #3b82f6);
+  --fusioni-primary-dark: var(--primary-color, #1d4ed8);
+}
+
+/* Dark theme variables */
+.fusioni-chat-widget.dark {
+  --fusioni-primary: var(--primary-color, #3b82f6);
+  --fusioni-primary-light: var(--primary-color, #60a5fa);
+  --fusioni-primary-dark: var(--primary-color, #2563eb);
+  --fusioni-secondary: #64748b;
+  --fusioni-success: #10b981;
+  --fusioni-warning: #f59e0b;
+  --fusioni-error: #ef4444;
+  --fusioni-info: #06b6d4;
+  
+  --fusioni-bg-primary: #0f172a;
+  --fusioni-bg-secondary: #1e293b;
+  --fusioni-bg-tertiary: #334155;
+  --fusioni-bg-accent: #1e293b;
+  --fusioni-bg-dark: #020617;
+  --fusioni-bg-darker: #000000;
+  
+  --fusioni-text-primary: #f8fafc;
+  --fusioni-text-secondary: #cbd5e1;
+  --fusioni-text-muted: #64748b;
+  --fusioni-text-light: #ffffff;
+  
+  --fusioni-border: #334155;
+  --fusioni-border-light: #475569;
+  --fusioni-border-dark: #1e293b;
+}
+
+/* Base styles */
+.fusioni-chat-widget {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fusioni-text-primary);
+  background-color: var(--fusioni-bg-primary);
+}
+
+/* Floating Button */
+.fusioni-floating-button {
+  position: fixed;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--fusioni-primary) 0%, var(--fusioni-primary-light) 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--fusioni-shadow-2xl);
+  /* transition: var(--fusioni-transition); */
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  overflow: visible;
+}
+
+.fusioni-floating-button:hover {
+  background: linear-gradient(135deg, var(--fusioni-primary-dark) 0%, var(--fusioni-primary) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.4);
+}
+
+.fusioni-floating-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Professional Variants */
+.fusioni-floating-button-glass {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Fallback for browsers that don't support backdrop-filter */
+@supports not (backdrop-filter: blur(20px)) {
+  .fusioni-floating-button-glass {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+}
+
+.fusioni-floating-button-minimal {
+  background: var(--fusioni-bg-primary);
+  border: 1px solid var(--fusioni-border);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fusioni-floating-button-solid {
+  background: linear-gradient(135deg, var(--fusioni-primary) 0%, var(--fusioni-primary-light) 100%);
+  box-shadow: 
+    0 4px 12px rgba(37, 99, 235, 0.15),
+    0 1px 3px rgba(37, 99, 235, 0.1);
+}
+
+.fusioni-floating-button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fusioni-floating-button-icon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fusioni-floating-button-glass .fusioni-floating-button-icon {
+  color: var(--fusioni-text-primary);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.fusioni-floating-button-minimal .fusioni-floating-button-icon {
+  color: var(--fusioni-text-primary);
+}
+
+.fusioni-floating-button-solid .fusioni-floating-button-icon {
+  color: white;
+}
+
+/* Sophisticated Attention-Grabbing Animations */
+.fusioni-floating-button-attention-ring {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border: 2px solid var(--fusioni-primary);
+  border-radius: 50%;
+  opacity: 0;
+  animation: attentionRingPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.fusioni-floating-button-attention-ring-2 {
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  right: -16px;
+  bottom: -16px;
+  border: 1px solid var(--fusioni-primary-light);
+  border-radius: 50%;
+  opacity: 0;
+  animation: attentionRingPulse 3s ease-in-out infinite 0.5s;
+  pointer-events: none;
+}
+
+.fusioni-floating-button-attention-ring-3 {
+  position: absolute;
+  top: -24px;
+  left: -24px;
+  right: -24px;
+  bottom: -24px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 50%;
+  opacity: 0;
+  animation: attentionRingPulse 3s ease-in-out infinite 1s;
+  pointer-events: none;
+}
+
+/* Neural Network Particle Effects */
+.fusioni-floating-button-neural-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.fusioni-neural-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--fusioni-primary-light);
+  border-radius: 50%;
+  opacity: 0;
+  animation: neuralParticleFloat 4s ease-in-out infinite;
+  box-shadow: 0 0 6px var(--fusioni-primary-light);
+}
+
+.fusioni-neural-particle:nth-child(1) {
+  top: 20%;
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.fusioni-neural-particle:nth-child(2) {
+  top: 15%;
+  right: 20%;
+  animation-delay: 0.8s;
+}
+
+.fusioni-neural-particle:nth-child(3) {
+  bottom: 25%;
+  left: 25%;
+  animation-delay: 1.6s;
+}
+
+.fusioni-neural-particle:nth-child(4) {
+  bottom: 20%;
+  right: 15%;
+  animation-delay: 2.4s;
+}
+
+.fusioni-neural-particle:nth-child(5) {
+  top: 50%;
+  left: 5%;
+  animation-delay: 3.2s;
+}
+
+.fusioni-neural-particle:nth-child(6) {
+  top: 50%;
+  right: 5%;
+  animation-delay: 0.4s;
+}
+
+/* AI Brain Activity Indicator */
+.fusioni-floating-button-brain-activity {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(45deg, #10b981, #059669);
+  border-radius: 50%;
+  opacity: 0;
+  animation: brainActivityPulse 2.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  pointer-events: none;
+}
+
+.fusioni-floating-button-brain-activity::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: brainCorePulse 1s ease-in-out infinite;
+}
+
+/* Attention Sequence Animation */
+.fusioni-floating-button-attention-sequence {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.fusioni-attention-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid var(--fusioni-primary);
+  border-radius: 50%;
+  opacity: 0;
+  animation: attentionWaveExpand 2s ease-out infinite;
+}
+
+.fusioni-attention-wave:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.fusioni-attention-wave:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* Periodic Attention Pulse */
+.fusioni-floating-button-periodic-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: periodicAttentionPulse 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Enhanced Glow Effect */
+.fusioni-floating-button-glow {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: enhancedGlowPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Magnetic Field Effect */
+.fusioni-floating-button-magnetic-field {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 50%;
+  opacity: 0;
+  animation: magneticFieldRotate 6s linear infinite;
+  pointer-events: none;
+}
+
+.fusioni-floating-button-magnetic-field::before,
+.fusioni-floating-button-magnetic-field::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--fusioni-primary-light);
+  border-radius: 50%;
+  box-shadow: 0 0 4px var(--fusioni-primary-light);
+}
+
+.fusioni-floating-button-magnetic-field::before {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.fusioni-floating-button-magnetic-field::after {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Floating button positioning */
+.fusioni-floating-button-bottom-right {
+  bottom: 1rem;
+  right: 1rem;
+}
+
+.fusioni-floating-button-bottom-left {
+  bottom: 1rem;
+  left: 1rem;
+}
+
+.fusioni-floating-button-top-right {
+  top: 1rem;
+  right: 1rem;
+}
+
+.fusioni-floating-button-top-left {
+  top: 1rem;
+  left: 1rem;
+}
+
+/* Chat Panel */
+.fusioni-chat-panel {
+  position: fixed;
+  width: 480px;
+  height: 640px;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  background: var(--fusioni-bg-primary);
+  border-radius: var(--fusioni-radius-2xl);
+  box-shadow: var(--fusioni-shadow-2xl);
+  border: 1px solid var(--fusioni-border-light);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  backdrop-filter: blur(20px);
+  box-sizing: border-box;
+}
+
+.fusioni-chat-widget:not(.dark) .fusioni-chat-panel {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.fusioni-chat-widget.dark .fusioni-chat-panel {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.fusioni-chat-panel-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Chat panel positioning */
+.fusioni-chat-panel-bottom-right {
+  bottom: 5rem;
+  right: 1rem;
+}
+
+.fusioni-chat-panel-bottom-left {
+  bottom: 5rem;
+  left: 1rem;
+}
+
+.fusioni-chat-panel-top-right {
+  top: 5rem;
+  right: 1rem;
+}
+
+.fusioni-chat-panel-top-left {
+  top: 5rem;
+  left: 1rem;
+}
+
+/* Fullscreen mode */
+.fusioni-chat-panel-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+}
+
+.fusioni-chat-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+/* Chat Container */
+.fusioni-chat-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.fusioni-chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  transition: width var(--fusioni-transition);
+}
+
+/* Conversation List */
+.fusioni-conversation-list {
+  width: 280px;
+  background: var(--fusioni-bg-secondary);
+  border-right: 1px solid var(--fusioni-border-light);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 10;
+  transform: translateX(-100%) scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--fusioni-shadow-lg);
+  opacity: 0;
+}
+
+.fusioni-chat-widget:not(.dark) .fusioni-conversation-list {
+  background: linear-gradient(180deg, var(--fusioni-bg-accent) 0%, var(--fusioni-bg-secondary) 100%);
+}
+
+.fusioni-conversation-list.open {
+  transform: translateX(0) scale(1);
+  opacity: 1;
+}
+
+.fusioni-conversation-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 5;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(2px);
+}
+
+.fusioni-conversation-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.fusioni-conversation-header {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--fusioni-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--fusioni-bg-tertiary);
+  backdrop-filter: blur(10px);
+}
+
+.fusioni-chat-widget:not(.dark) .fusioni-conversation-header {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.fusioni-conversation-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fusioni-conversation-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--fusioni-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: var(--fusioni-shadow-md);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.fusioni-conversation-info h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fusioni-text-primary);
+}
+
+.fusioni-conversation-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-conversation-search {
+  padding: 1rem;
+}
+
+.fusioni-search-input {
+  position: relative;
+}
+
+.fusioni-input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 1px solid var(--fusioni-border-light);
+  border-radius: var(--fusioni-radius-lg);
+  background: var(--fusioni-bg-secondary);
+  color: var(--fusioni-text-primary);
+  font-size: 0.875rem;
+  transition: var(--fusioni-transition);
+  box-shadow: var(--fusioni-shadow);
+}
+
+.fusioni-input:focus {
+  outline: none;
+  border-color: var(--fusioni-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), var(--fusioni-shadow-md);
+  background: var(--fusioni-bg-secondary);
+}
+
+.fusioni-chat-widget:not(.dark) .fusioni-input {
+  background: var(--fusioni-bg-primary);
+}
+
+.fusioni-chat-widget:not(.dark) .fusioni-input:focus {
+  background: var(--fusioni-bg-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), var(--fusioni-shadow-md);
+}
+
+.fusioni-search-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fusioni-text-muted);
+  pointer-events: none;
+}
+
+.fusioni-divider {
+  height: 1px;
+  background: var(--fusioni-border);
+  margin: 0 1rem;
+}
+
+.fusioni-conversations {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.fusioni-conversation-item {
+  position: relative;
+  padding: 1rem;
+  padding-right: 0.5rem;
+  border-radius: var(--fusioni-radius-lg);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 0.5rem;
+  background: var(--fusioni-bg-primary);
+  border: 1px solid var(--fusioni-border-light);
+  box-shadow: var(--fusioni-shadow);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.fusioni-conversation-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(37, 99, 235, 0.02) 0%, 
+    rgba(59, 130, 246, 0.05) 50%, 
+    rgba(37, 99, 235, 0.02) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.fusioni-conversation-item:hover {
+  background: var(--fusioni-bg-secondary);
+  border-color: var(--fusioni-primary);
+  box-shadow: var(--fusioni-shadow-lg);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.fusioni-conversation-item:hover::before {
+  opacity: 1;
+}
+
+.fusioni-conversation-item.active {
+  background: linear-gradient(135deg, var(--fusioni-primary) 0%, var(--fusioni-primary-light) 100%);
+  color: white;
+  border-color: var(--fusioni-primary);
+  box-shadow: 0 8px 32px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
+}
+
+.fusioni-conversation-item.active::before {
+  opacity: 0;
+}
+
+/* Neural Network Background Animation */
+.fusioni-conversation-neural-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.fusioni-conversation-item:hover .fusioni-conversation-neural-bg {
+  opacity: 0.6;
+}
+
+.fusioni-conversation-item.active .fusioni-conversation-neural-bg {
+  opacity: 0.8;
+}
+
+.fusioni-neural-node {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--fusioni-primary);
+  border-radius: 50%;
+  animation: neuralPulse 3s ease-in-out infinite;
+  box-shadow: 0 0 8px var(--fusioni-primary);
+}
+
+.fusioni-neural-node-1 {
+  top: 20%;
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.fusioni-neural-node-2 {
+  top: 60%;
+  right: 20%;
+  animation-delay: 1s;
+}
+
+.fusioni-neural-node-3 {
+  bottom: 25%;
+  left: 40%;
+  animation-delay: 2s;
+}
+
+.fusioni-neural-connection {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--fusioni-primary) 50%, 
+    transparent 100%);
+  animation: neuralFlow 4s ease-in-out infinite;
+}
+
+.fusioni-neural-connection-1 {
+  top: 30%;
+  left: 15%;
+  width: 60%;
+  transform: rotate(15deg);
+  animation-delay: 0.5s;
+}
+
+.fusioni-neural-connection-2 {
+  bottom: 40%;
+  left: 25%;
+  width: 45%;
+  transform: rotate(-20deg);
+  animation-delay: 1.5s;
+}
+
+.fusioni-ai-pulse-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--fusioni-primary);
+  border-radius: 50%;
+  animation: aiPulse 2s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+.fusioni-ai-core {
+  position: relative;
+  z-index: 1;
+  color: var(--fusioni-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: aiRotate 4s linear infinite;
+}
+
+.fusioni-conversation-item.active .fusioni-ai-core {
+  color: white;
+}
+
+.fusioni-conversation-item.active .fusioni-ai-pulse-ring {
+  border-color: white;
+}
+
+.fusioni-conversation-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fusioni-conversation-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.fusioni-conversation-title-section {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fusioni-conversation-title-text {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--fusioni-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  word-break: break-word;
+}
+
+.fusioni-conversation-item.active .fusioni-conversation-title-text {
+  color: white;
+}
+
+.fusioni-conversation-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.fusioni-conversation-status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--fusioni-text-muted);
+  font-weight: 500;
+}
+
+.fusioni-conversation-item.active .fusioni-conversation-status {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.fusioni-status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--fusioni-success);
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 4px var(--fusioni-success);
+}
+
+.fusioni-conversation-temp-indicator {
+  flex-shrink: 0;
+}
+
+.fusioni-new-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, var(--fusioni-warning) 0%, #f59e0b 100%);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--fusioni-radius);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+  animation: newBadgePulse 2s ease-in-out infinite;
+}
+
+.fusioni-new-text {
+  position: relative;
+  z-index: 2;
+}
+
+.fusioni-new-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--fusioni-warning) 0%, #f59e0b 100%);
+  border-radius: var(--fusioni-radius);
+  animation: newPulseRing 2s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+.fusioni-conversation-actions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: flex-start;
+  margin-top: 0.25rem;
+}
+
+.fusioni-delete-btn {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fusioni-conversation-item:hover .fusioni-delete-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.fusioni-conversation-item.active .fusioni-delete-btn {
+  opacity: 1;
+  transform: scale(1);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.fusioni-conversation-item.active .fusioni-delete-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.fusioni-conversation-date {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--fusioni-text-muted);
+  font-weight: 500;
+}
+
+.fusioni-conversation-item.active .fusioni-conversation-date {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Data Flow Animation */
+.fusioni-conversation-data-flow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.fusioni-conversation-item:hover .fusioni-conversation-data-flow {
+  opacity: 1;
+}
+
+.fusioni-conversation-item.active .fusioni-conversation-data-flow {
+  opacity: 1;
+}
+
+.fusioni-data-stream {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--fusioni-primary) 20%, 
+    var(--fusioni-primary-light) 50%, 
+    var(--fusioni-primary) 80%, 
+    transparent 100%);
+  animation: dataFlow 3s ease-in-out infinite;
+}
+
+.fusioni-conversation-item.active .fusioni-data-stream {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 20%, 
+    rgba(255, 255, 255, 0.6) 50%, 
+    rgba(255, 255, 255, 0.3) 80%, 
+    transparent 100%);
+}
+
+.fusioni-empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--fusioni-text-muted);
+}
+
+/* Message List */
+.fusioni-message-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--fusioni-bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.fusioni-messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+}
+
+.fusioni-empty-messages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.fusioni-empty-messages-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--fusioni-text-muted);
+  height: 100%;
+}
+
+.fusioni-empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  color: var(--fusioni-text-muted);
+}
+
+.fusioni-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fusioni-message-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.fusioni-message {
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.fusioni-message.user {
+  flex-direction: row-reverse;
+}
+
+.fusioni-message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--fusioni-bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fusioni-text-secondary);
+  flex-shrink: 0;
+}
+
+.fusioni-message.user .fusioni-message-avatar {
+  background: var(--fusioni-primary);
+  color: white;
+}
+
+.fusioni-message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.fusioni-message-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.fusioni-message-role {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 5px;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-message-time {
+  font-size: 0.75rem;
+  color: var(--fusioni-text-muted);
+}
+
+.fusioni-message-body {
+  margin-bottom: 0;
+}
+
+.fusioni-message-bubble {
+  padding: 0.75rem 1rem;
+  border-radius: var(--fusioni-radius-lg);
+  max-width: 100%;
+  word-wrap: break-word;
+  position: relative;
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-message-bubble:hover {
+  /* transform: scale(1.02); */
+  box-shadow: var(--fusioni-shadow);
+}
+
+.fusioni-message-user {
+  background: var(--fusioni-primary);
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.fusioni-message-assistant {
+  background: var(--fusioni-bg-secondary);
+  color: var(--fusioni-text-primary);
+  border-bottom-left-radius: 0.25rem;
+}
+
+.fusioni-message-error {
+  background: var(--fusioni-error);
+  color: white;
+}
+
+.fusioni-message-text {
+  line-height: 1.5;
+}
+
+.fusioni-message-text h1,
+.fusioni-message-text h2,
+.fusioni-message-text h3 {
+  margin: 0.5rem 0 0.25rem;
+  line-height: 1.25;
+}
+
+.fusioni-message-text p {
+  margin: 0.5rem 0;
+}
+
+.fusioni-message-text ul,
+.fusioni-message-text ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.fusioni-message-text code {
+  background: var(--fusioni-bg-tertiary);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875em;
+}
+
+.fusioni-message-text pre {
+  background: var(--fusioni-bg-dark);
+  color: var(--fusioni-text-light);
+  padding: 0.75rem;
+  border-radius: var(--fusioni-radius);
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.fusioni-message-text a {
+  color: var(--fusioni-primary);
+  text-decoration: underline;
+}
+
+.fusioni-message-extra {
+  margin-top: 0.5rem;
+}
+
+.fusioni-message-image {
+  margin-top: 0.5rem;
+}
+
+.fusioni-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--fusioni-radius);
+  box-shadow: var(--fusioni-shadow);
+}
+
+.fusioni-message-audio {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--fusioni-bg-tertiary);
+  border-radius: var(--fusioni-radius);
+}
+
+.fusioni-audio-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-audio-duration {
+  font-size: 0.75rem;
+  color: var(--fusioni-text-muted);
+}
+
+.fusioni-audio-player {
+  width: 100%;
+  height: 32px;
+}
+
+.fusioni-message-map {
+  margin-top: 0.5rem;
+}
+
+.fusioni-map-placeholder {
+  padding: 1rem;
+  background: var(--fusioni-bg-tertiary);
+  border-radius: var(--fusioni-radius);
+  text-align: center;
+  color: var(--fusioni-text-secondary);
+}
+
+/* Map Component Styles */
+.fusioni-map-container {
+  margin-top: 0.5rem;
+  border-radius: var(--fusioni-radius);
+  overflow: hidden;
+  box-shadow: var(--fusioni-shadow);
+  border: 1px solid var(--fusioni-border);
+}
+
+.fusioni-map-static,
+.fusioni-map-interactive {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+.fusioni-map-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--fusioni-radius);
+}
+
+.fusioni-map-iframe {
+  width: 100%;
+  height: 400px;
+  border: none;
+  border-radius: var(--fusioni-radius);
+}
+
+.fusioni-map-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--fusioni-bg-tertiary);
+  border-radius: var(--fusioni-radius);
+  border: 1px solid var(--fusioni-border);
+}
+
+.fusioni-map-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-map-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--fusioni-border);
+  border-top: 2px solid var(--fusioni-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.fusioni-map-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--fusioni-radius);
+  color: var(--fusioni-error);
+}
+
+.fusioni-map-error-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Dark theme adjustments for map */
+.fusioni-chat-widget.dark .fusioni-map-container {
+  border-color: var(--fusioni-border-dark);
+}
+
+.fusioni-chat-widget.dark .fusioni-map-loading {
+  background: var(--fusioni-bg-dark);
+  border-color: var(--fusioni-border-dark);
+}
+
+.fusioni-chat-widget.dark .fusioni-map-error {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.fusioni-message-thoughts {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--fusioni-text-muted);
+}
+
+.fusioni-message-thoughts details {
+  cursor: pointer;
+}
+
+.fusioni-message-thoughts summary {
+  font-weight: 500;
+}
+
+.fusioni-message-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-message:hover .fusioni-message-actions {
+  opacity: 1;
+}
+
+.fusioni-message-error-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--fusioni-error);
+  margin-top: 0.25rem;
+}
+
+
+
+.fusioni-stream-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.fusioni-stream-message:last-child {
+  margin-bottom: 0;
+}
+
+.fusioni-stream-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fusioni-stream-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--fusioni-primary);
+  border-radius: 50%;
+  animation: dotPulse 1.5s infinite;
+  box-shadow: 0 0 8px rgb(99 102 241 / 0.4);
+}
+
+.fusioni-stream-text {
+  font-size: 0.875rem;
+  color: var(--fusioni-text-secondary);
+  line-height: 1.4;
+}
+
+/* Chat Input */
+.fusioni-chat-input {
+  padding: 1rem;
+  background: var(--fusioni-bg-primary);
+  border-top: 1px solid var(--fusioni-border);
+}
+
+.fusioni-image-preview {
+  margin-bottom: 0.75rem;
+}
+
+.fusioni-image-preview-content {
+  position: relative;
+  display: inline-block;
+}
+
+.fusioni-preview-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: var(--fusioni-radius);
+  box-shadow: var(--fusioni-shadow);
+}
+
+.fusioni-image-preview-content .fusioni-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.fusioni-audio-preview {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: var(--fusioni-bg-secondary);
+  border-radius: var(--fusioni-radius);
+  border: 1px solid var(--fusioni-border);
+}
+
+.fusioni-audio-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fusioni-audio-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-audio-preview-player {
+  width: 100%;
+  height: 32px;
+}
+
+.fusioni-audio-preview-text {
+  font-size: 0.75rem;
+  color: var(--fusioni-text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+.fusioni-input-container {
+  width: 100%;
+}
+
+.fusioni-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  background: var(--fusioni-bg-secondary);
+  border: 2px solid var(--fusioni-border);
+  border-radius: var(--fusioni-radius-xl);
+  padding: 0.5rem;
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-input-wrapper:focus-within {
+  border-color: var(--fusioni-primary);
+  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.1);
+}
+
+.fusioni-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--fusioni-text-primary);
+  min-height: 20px;
+  max-height: 120px;
+  padding: 0.5rem;
+}
+
+.fusioni-textarea::placeholder {
+  color: var(--fusioni-text-muted);
+}
+
+.fusioni-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Buttons */
+.fusioni-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  border-radius: var(--fusioni-radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--fusioni-transition);
+  text-decoration: none;
+  background: transparent;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-btn:hover {
+  background: var(--fusioni-bg-tertiary);
+  color: var(--fusioni-text-primary);
+}
+
+.fusioni-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fusioni-btn-icon-primary {
+  background: var(--fusioni-bg-primary);
+  border: 1px solid var(--fusioni-border);
+  box-shadow: var(--fusioni-shadow);
+}
+
+.fusioni-btn-icon-primary:hover {
+  background: var(--fusioni-primary-dark);
+  color: white;
+  border-color: var(--fusioni-primary-dark);
+}
+
+.fusioni-btn-icon {
+  width: 28px;
+  height: 25px;
+  padding: 0;
+  border-radius: 50%;
+  transition: var(--fusioni-transition-fast);
+}
+
+.fusioni-btn-icon:hover {
+  background: var(--fusioni-primary);
+  color: white;
+  border-color: var(--fusioni-primary);
+  transform: scale(1.05);
+}
+
+.fusioni-btn-primary {
+  background: linear-gradient(135deg, var(--fusioni-primary) 0%, var(--fusioni-primary-light) 100%);
+  color: white;
+  border: none;
+  box-shadow: var(--fusioni-shadow-md);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--fusioni-radius-lg);
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-btn-primary:hover {
+  background: linear-gradient(135deg, var(--fusioni-primary-dark) 0%, var(--fusioni-primary) 100%);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--fusioni-shadow-lg);
+}
+
+.fusioni-btn-danger {
+  color: var(--fusioni-error);
+}
+
+.fusioni-btn-danger:hover {
+  background: var(--fusioni-error);
+  color: white;
+}
+
+.fusioni-btn-text {
+  background: transparent;
+  color: var(--fusioni-primary);
+  padding: 0.25rem 0.5rem;
+}
+
+.fusioni-btn-text:hover {
+  background: var(--fusioni-bg-tertiary);
+  color: var(--fusioni-primary);
+}
+
+.fusioni-btn-send {
+  background: var(--fusioni-primary);
+  color: white;
+}
+
+.fusioni-btn-send:hover {
+  background: var(--fusioni-primary-dark);
+  color: white;
+}
+
+.fusioni-btn-send:disabled {
+  background: var(--fusioni-text-muted);
+  color: var(--fusioni-text-light);
+}
+
+.fusioni-btn-send-audio {
+  background: var(--fusioni-success);
+}
+
+.fusioni-btn-send-audio:hover {
+  background: #059669;
+}
+
+.fusioni-btn-recording {
+  background: var(--fusioni-error);
+  color: white;
+  animation: recordingPulse 2s ease-in-out infinite;
+}
+
+.fusioni-btn-recording:hover {
+  background: #dc2626;
+  color: white;
+}
+
+/* Confirmation Widget */
+.fusioni-confirmation-widget {
+  display: flex;
+  gap: 0.75rem;
+  /* margin-top: 1.25rem; */
+  padding-top: 1.25rem;
+}
+
+.fusioni-btn-confirm {
+  background: linear-gradient(135deg, var(--fusioni-primary) 0%, var(--fusioni-primary-light) 100%);
+  color: white;
+  border: none;
+  box-shadow: var(--fusioni-shadow-md);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--fusioni-radius-lg);
+  transition: var(--fusioni-transition);
+  font-size: 0.875rem;
+}
+
+.fusioni-btn-confirm:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--fusioni-primary-dark) 0%, var(--fusioni-primary) 100%);
+  color: white;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: var(--fusioni-shadow-lg);
+}
+
+.fusioni-btn-confirm:active:not(:disabled) {
+  transform: translateY(0) scale(1);
+}
+
+.fusioni-btn-confirm:disabled {
+  background: var(--fusioni-primary);
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fusioni-btn-cancel {
+  background: var(--fusioni-secondary);
+  color: white;
+  border: none;
+  box-shadow: var(--fusioni-shadow-md);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--fusioni-radius-lg);
+  transition: var(--fusioni-transition);
+  font-size: 0.875rem;
+}
+
+.fusioni-btn-cancel:hover:not(:disabled) {
+  background: var(--fusioni-secondary);
+  color: white;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: var(--fusioni-shadow-lg);
+}
+
+.fusioni-btn-cancel:active:not(:disabled) {
+  transform: translateY(0) scale(1);
+}
+
+.fusioni-btn-cancel:disabled {
+  background: var(--fusioni-secondary);
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dark .fusioni-btn-cancel {
+  background: var(--fusioni-secondary);
+}
+
+.dark .fusioni-btn-cancel:hover:not(:disabled) {
+  background: var(--fusioni-secondary);
+}
+
+/* Audio Recorder */
+.fusioni-audio-recorder {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fusioni-recording-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fusioni-recording-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: recordingPulse 1.5s ease-in-out infinite;
+}
+
+.fusioni-recording-timer {
+  font-size: 0.75rem;
+  color: var(--fusioni-error);
+  font-weight: 500;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.fusioni-audio-error {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--fusioni-error);
+  color: white;
+  padding: 0.5rem;
+  border-radius: var(--fusioni-radius);
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.fusioni-audio-error p {
+  margin: 0 0 0.25rem;
+}
+
+.fusioni-audio-error button {
+  background: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--fusioni-radius);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* Chat Loader */
+.fusioni-chat-loader {
+  padding: 1rem;
+  text-align: center;
+}
+
+.fusioni-loader-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.fusioni-loader-dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.fusioni-loader-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--fusioni-primary);
+  border-radius: 50%;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.fusioni-loader-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.fusioni-loader-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.fusioni-loader-text {
+  font-size: 0.875rem;
+  color: var(--fusioni-text-secondary);
+}
+
+/* Chat Main Header */
+.fusioni-chat-main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--fusioni-border-light);
+  background: var(--fusioni-bg-tertiary);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+  position: relative;
+}
+
+.fusioni-chat-widget:not(.dark) .fusioni-chat-main-header {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.fusioni-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fusioni-conversation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--fusioni-bg-primary);
+  border: 1px solid var(--fusioni-border);
+  border-radius: var(--fusioni-radius-lg);
+  cursor: pointer;
+  transition: var(--fusioni-transition);
+  font-size: 0.875rem;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-conversation-toggle:hover {
+  background: var(--fusioni-primary);
+  color: white;
+  border-color: var(--fusioni-primary);
+}
+
+.fusioni-conversation-toggle-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--fusioni-transition);
+}
+
+.fusioni-conversation-toggle.open .fusioni-conversation-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.fusioni-connection-status {
+  display: flex;
+  align-items: center;
+}
+
+.fusioni-connection-indicator {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem;
+  border-radius: var(--fusioni-radius);
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-connection-indicator.connected .fusioni-connection-dot {
+  background: var(--fusioni-success);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.fusioni-connection-indicator.disconnected .fusioni-connection-dot {
+  background: var(--fusioni-text-muted);
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
+}
+
+/* Language Switcher */
+.fusioni-language-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.fusioni-language-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--fusioni-bg-primary);
+  border: 1px solid var(--fusioni-border);
+  border-radius: var(--fusioni-radius-lg);
+  cursor: pointer;
+  transition: var(--fusioni-transition);
+  font-size: 0.875rem;
+  color: var(--fusioni-text-primary);
+  min-width: 120px;
+}
+
+.fusioni-language-button:hover {
+  background: var(--fusioni-bg-secondary);
+  border-color: var(--fusioni-primary);
+}
+
+.fusioni-language-flag {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.fusioni-language-name {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+
+.fusioni-language-arrow {
+  transition: transform var(--fusioni-transition);
+}
+
+.fusioni-language-arrow.open {
+  transform: rotate(180deg);
+}
+
+.fusioni-language-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--fusioni-bg-primary);
+  border: 1px solid var(--fusioni-border);
+  border-radius: var(--fusioni-radius-lg);
+  box-shadow: var(--fusioni-shadow-lg);
+  z-index: 1000;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.fusioni-language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--fusioni-transition);
+  font-size: 0.875rem;
+  color: var(--fusioni-text-primary);
+  text-align: left;
+}
+
+.fusioni-language-option:hover {
+  background: var(--fusioni-bg-secondary);
+}
+
+.fusioni-language-option.active {
+  background: var(--fusioni-primary);
+  color: white;
+}
+
+.fusioni-language-check {
+  margin-left: auto;
+  opacity: 0.8;
+}
+
+/* Welcome Screen */
+.fusioni-chat-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  padding: 3rem 2rem;
+  background: var(--fusioni-bg-primary);
+  box-sizing: border-box;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.fusioni-chat-widget:not(.dark) .fusioni-chat-welcome {
+  background: linear-gradient(135deg, var(--fusioni-bg-accent) 0%, var(--fusioni-bg-primary) 100%);
+}
+
+.fusioni-chat-welcome-content {
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.fusioni-chat-welcome-content h3 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--fusioni-text-primary);
+  background: linear-gradient(135deg, var(--fusioni-primary) 0%, var(--fusioni-primary-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fusioni-chat-welcome-content p {
+  margin: 0 0 2rem;
+  color: var(--fusioni-text-secondary);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* Error State */
+.fusioni-chat-error {
+  padding: 1rem;
+  background: var(--fusioni-error);
+  color: white;
+  border-radius: var(--fusioni-radius);
+  margin: 1rem;
+}
+
+.fusioni-chat-error p {
+  margin: 0 0 0.5rem;
+}
+
+.fusioni-chat-error button {
+  background: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--fusioni-radius);
+  cursor: pointer;
+}
+
+/* Spinner */
+.fusioni-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--fusioni-border);
+  border-top: 2px solid var(--fusioni-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@keyframes recordingPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgb(239 68 68 / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgb(239 68 68 / 0.8), 0 0 30px rgb(239 68 68 / 0.6);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* AI Assistant Unique Animations */
+@keyframes neuralPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+    box-shadow: 0 0 8px var(--fusioni-primary);
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+    box-shadow: 0 0 16px var(--fusioni-primary);
+  }
+}
+
+@keyframes neuralFlow {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+@keyframes aiPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes aiRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 4px var(--fusioni-success);
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+    box-shadow: 0 0 8px var(--fusioni-success);
+  }
+}
+
+@keyframes newBadgePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.5);
+  }
+}
+
+@keyframes newPulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes dataFlow {
+  0% {
+    left: -100%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* Magnetic Hover Effect */
+@keyframes magneticHover {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    transform: translateY(-1px) scale(1.01);
+  }
+}
+
+/* Neural Network Glow */
+@keyframes neuralGlow {
+  0%, 100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.2) saturate(1.3);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fusioni-chat-panel {
+    width: calc(100vw - 1rem);
+    height: calc(100vh - 1rem);
+    max-width: none;
+    max-height: none;
+  }
+  
+  /* Fix positioning for mobile to ensure header is visible */
+  .fusioni-chat-panel-bottom-right,
+  .fusioni-chat-panel-bottom-left {
+    bottom: 0.5rem;
+    top: 0.5rem;
+    height: calc(100vh - 1rem);
+  }
+  
+  .fusioni-chat-panel-top-right,
+  .fusioni-chat-panel-top-left {
+    top: 0.5rem;
+    bottom: 0.5rem;
+    height: calc(100vh - 1rem);
+  }
+  
+  .fusioni-conversation-list {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--fusioni-border);
+  }
+  
+  .fusioni-chat-container {
+    flex-direction: column;
+  }
+  
+  .fusioni-message-bubble:hover {
+    transform: scale(1.01);
+  }
+}
+
+/* Scrollbar Styling */
+.fusioni-conversations::-webkit-scrollbar,
+.fusioni-message-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fusioni-conversations::-webkit-scrollbar-track,
+.fusioni-message-list::-webkit-scrollbar-track {
+  background: var(--fusioni-bg-tertiary);
+}
+
+.fusioni-conversations::-webkit-scrollbar-thumb,
+.fusioni-message-list::-webkit-scrollbar-thumb {
+  background: var(--fusioni-text-muted);
+  border-radius: 3px;
+}
+
+.fusioni-conversations::-webkit-scrollbar-thumb:hover,
+.fusioni-message-list::-webkit-scrollbar-thumb:hover {
+  background: var(--fusioni-text-secondary);
+}
+
+/* URL Preview Styles */
+.fusioni-url-preview {
+  margin: 0.5rem 0;
+  border-radius: var(--fusioni-radius);
+  overflow: hidden;
+  border: 1px solid var(--fusioni-border);
+  background: var(--fusioni-bg-primary);
+  box-shadow: var(--fusioni-shadow);
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-url-preview:hover {
+  box-shadow: var(--fusioni-shadow-md);
+  transform: translateY(-1px);
+}
+
+.fusioni-url-preview-compact {
+  margin: 0.25rem 0;
+}
+
+.fusioni-url-preview-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  color: var(--fusioni-text-secondary);
+  font-size: 0.875rem;
+}
+
+.fusioni-url-preview-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--fusioni-border);
+  border-top: 2px solid var(--fusioni-primary);
+  border-radius: 50%;
+  animation: fusioni-spin 1s linear infinite;
+}
+
+@keyframes fusioni-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fusioni-url-preview-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  color: var(--fusioni-error);
+  font-size: 0.875rem;
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.fusioni-url-preview-content {
+  position: relative;
+}
+
+.fusioni-url-preview-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-url-preview-close:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.fusioni-url-preview-link {
+  display: flex;
+  text-decoration: none;
+  color: inherit;
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-url-preview-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.fusioni-url-preview-image {
+  flex-shrink: 0;
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+}
+
+.fusioni-url-preview-compact .fusioni-url-preview-image {
+  width: 80px;
+  height: 60px;
+}
+
+.fusioni-url-preview-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--fusioni-transition);
+}
+
+.fusioni-url-preview-link:hover .fusioni-url-preview-image img {
+  transform: scale(1.05);
+}
+
+.fusioni-url-preview-text {
+  flex: 1;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.fusioni-url-preview-compact .fusioni-url-preview-text {
+  padding: 0.5rem;
+}
+
+.fusioni-url-preview-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: var(--fusioni-text-primary);
+  margin-bottom: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fusioni-url-preview-compact .fusioni-url-preview-title {
+  font-size: 0.8125rem;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.fusioni-url-preview-description {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--fusioni-text-secondary);
+  margin-bottom: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fusioni-url-preview-compact .fusioni-url-preview-description {
+  font-size: 0.75rem;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.fusioni-url-preview-domain {
+  font-size: 0.75rem;
+  color: var(--fusioni-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.fusioni-message-url-previews {
+  margin-top: 0.5rem;
+}
+
+/* Dark theme adjustments for URL preview */
+.fusioni-chat-widget.dark .fusioni-url-preview {
+  background: var(--fusioni-bg-dark);
+  border-color: var(--fusioni-border-dark);
+}
+
+.fusioni-chat-widget.dark .fusioni-url-preview-title {
+  color: var(--fusioni-text-light);
+}
+
+.fusioni-chat-widget.dark .fusioni-url-preview-description {
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-chat-widget.dark .fusioni-url-preview-error {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+/* Stream Messages Styles */
+.fusioni-stream-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fusioni-stream-message-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.fusioni-stream-message-logo-wrap {
+  flex-shrink: 0;
+}
+
+.fusioni-stream-message-logo-frame {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: var(--fusioni-shadow-lg);
+  background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+}
+
+.fusioni-chat-widget.dark .fusioni-stream-message-logo-frame {
+  background: linear-gradient(to bottom right, #1f2937, #111827);
+}
+
+.fusioni-stream-message-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  padding: 4px;
+  margin: 0;
+  animation: fusioni-spin 1s linear infinite;
+}
+
+.fusioni-stream-message-spotlight {
+  margin-top: 4px;
+  min-width: 0;
+}
+
+/* Spotlight text (parity with fusioni-web spotlight.component.scss) */
+.fusioni-spotlight {
+  --mask-x: 0%;
+  --mask-y: 50%;
+  --text-spotlight-size: 100px;
+  display: block;
+}
+
+.fusioni-spotlight-title {
+  position: relative;
+  display: inline-block;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: inherit;
+  font-family: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+.fusioni-spotlight-text-base,
+.fusioni-spotlight-text-overlay {
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: inherit;
+  font-family: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+}
+
+.fusioni-spotlight-text-base {
+  background: currentColor;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0.2;
+}
+
+.fusioni-spotlight-text-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: currentColor;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 1;
+  mask: radial-gradient(
+    circle var(--text-spotlight-size) at var(--mask-x) var(--mask-y),
+    black 0%,
+    transparent 70%
+  );
+  -webkit-mask: radial-gradient(
+    circle var(--text-spotlight-size) at var(--mask-x) var(--mask-y),
+    black 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Stream Message Animations */
+@keyframes fusioni-dotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Dark theme adjustments for conversation items */
+.fusioni-chat-widget.dark .fusioni-conversation-item {
+  background: var(--fusioni-bg-dark);
+  border-color: var(--fusioni-border-dark);
+}
+
+.fusioni-chat-widget.dark .fusioni-conversation-item::before {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.05) 0%, 
+    rgba(37, 99, 235, 0.1) 50%, 
+    rgba(59, 130, 246, 0.05) 100%);
+}
+
+.fusioni-chat-widget.dark .fusioni-conversation-item:hover {
+  background: var(--fusioni-bg-secondary);
+  border-color: var(--fusioni-primary-light);
+}
+
+.fusioni-chat-widget.dark .fusioni-neural-node {
+  background: var(--fusioni-primary-light);
+  box-shadow: 0 0 8px var(--fusioni-primary-light);
+}
+
+.fusioni-chat-widget.dark .fusioni-neural-connection {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--fusioni-primary-light) 50%, 
+    transparent 100%);
+}
+
+.fusioni-chat-widget.dark .fusioni-ai-core {
+  color: var(--fusioni-primary-light);
+}
+
+.fusioni-chat-widget.dark .fusioni-ai-pulse-ring {
+  border-color: var(--fusioni-primary-light);
+}
+
+.fusioni-chat-widget.dark .fusioni-data-stream {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--fusioni-primary-light) 20%, 
+    var(--fusioni-primary) 50%, 
+    var(--fusioni-primary-light) 80%, 
+    transparent 100%);
+}
+
+.fusioni-chat-widget.dark .fusioni-conversation-title-text {
+  color: var(--fusioni-text-light);
+}
+
+.fusioni-chat-widget.dark .fusioni-conversation-status {
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-chat-widget.dark .fusioni-conversation-date {
+  color: var(--fusioni-text-muted);
+}
+
+/* Accessibility and Performance Optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .fusioni-conversation-item,
+  .fusioni-neural-node,
+  .fusioni-neural-connection,
+  .fusioni-ai-pulse-ring,
+  .fusioni-ai-core,
+  .fusioni-status-dot,
+  .fusioni-new-badge,
+  .fusioni-new-pulse,
+  .fusioni-data-stream {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .fusioni-conversation-item:hover {
+    transform: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .fusioni-conversation-item {
+    border-width: 2px;
+  }
+  
+  .fusioni-conversation-item.active {
+    border-width: 3px;
+  }
+  
+  .fusioni-neural-node,
+  .fusioni-ai-pulse-ring,
+  .fusioni-status-dot {
+    box-shadow: none;
+    border: 1px solid currentColor;
+  }
+}
+
+/* Focus management for keyboard navigation */
+.fusioni-conversation-item:focus-visible {
+  outline: 2px solid var(--fusioni-primary);
+  outline-offset: 2px;
+}
+
+.fusioni-conversation-item.active:focus-visible {
+  outline-color: white;
+}
+
+/* Performance optimizations */
+.fusioni-conversation-item {
+  will-change: transform, box-shadow;
+  contain: layout style paint;
+}
+
+.fusioni-neural-node,
+.fusioni-neural-connection,
+.fusioni-ai-pulse-ring,
+.fusioni-data-stream {
+  will-change: transform, opacity;
+  contain: layout style paint;
+}
+
+/* GPU acceleration for smooth animations */
+.fusioni-conversation-item,
+.fusioni-neural-node,
+.fusioni-ai-core,
+.fusioni-data-stream {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Sophisticated Floating Button Animation Keyframes */
+@keyframes attentionRingPulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes neuralParticleFloat {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.5) translateY(0);
+  }
+  25% {
+    opacity: 0.6;
+    transform: scale(1) translateY(-10px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-20px);
+  }
+  75% {
+    opacity: 0.6;
+    transform: scale(1) translateY(-10px);
+  }
+}
+
+@keyframes brainActivityPulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes brainCorePulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+@keyframes attentionWaveExpand {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+@keyframes periodicAttentionPulse {
+  0%, 90% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  95% {
+    opacity: 0.6;
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes enhancedGlowPulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes magneticFieldRotate {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+/* Entrance Animation Sequence */
+@keyframes floatingButtonEntrance {
+  0% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(6);
+  }
+  40% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Attention Sequence Trigger */
+@keyframes attentionSequenceTrigger {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  40% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  80% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* Sophisticated Hover Effects */
+@keyframes floatingButtonHover {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) scale(1.05) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.08) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-2px) scale(1.03) rotate(-1deg);
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+/* AI Processing Indicator */
+@keyframes aiProcessingIndicator {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
+/* Neural Network Connection Flow */
+@keyframes neuralConnectionFlow {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  20% {
+    opacity: 0.8;
+    transform: scaleX(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  80% {
+    opacity: 0.8;
+    transform: scaleX(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+/* Attention State Classes */
+.fusioni-floating-button-attention-active .fusioni-floating-button-attention-ring,
+.fusioni-floating-button-attention-active .fusioni-floating-button-attention-ring-2,
+.fusioni-floating-button-attention-active .fusioni-floating-button-attention-ring-3 {
+  opacity: 1;
+}
+
+.fusioni-floating-button-attention-active .fusioni-floating-button-neural-particles {
+  opacity: 1;
+}
+
+.fusioni-floating-button-attention-active .fusioni-floating-button-brain-activity {
+  opacity: 1;
+}
+
+.fusioni-floating-button-attention-active .fusioni-floating-button-attention-sequence {
+  opacity: 1;
+}
+
+.fusioni-floating-button-attention-active .fusioni-floating-button-periodic-pulse {
+  opacity: 1;
+}
+
+.fusioni-floating-button-attention-active .fusioni-floating-button-glow {
+  opacity: 1;
+}
+
+.fusioni-floating-button-attention-active .fusioni-floating-button-magnetic-field {
+  opacity: 1;
+}
+
+/* Entrance Animation */
+.fusioni-floating-button-entering {
+  /* transform: scale(1);
+  transition: all 1s ease-in-out; */
+  animation: floatingButtonEntrance 1.2s ease-in-out forwards;
+}
+
+/* Hover Enhancement */
+/* .fusioni-floating-button:hover {
+  animation: floatingButtonHover 0.6s ease-in-out;
+}
+
+.fusioni-floating-button:hover .fusioni-floating-button-attention-ring,
+.fusioni-floating-button:hover .fusioni-floating-button-attention-ring-2,
+.fusioni-floating-button:hover .fusioni-floating-button-attention-ring-3 {
+  opacity: 1;
+  animation-duration: 1.5s;
+}
+
+.fusioni-floating-button:hover .fusioni-floating-button-glow {
+  opacity: 1;
+  animation-duration: 1s;
+} */
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .fusioni-floating-button-attention-ring,
+  .fusioni-floating-button-attention-ring-2,
+  .fusioni-floating-button-attention-ring-3,
+  .fusioni-neural-particle,
+  .fusioni-floating-button-brain-activity,
+  .fusioni-attention-wave,
+  .fusioni-floating-button-periodic-pulse,
+  .fusioni-floating-button-glow,
+  .fusioni-floating-button-magnetic-field {
+    animation: none !important;
+  }
+  
+  .fusioni-floating-button:hover {
+    animation: none !important;
+  }
+}
+
+/* Confirmation Dialog */
+.fusioni-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.fusioni-dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.fusioni-dialog {
+  background-color: var(--fusioni-bg-primary);
+  border-radius: var(--fusioni-radius-lg);
+  box-shadow: var(--fusioni-shadow-2xl);
+  width: 90%;
+  max-width: 420px;
+  pointer-events: auto;
+  animation: dialogSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--fusioni-border);
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fusioni-dialog-header {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--fusioni-border);
+}
+
+.fusioni-dialog-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--fusioni-text-primary);
+  line-height: 1.5;
+}
+
+.fusioni-dialog-body {
+  padding: 1.5rem;
+}
+
+.fusioni-dialog-message {
+  margin: 0;
+  color: var(--fusioni-text-secondary);
+  line-height: 1.6;
+  font-size: 0.9375rem;
+}
+
+.fusioni-dialog-footer {
+  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  border-top: 1px solid var(--fusioni-border);
+}
+
+.fusioni-dialog-cancel {
+  min-width: 80px;
+}
+
+.fusioni-dialog-confirm {
+  min-width: 80px;
+}
+
+.fusioni-dialog-confirm-danger {
+  background-color: var(--fusioni-error);
+  color: var(--fusioni-text-light);
+  border-color: var(--fusioni-error);
+}
+
+.fusioni-dialog-confirm-danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+  border-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: var(--fusioni-shadow-md);
+}
+
+.fusioni-dialog-confirm-danger:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--fusioni-shadow);
+}
+
+.fusioni-dialog-confirm-warning {
+  background-color: var(--fusioni-warning);
+  color: var(--fusioni-text-light);
+  border-color: var(--fusioni-warning);
+}
+
+.fusioni-dialog-confirm-warning:hover:not(:disabled) {
+  background-color: #b45309;
+  border-color: #b45309;
+  transform: translateY(-1px);
+  box-shadow: var(--fusioni-shadow-md);
+}
+
+.fusioni-dialog-confirm-info {
+  background-color: var(--fusioni-info);
+  color: var(--fusioni-text-light);
+  border-color: var(--fusioni-info);
+}
+
+.fusioni-dialog-confirm-info:hover:not(:disabled) {
+  background-color: #0369a1;
+  border-color: #0369a1;
+  transform: translateY(-1px);
+  box-shadow: var(--fusioni-shadow-md);
+}
+
+/* Dark theme adjustments for dialog */
+.fusioni-chat-widget.dark .fusioni-dialog {
+  background-color: var(--fusioni-bg-secondary);
+  border-color: var(--fusioni-border);
+}
+
+.fusioni-chat-widget.dark .fusioni-dialog-header {
+  border-bottom-color: var(--fusioni-border);
+}
+
+.fusioni-chat-widget.dark .fusioni-dialog-footer {
+  border-top-color: var(--fusioni-border);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Image gallery (parity with fusioni-web ImageGalleryComponent)               */
+/* -------------------------------------------------------------------------- */
+
+.fusioni-image-gallery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  animation: fusionImageGalleryFadeIn 0.2s ease-out;
+  /* Reserve vertical space for top bar + optional thumb band (matches Angular calc(100vh - 8rem) baseline) */
+  --fusioni-ig-img-offset: 8rem;
+}
+
+.fusioni-image-gallery-overlay.fusioni-image-gallery-has-thumbs {
+  /* Top bar + compact thumb grid + dots (extra vs Angular single-pane 8rem) */
+  --fusioni-ig-img-offset: 14rem;
+}
+
+.fusioni-image-gallery-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.fusioni-image-gallery-stage {
+  flex: 1 1 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.fusioni-image-gallery-overlay.fusioni-image-gallery-theme-light {
+  background: linear-gradient(to bottom, #374151 0%, #9ca3af 100%);
+}
+
+.fusioni-image-gallery-overlay.fusioni-image-gallery-theme-dark {
+  background: linear-gradient(to bottom, #111827 0%, #1f2937 100%);
+}
+
+@keyframes fusionImageGalleryFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fusioni-image-gallery-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+  pointer-events: none;
+}
+
+.fusioni-image-gallery-topbar-spacer {
+  width: 2.5rem;
+}
+
+.fusioni-image-gallery-counter {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.025em;
+}
+
+.fusioni-image-gallery-close {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 9999px;
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.fusioni-image-gallery-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.fusioni-image-gallery-close:focus {
+  outline: none;
+}
+
+.fusioni-image-gallery-close:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.fusioni-image-gallery-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.fusioni-image-gallery-icon-lg {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Angular image-gallery: flex:1; min-width:0; padding 4rem 4.5rem; img max 100% × calc(100vh - 8rem) */
+.fusioni-image-gallery-content {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 4rem 4.5rem;
+  box-sizing: border-box;
+}
+
+.fusioni-image-gallery-img {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  max-height: calc(100vh - var(--fusioni-ig-img-offset, 8rem));
+  max-height: calc(100dvh - var(--fusioni-ig-img-offset, 8rem));
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: fusionImageGalleryZoomIn 0.25s ease-out;
+}
+
+.fusioni-image-gallery-thumbs-wrap {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: min(100vw - 2rem, 42rem);
+  max-height: 12.5rem;
+  margin: 0 auto;
+  padding: 0 1rem 0.75rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Compact thumbnail rail: full-width cells made huge by aspect-ratio — cap row height (SDK-only; Angular has no strip) */
+.fusioni-image-gallery-thumbs-wrap .fusioni-gallery-strip--lightbox .fusioni-gallery-strip-grid {
+  gap: 0.5rem;
+}
+
+.fusioni-image-gallery-thumbs-wrap .fusioni-gallery-strip--lightbox .fusioni-gallery-strip-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 3.75rem;
+}
+
+.fusioni-image-gallery-thumb {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 5.5rem;
+  height: 3.5rem;
+  padding: 0;
+  margin: 0 auto;
+  border: 2px solid transparent;
+  border-radius: var(--fusioni-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.35);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.fusioni-image-gallery-thumb:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.fusioni-image-gallery-thumb:focus {
+  outline: none;
+}
+
+.fusioni-image-gallery-thumb:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+.fusioni-image-gallery-thumb-selected {
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.fusioni-image-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fusioni-image-gallery-thumbs-wrap .fusioni-gallery-strip-dots {
+  margin-top: 0.5rem;
+}
+
+@keyframes fusionImageGalleryZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fusioni-image-gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.fusioni-image-gallery-nav:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.fusioni-image-gallery-nav:active {
+  transform: translateY(-50%) scale(0.98);
+}
+
+.fusioni-image-gallery-nav:focus {
+  outline: none;
+}
+
+.fusioni-image-gallery-nav:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.fusioni-image-gallery-nav-prev {
+  left: 1rem;
+}
+
+.fusioni-image-gallery-nav-next {
+  right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .fusioni-image-gallery-nav {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .fusioni-image-gallery-nav-prev {
+    left: 1.5rem;
+  }
+
+  .fusioni-image-gallery-nav-next {
+    right: 1.5rem;
+  }
+}
+
+/* Message images open the gallery */
+.fusioni-image.fusioni-image-clickable {
+  cursor: pointer;
+}
+
+.fusioni-image-clickable-wrap {
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-radius: var(--fusioni-radius);
+}
+
+.fusioni-image-clickable-wrap:focus-visible {
+  outline: 2px solid var(--fusioni-primary);
+  outline-offset: 2px;
+}
+
+/* Shared: 2-row paginated strip (chat document thumbnails + lightbox thumbs) */
+.fusioni-gallery-strip {
+  width: 100%;
+}
+
+.fusioni-gallery-strip-viewport {
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* margin-left: -N*100% slides by one viewport width; transform % used the full track width (broken layout). */
+.fusioni-gallery-strip-track {
+  display: flex;
+  width: 100%;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.fusioni-gallery-strip-page {
+  flex: 0 0 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.fusioni-gallery-strip-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fusioni-gallery-strip-cell {
+  min-width: 0;
+}
+
+.fusioni-gallery-strip-dots {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.fusioni-gallery-strip-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.fusioni-gallery-strip--document .fusioni-gallery-strip-dot {
+  background-color: #d1d5db;
+}
+
+.fusioni-chat-widget.dark .fusioni-gallery-strip--document .fusioni-gallery-strip-dot {
+  background-color: #475569;
+}
+
+.fusioni-gallery-strip--document .fusioni-gallery-strip-dot-active {
+  background-color: var(--fusioni-primary);
+}
+
+.fusioni-chat-widget.dark .fusioni-gallery-strip--document .fusioni-gallery-strip-dot-active {
+  background-color: var(--fusioni-primary-light);
+}
+
+.fusioni-gallery-strip--lightbox .fusioni-gallery-strip-dot {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.fusioni-gallery-strip--lightbox .fusioni-gallery-strip-dot-active {
+  background-color: rgba(255, 255, 255, 0.95);
+  transform: scale(1.15);
+}
+
+.fusioni-gallery-strip-dot:focus-visible {
+  outline: 2px solid var(--fusioni-primary);
+  outline-offset: 2px;
+}
+
+.fusioni-gallery-strip--lightbox .fusioni-gallery-strip-dot:focus-visible {
+  outline-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Document image grid (assistant message thumbnails → gallery) */
+.fusioni-document-images {
+  margin-top: 0.25rem;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.fusioni-document-images-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  min-height: 1.25rem;
+}
+
+.fusioni-document-images-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--fusioni-border);
+  z-index: 0;
+}
+
+.fusioni-chat-widget.dark .fusioni-document-images-header::before {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.fusioni-document-images-header-label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--fusioni-text-secondary);
+  background: var(--fusioni-bg-secondary);
+}
+
+.fusioni-document-images-header-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.fusioni-document-image-btn {
+  cursor: pointer;
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--fusioni-radius-xl);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: var(--fusioni-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 0;
+}
+
+.fusioni-chat-widget.dark .fusioni-document-image-btn {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fusioni-document-image-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--fusioni-shadow-md);
+}
+
+.fusioni-document-image-btn:focus {
+  outline: none;
+}
+
+.fusioni-document-image-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+}
+
+.fusioni-document-image-aspect {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+}
+
+.fusioni-document-image-aspect img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.fusioni-document-image-btn:hover .fusioni-document-image-aspect img {
+  transform: scale(1.02);
+}
