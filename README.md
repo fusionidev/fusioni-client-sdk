@@ -25,7 +25,7 @@ npm install @fusioni/client-sdk
 
 ### As a script (no build step)
 
-Add a single script tag to your page. The UMD bundle includes React and styles.
+Add a single script tag to your page. The browser bundle is an **IIFE** (file name still `fusioni-sdk.umd.js` for CDN URLs): it assigns global `Fusioni` and includes React and styles. IIFE is used instead of classic UMD so `Fusioni` stays correct even when the host page’s bundler defines CommonJS `module`/`exports` in the same scope (plain UMD could leave `Fusioni` as `{}` in that case).
 
 ```html
 <script src="https://unpkg.com/@fusioni/client-sdk/dist/fusioni-sdk.umd.js"></script>

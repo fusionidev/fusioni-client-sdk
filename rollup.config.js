@@ -41,20 +41,24 @@ export default [
     ],
     external: ['react', 'react-dom'],
   },
-  // UMD build – for <script src="..."> (bundles React, injects CSS)
+  // Script-tag build – IIFE (bundles React, injects CSS). File name kept as *.umd.js for CDN URLs.
+  // UMD was avoided: its CommonJS branch runs when outer `exports`/`module` exist, leaving
+  // globalThis.Fusioni as `{}` while the API is only on the bundler's exports object.
   {
     input: 'src/browser.tsx',
     output: {
       file: 'dist/fusioni-sdk.umd.js',
-      format: 'umd',
+      format: 'iife',
       name: 'Fusioni',
       sourcemap: true,
-      globals: {},
+      exports: 'default',
     },
     plugins: [
       replace({
-        __FUSIONI_SDK_VERSION__: JSON.stringify(packageJson.version),
         preventAssignment: true,
+        __FUSIONI_SDK_VERSION__: JSON.stringify(packageJson.version),
+        // React and other deps reference process.env.NODE_ENV; browsers have no `process`.
+        'process.env.NODE_ENV': JSON.stringify('production'),
       }),
       resolve({
         browser: true,

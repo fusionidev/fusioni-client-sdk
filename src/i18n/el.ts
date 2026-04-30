@@ -30,6 +30,7 @@ export const el = {
       }
     },
     attachedImages: 'Εικόνες',
+    attachedVideos: 'Βίντεο',
     messages: {
       loading: 'Εργάζομαι...',
       error: 'Ουπς! Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά αργότερα.',

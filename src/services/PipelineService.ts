@@ -44,7 +44,7 @@ export class PipelineService {
 
     const apiClient = this.getApiClient();
     const response: AxiosResponse<PipelineResponse> = await (apiClient as any).client.post(
-      `/pipeline/${request.agency_id}/exec`,
+      `/journey/${request.agency_id}/exec`,
       request
     );
     

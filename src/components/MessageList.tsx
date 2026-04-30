@@ -207,14 +207,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                   </div>
                   
                   <div className="fusioni-message-content">
-                    <div className="fusioni-message-header">
-                      <span className="fusioni-message-role">
-                        {message.role === 'user' ? '' : 'Fusioni'}
-                      </span>
-                      <span className="fusioni-message-time">
-                        {formatDate(message.created)}
-                      </span>
-                    </div>
+                    
                     
                     <div className="fusioni-message-body">
                       {message.role === 'user' && editingMessageId === message.id ? (
@@ -247,6 +240,81 @@ export const MessageList: React.FC<MessageListProps> = ({
                         />
                       )}
                     </div>
+
+                    <div className="fusioni-message-footer">
+                      {/* <span className="fusioni-message-role">
+                        {message.role === 'user' ? '' : 'Fusioni'}
+                      </span> */}
+                      <span className="fusioni-message-time">
+                        {formatDate(message.created)}
+                      </span>
+                      {message.id && (onDeleteMessage || (message.role === 'user' && onEditMessage)) && (
+                        <div className="fusioni-message-actions">
+                          {message.role === 'user' && editingMessageId === message.id ? (
+                            <>
+                              <button
+                                onClick={confirmEdit}
+                                className="fusioni-btn fusioni-btn-icon"
+                                title="Save edit"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                  <polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="fusioni-btn fusioni-btn-icon"
+                                title="Cancel edit"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {message.role === 'user' && onEditMessage && (
+                                <button
+                                  onClick={() => startEdit(message)}
+                                  className="fusioni-btn fusioni-btn-icon"
+                                  title="Edit message"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 20H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M16.5 3.5C16.8978 3.10218 17.4374 2.87868 18 2.87868C18.5626 2.87868 19.1022 3.10218 19.5 3.5C19.8978 3.89782 20.1213 4.43739 20.1213 5C20.1213 5.56261 19.8978 6.10218 19.5 6.5L7 19L3 20L4 16L16.5 3.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                </button>
+                              )}
+                              {onDeleteMessage && (
+                                <button
+                                  onClick={() => onDeleteMessage(message.id!)}
+                                  className="fusioni-btn fusioni-btn-icon"
+                                  title="Delete message"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <path
+                                      d="M3 6H5H21"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                    <path
+                                      d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     
                     {showThoughts && message.thoughts && (
                       <div className="fusioni-message-thoughts">
@@ -257,73 +325,6 @@ export const MessageList: React.FC<MessageListProps> = ({
                       </div>
                     )}
                   </div>
-                  
-                  {message.id && (onDeleteMessage || (message.role === 'user' && onEditMessage)) && (
-                    <div className="fusioni-message-actions">
-                      {message.role === 'user' && editingMessageId === message.id ? (
-                        <>
-                          <button
-                            onClick={confirmEdit}
-                            className="fusioni-btn fusioni-btn-icon"
-                            title="Save edit"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                              <polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={cancelEdit}
-                            className="fusioni-btn fusioni-btn-icon"
-                            title="Cancel edit"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                              <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {message.role === 'user' && onEditMessage && (
-                            <button
-                              onClick={() => startEdit(message)}
-                              className="fusioni-btn fusioni-btn-icon"
-                              title="Edit message"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 20H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M16.5 3.5C16.8978 3.10218 17.4374 2.87868 18 2.87868C18.5626 2.87868 19.1022 3.10218 19.5 3.5C19.8978 3.89782 20.1213 4.43739 20.1213 5C20.1213 5.56261 19.8978 6.10218 19.5 6.5L7 19L3 20L4 16L16.5 3.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </button>
-                          )}
-                          {onDeleteMessage && (
-                            <button
-                              onClick={() => onDeleteMessage(message.id!)}
-                              className="fusioni-btn fusioni-btn-icon fusioni-btn-danger"
-                              title="Delete message"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                <path
-                                  d="M3 6H5H21"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
               );

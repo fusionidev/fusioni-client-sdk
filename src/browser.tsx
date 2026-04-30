@@ -1,6 +1,8 @@
 /**
  * Browser / script-tag entry point for Fusioni SDK.
  * Use when including via <script src="path/to/fusioni-sdk.umd.js"></script>.
+ * Built as IIFE (not UMD) so `Fusioni` is always set on the global object even when
+ * outer scopes define CommonJS `module`/`exports` (e.g. some app bundlers).
  * Exposes window.Fusioni with init() and mount().
  */
 declare const __FUSIONI_SDK_VERSION__: string;
@@ -51,7 +53,7 @@ const mountedRoots = new Map<HTMLElement, Root>();
  * @param config - Fusioni SDK configuration
  * @returns Object with unmount() to tear down the widget
  */
-export function mount(
+function mount(
   container: string | HTMLElement,
   config: FusioniScriptConfig
 ): FusioniMountResult {
@@ -74,7 +76,7 @@ export function mount(
  * @param config - Fusioni SDK configuration
  * @returns Object with unmount() to tear down the widget
  */
-export function init(config: FusioniScriptConfig): FusioniMountResult {
+function init(config: FusioniScriptConfig): FusioniMountResult {
   const rootEl = createDefaultRoot();
   return mount(rootEl, config);
 }

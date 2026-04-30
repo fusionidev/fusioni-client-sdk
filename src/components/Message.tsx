@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {MessageProps} from '../types';
 import {UrlPreview} from './UrlPreview';
 import {Map} from './Map';
@@ -11,6 +11,11 @@ interface DocumentImageGridProps {
     images: string[];
     onOpenGallery: (payload: { images: string[]; index: number }) => void;
     attachedImagesLabel: string;
+}
+
+interface DocumentVideoGridProps {
+    videos: string[];
+    attachedVideosLabel: string;
 }
 
 const DocumentImageGrid: React.FC<DocumentImageGridProps> = ({
@@ -94,6 +99,86 @@ const DocumentImageGrid: React.FC<DocumentImageGridProps> = ({
                                 />
                             </div>
                         </button>
+                    );
+                }}
+            />
+        </div>
+    );
+};
+
+const DocumentVideoGrid: React.FC<DocumentVideoGridProps> = ({
+    videos,
+    attachedVideosLabel,
+}) => {
+    const cols = useGalleryStripColumns();
+    const [visible, setVisible] = useState<string[]>(videos);
+    const [page, setPage] = useState(0);
+    const pageSize = cols * GALLERY_STRIP_MAX_ROWS;
+    const pageCount = visible.length > 0 ? Math.ceil(visible.length / pageSize) : 0;
+    const prevPageSizeRef = useRef(pageSize);
+
+    useEffect(() => setVisible(videos), [videos]);
+
+    useEffect(() => {
+        const old = prevPageSizeRef.current;
+        if (old !== pageSize && old > 0 && pageSize > 0) {
+            setPage((p) => {
+                const firstGlobal = p * old;
+                const np = Math.floor(firstGlobal / pageSize);
+                const pc = visible.length > 0 ? Math.ceil(visible.length / pageSize) : 0;
+                return pc <= 0 ? 0 : Math.min(Math.max(0, np), pc - 1);
+            });
+        }
+        prevPageSizeRef.current = pageSize;
+    }, [pageSize, visible.length]);
+
+    useEffect(() => {
+        setPage((p) => {
+            if (pageCount <= 0) return 0;
+            return Math.min(p, pageCount - 1);
+        });
+    }, [pageCount]);
+
+    if (!visible.length) return null;
+
+    return (
+        <div className="fusioni-document-videos">
+            <div className="fusioni-document-videos-header">
+                <span className="fusioni-document-videos-header-label">
+                    <svg
+                        className="fusioni-document-videos-header-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                    >
+                        <polygon points="23 7 16 12 23 17 23 7" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    </svg>
+                    {attachedVideosLabel}
+                </span>
+            </div>
+            <PaginatedGalleryStrip
+                variant="document"
+                itemCount={visible.length}
+                columns={cols}
+                page={page}
+                onPageChange={setPage}
+                renderCell={(gi) => {
+                    const vid = visible[gi];
+                    return (
+                        <div className="fusioni-document-video-wrap" aria-label={`Attached video ${gi + 1}`}>
+                            <div className="fusioni-document-video-aspect">
+                                <video
+                                    src={vid}
+                                    controls
+                                    preload="metadata"
+                                    playsInline
+                                    onError={() => setVisible((v) => v.filter((u) => u !== vid))}
+                                />
+                            </div>
+                        </div>
                     );
                 }}
             />
@@ -320,38 +405,88 @@ export const Message: React.FC<MessageProps> = ({
 
         // Reset displayed content
         setDisplayedContent('');
-        const fullContent = message.content;
+        // Type the same HTML string that will be rendered (after any transformations),
+        // otherwise we can end up animating an HTML-escaped variant.
+        const fullContent = enhanceMessageContent(message.content);
 
-        // Parse content into segments: text segments and HTML tag segments
+        // Parse content into segments: text segments and HTML tag segments.
+        // Important: this parser is quote-aware so it won't break on `>` inside quoted attributes.
         const segments: Array<{ type: 'text' | 'tag'; content: string }> = [];
-        let currentIndex = 0;
+        const readTagAt = (html: string, start: number): { tag: string; end: number } | null => {
+            if (html[start] !== '<') return null;
 
-        while (currentIndex < fullContent.length) {
-            const remainingContent = fullContent.substring(currentIndex);
-            const tagMatch = remainingContent.match(/^<[^>]*>/);
+            // Handle comments: <!-- ... -->
+            if (html.startsWith('<!--', start)) {
+                const endIdx = html.indexOf('-->', start + 4);
+                if (endIdx === -1) return { tag: html.slice(start), end: html.length };
+                return { tag: html.slice(start, endIdx + 3), end: endIdx + 3 };
+            }
 
-            if (tagMatch) {
-                // Found an HTML tag - add it as a complete segment
-                segments.push({type: 'tag', content: tagMatch[0]});
-                currentIndex += tagMatch[0].length;
-            } else {
-                // Find the next HTML tag or end of string
-                const nextTagIndex = remainingContent.indexOf('<');
-                if (nextTagIndex === -1) {
-                    // No more tags, add remaining text
-                    segments.push({type: 'text', content: remainingContent});
-                    break;
-                } else {
-                    // Add text up to the next tag
-                    segments.push({type: 'text', content: remainingContent.substring(0, nextTagIndex)});
-                    currentIndex += nextTagIndex;
+            let i = start + 1;
+            let quote: '"' | "'" | null = null;
+
+            while (i < html.length) {
+                const ch = html[i];
+                if (quote) {
+                    if (ch === quote) quote = null;
+                    i++;
+                    continue;
                 }
+                if (ch === '"' || ch === "'") {
+                    quote = ch;
+                    i++;
+                    continue;
+                }
+                if (ch === '>') {
+                    return { tag: html.slice(start, i + 1), end: i + 1 };
+                }
+                i++;
+            }
+
+            // No closing `>` found; treat the remainder as text to avoid exposing partial tags.
+            return null;
+        };
+
+        let currentIndex = 0;
+        while (currentIndex < fullContent.length) {
+            const nextLt = fullContent.indexOf('<', currentIndex);
+            if (nextLt === -1) {
+                segments.push({ type: 'text', content: fullContent.slice(currentIndex) });
+                break;
+            }
+            if (nextLt > currentIndex) {
+                segments.push({ type: 'text', content: fullContent.slice(currentIndex, nextLt) });
+            }
+            const maybeTag = readTagAt(fullContent, nextLt);
+            if (maybeTag) {
+                segments.push({ type: 'tag', content: maybeTag.tag });
+                currentIndex = maybeTag.end;
+            } else {
+                // Not a valid tag; emit the `<` as text and keep going.
+                segments.push({ type: 'text', content: '<' });
+                currentIndex = nextLt + 1;
             }
         }
 
         // Now animate through segments
         let segmentIndex = 0;
         let textIndex = 0;
+
+        const nextTextStep = (text: string, index: number): { nextIndex: number; slice: string } => {
+            if (index >= text.length) return { nextIndex: index, slice: '' };
+            const ch = text[index];
+
+            // Treat HTML entities as atomic "characters" so we don't type partial `&...;`.
+            if (ch === '&') {
+                const rest = text.slice(index);
+                const entityMatch = rest.match(/^&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]+);/);
+                if (entityMatch) {
+                    return { nextIndex: index + entityMatch[0].length, slice: text.slice(0, index + entityMatch[0].length) };
+                }
+            }
+
+            return { nextIndex: index + 1, slice: text.slice(0, index + 1) };
+        };
 
         const typeNextChar = () => {
             if (segmentIndex >= segments.length) {
@@ -378,14 +513,22 @@ export const Message: React.FC<MessageProps> = ({
             } else {
                 // Text segments are typed character by character
                 if (textIndex < segment.content.length) {
-                    // Build content: all previous segments + current segment up to textIndex
+                    const step = nextTextStep(segment.content, textIndex);
+                    if (!step.slice) {
+                        segmentIndex++;
+                        textIndex = 0;
+                        typingIntervalRef.current = setTimeout(typeNextChar, 0);
+                        return;
+                    }
+
+                    // Build content: all previous segments + current segment slice
                     let content = '';
                     for (let i = 0; i < segmentIndex; i++) {
                         content += segments[i].content;
                     }
-                    content += segment.content.substring(0, textIndex + 1);
+                    content += step.slice;
                     setDisplayedContent(content);
-                    textIndex++;
+                    textIndex = step.nextIndex;
                     typingIntervalRef.current = setTimeout(typeNextChar, typingSpeed);
                 } else {
                     // Current text segment is complete, move to next segment
@@ -413,6 +556,7 @@ export const Message: React.FC<MessageProps> = ({
     const contentToDisplay = message.shouldAnimate
         ? displayedContent
         : message.content;
+    const extractedUrls = useMemo(() => extractUrlsFromContent(message.content), [message.content]);
 
     return (
         <div className={getMessageClasses()}>
@@ -454,11 +598,11 @@ export const Message: React.FC<MessageProps> = ({
             )}
 
             {/* URL Previews for message content */}
-            {!message.loading && extractUrlsFromContent(message.content).length > 0 && message.role !== 'user' && (
+            {!message.loading && extractedUrls.length > 0 && message.role !== 'user' && (
                 <div className="fusioni-message-url-previews">
-                    {extractUrlsFromContent(message.content).map((url, index) => (
+                    {extractedUrls.map((url) => (
                         <UrlPreview
-                            key={`${url}-${index}`}
+                            key={url}
                             url={url}
                             agencyId={agencyId}
                             showCloseButton={false}
@@ -481,6 +625,14 @@ export const Message: React.FC<MessageProps> = ({
                                 images={message.extra_data.document_images}
                                 onOpenGallery={onOpenGallery}
                                 attachedImagesLabel={t('chat.attachedImages')}
+                            />
+                        )}
+
+                    {message.extra_data.document_videos &&
+                        message.extra_data.document_videos.length > 0 && (
+                            <DocumentVideoGrid
+                                videos={message.extra_data.document_videos}
+                                attachedVideosLabel={t('chat.attachedVideos')}
                             />
                         )}
 

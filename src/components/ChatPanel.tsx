@@ -37,8 +37,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fusioni-chat-backdrop" />
       
       {/* Panel */}
       <div
