@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 // Core interfaces based on Angular services
 
 export interface Pagination {
@@ -134,7 +136,8 @@ export interface MessageProps {
   onDelete?: (messageId: string) => void;
   onConfirmation?: (result: ConfirmationResult) => void;
   enableButtons?: boolean;
-  streamMessages?: string[];
+  /** Rendered inside the bubble while `message.loading` (e.g. from MessageList) */
+  streamLoading?: ReactNode;
   apiBaseUrl?: string;
   apiKey?: string;
   agencyId: string;

@@ -1855,6 +1855,16 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
+.fusioni-chat-main-header-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--fusioni-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .fusioni-header-actions {
   display: flex;
   align-items: center;
@@ -2277,26 +2287,29 @@
     top: max(0.75rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));
   }
 
-  .fusioni-chat-panel {
-    width: calc(100vw - 1rem);
-    height: calc(100vh - 1rem);
+  /*
+   * Full-bleed panel on small screens: desktop rules pin with right/left: 1rem
+   * while width was calc(100vw - 1rem), which leaves an asymmetric strip (e.g. gap on the right).
+   * Use inset + width/height auto so the panel aligns to the viewport and safe areas only.
+   */
+  .fusioni-chat-panel:not(.fusioni-chat-panel-fullscreen) {
+    width: auto;
+    height: auto;
     max-width: none;
     max-height: none;
+    border-radius: 0;
   }
-  
-  /* Fix positioning for mobile to ensure header is visible */
+
   .fusioni-chat-panel-bottom-right,
-  .fusioni-chat-panel-bottom-left {
-    bottom: 0.5rem;
-    top: 0.5rem;
-    height: calc(100vh - 1rem);
-  }
-  
+  .fusioni-chat-panel-bottom-left,
   .fusioni-chat-panel-top-right,
   .fusioni-chat-panel-top-left {
-    top: 0.5rem;
-    bottom: 0.5rem;
-    height: calc(100vh - 1rem);
+    top: env(safe-area-inset-top, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
+    left: env(safe-area-inset-left, 0px);
+    right: env(safe-area-inset-right, 0px);
+    width: auto;
+    height: auto;
   }
   
   .fusioni-conversation-list {
@@ -2311,6 +2324,34 @@
   
   .fusioni-message-bubble:hover {
     transform: scale(1.01);
+  }
+
+  .fusioni-message-bubble {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .fusioni-message-list {
+    -webkit-overflow-scrolling: touch;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .fusioni-chat-input {
+    padding-bottom: max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem));
+  }
+
+  .fusioni-chat-toolbar-close-mobile {
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+  }
+
+  .fusioni-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 0.25rem;
   }
 }
 

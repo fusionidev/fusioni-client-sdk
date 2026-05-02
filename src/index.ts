@@ -29,6 +29,7 @@ export { useChatState } from './hooks/useChatState';
 export { useSSE } from './hooks/useSSE';
 export { useTheme } from './hooks/useTheme';
 export { useTranslation } from './hooks/useTranslation';
+export { useIsMobileLayout } from './hooks/useIsMobileLayout';
 
 // i18n exports
 export { getTranslation, getAvailableLanguages, isValidLanguage } from './i18n';

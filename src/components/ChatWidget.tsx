@@ -16,6 +16,7 @@ import {FUSIONI_SDK_OPTIMISTIC_USER, useChatState} from '../hooks/useChatState';
 import {useSSE} from '../hooks/useSSE';
 import {useTheme} from '../hooks/useTheme';
 import {useTranslation} from '../hooks/useTranslation';
+import {useIsMobileLayout} from '../hooks/useIsMobileLayout';
 import '../styles/index.css';
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
@@ -66,6 +67,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   } = useChatState(mergedConfig?.agencyId || config.agencyId);
 
   const { theme, toggleTheme } = useTheme(mergedConfig?.theme || config.theme);
+  const isMobileLayout = useIsMobileLayout();
   
   // Initialize API client and fetch server configuration
   useEffect(() => {
@@ -638,7 +640,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
         primaryColor={mergedConfig.primaryColor}
         buttonRef={floatingButtonRef}
         variant={mergedConfig.buttonVariant || 'glass'}
-        shouldDisplay={!hasConfigError}
+        shouldDisplay={!hasConfigError && (!isMobileLayout || !isOpen)}
       />
       
       {isOpen && (
@@ -669,9 +671,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
             )}
             
             <div className="fusioni-chat-main">
-              {mergedConfig.showConversationList !== false && (
-                <div className="fusioni-chat-main-header">
-                  <button 
+              <div className="fusioni-chat-main-header">
+                {mergedConfig.showConversationList !== false ? (
+                  <button
+                    type="button"
                     onClick={handleToggleConversationList}
                     className={`fusioni-conversation-toggle ${isConversationListOpen ? 'open' : ''}`}
                   >
@@ -680,52 +683,69 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                     </svg>
                     {t('chat.conversations.title')}
                   </button>
-                  <div className="fusioni-header-actions">
+                ) : (
+                  <span className="fusioni-chat-main-header-title">{t('chat.title')}</span>
+                )}
+                <div className="fusioni-header-actions">
+                  {isMobileLayout && (
                     <button
-                      onClick={toggleTheme}
-                      className="fusioni-btn fusioni-btn-icon"
-                      title={theme === 'dark' ? t('chat.theme.light') : t('chat.theme.dark')}
+                      type="button"
+                      onClick={() => setIsOpen(false)}
+                      className="fusioni-btn fusioni-btn-icon fusioni-chat-toolbar-close-mobile"
+                      title={t('common.close')}
+                      aria-label={t('common.close')}
                     >
-                      {theme === 'dark' ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="5"/>
-                          <line x1="12" y1="1" x2="12" y2="3"/>
-                          <line x1="12" y1="21" x2="12" y2="23"/>
-                          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                          <line x1="1" y1="12" x2="3" y2="12"/>
-                          <line x1="21" y1="12" x2="23" y2="12"/>
-                          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                        </svg>
-                      ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                        </svg>
-                      )}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M18 6L6 18M6 6L18 18" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                     </button>
-                    <button
-                      onClick={handleToggleFullscreen}
-                      className="fusioni-btn fusioni-btn-icon"
-                      title={isFullscreen ? t('chat.fullscreen.exit') : t('chat.fullscreen.enter')}
-                    >
-                      {isFullscreen ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M8 3V5M8 3H5M8 3L3 8M16 3V5M16 3H19M16 3L21 8M8 21V19M8 21H5M8 21L3 16M16 21V19M16 21H19M16 21L21 16"/>
-                        </svg>
-                      ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M8 3H5C4.46957 3 3.96086 3.21071 3.58579 3.58579C3.21071 3.96086 3 4.46957 3 5V8M21 8V5C21 4.46957 20.7893 3.96086 20.4142 3.58579C20.0391 3.21071 19.5304 3 19 3H16M16 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V16M3 16V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H8"/>
-                        </svg>
-                      )}
-                    </button>
-                    <LanguageSwitcher
-                      currentLanguage={currentLanguage}
-                      onLanguageChange={changeLanguage}
-                    />
-                  </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="fusioni-btn fusioni-btn-icon"
+                    title={theme === 'dark' ? t('chat.theme.light') : t('chat.theme.dark')}
+                  >
+                    {theme === 'dark' ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToggleFullscreen}
+                    className="fusioni-btn fusioni-btn-icon"
+                    title={isFullscreen ? t('chat.fullscreen.exit') : t('chat.fullscreen.enter')}
+                  >
+                    {isFullscreen ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M8 3V5M8 3H5M8 3L3 8M16 3V5M16 3H19M16 3L21 8M8 21V19M8 21H5M8 21L3 16M16 21V19M16 21H19M16 21L21 16"/>
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M8 3H5C4.46957 3 3.96086 3.21071 3.58579 3.58579C3.21071 3.96086 3 4.46957 3 5V8M21 8V5C21 4.46957 20.7893 3.96086 20.4142 3.58579C20.0391 3.21071 19.5304 3 19 3H16M16 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V16M3 16V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H8"/>
+                      </svg>
+                    )}
+                  </button>
+                  <LanguageSwitcher
+                    currentLanguage={currentLanguage}
+                    onLanguageChange={changeLanguage}
+                  />
                 </div>
-              )}
+              </div>
               
               {currentConversation ? (
                 <>

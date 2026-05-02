@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FusioniMemoryMessage } from '../types';
 import { Message } from './Message';
+import { MessageStreamLoading } from './MessageStreamLoading';
 import { ChatLoader } from './ChatLoader';
+import { useTranslation } from '../hooks/useTranslation';
 import { ImageGallery } from './ImageGallery';
 import { FUSIONI_LOGO_BASE64 } from '../assets/logo-base64';
 
@@ -35,6 +37,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   currentLanguage = 'en',
   theme = 'light'
 }) => {
+  const { t } = useTranslation(currentLanguage);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
@@ -231,7 +234,14 @@ export const MessageList: React.FC<MessageListProps> = ({
                           onDelete={onDeleteMessage}
                           onConfirmation={onConfirmation}
                           enableButtons={enableButtons && isLastMessage}
-                          streamMessages={message.loading ? streamMessages : []}
+                          streamLoading={
+                            message.loading ? (
+                              <MessageStreamLoading
+                                streamMessages={streamMessages}
+                                loadingLabel={t('chat.messages.loading')}
+                              />
+                            ) : undefined
+                          }
                           apiBaseUrl={apiBaseUrl}
                           apiKey={apiKey}
                           agencyId={agencyId}

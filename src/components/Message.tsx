@@ -2,8 +2,6 @@ import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {MessageProps} from '../types';
 import {UrlPreview} from './UrlPreview';
 import {Map} from './Map';
-import {Spotlight} from './Spotlight';
-import {FUSIONI_LOGO_BASE64} from '../assets/logo-base64';
 import {useTranslation} from '../hooks/useTranslation';
 import {GALLERY_STRIP_MAX_ROWS, PaginatedGalleryStrip, useGalleryStripColumns} from './PaginatedGalleryStrip';
 
@@ -197,7 +195,7 @@ export const Message: React.FC<MessageProps> = ({
                                                     onDelete,
                                                     onConfirmation,
                                                     enableButtons = true,
-                                                    streamMessages = [],
+                                                    streamLoading,
                                                     apiBaseUrl,
                                                     apiKey,
                                                     agencyId,
@@ -570,32 +568,7 @@ export const Message: React.FC<MessageProps> = ({
                 />
             )}
 
-            {/* Logo + Spotlight: SSE stream lines, or loading label until first stream event */}
-            {message.loading && (
-                <div className="fusioni-stream-messages">
-                    {(streamMessages.length > 0 ? streamMessages : [t('chat.messages.loading')]).map(
-                        (line, index) => (
-                            <div
-                                key={streamMessages.length > 0 ? `${index}-${line}` : 'loading-placeholder'}
-                                className="fusioni-stream-message-item"
-                            >
-                                <div className="fusioni-stream-message-logo-wrap">
-                                    <div className="fusioni-stream-message-logo-frame">
-                                        <img
-                                            className="fusioni-stream-message-logo-img"
-                                            src={FUSIONI_LOGO_BASE64}
-                                            alt=""
-                                            width={32}
-                                            height={32}
-                                        />
-                                    </div>
-                                </div>
-                                <Spotlight className="fusioni-stream-message-spotlight" text={line} />
-                            </div>
-                        )
-                    )}
-                </div>
-            )}
+            {message.loading && streamLoading}
 
             {/* URL Previews for message content */}
             {!message.loading && extractedUrls.length > 0 && message.role !== 'user' && (
