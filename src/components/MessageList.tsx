@@ -181,6 +181,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               return (
               <div key={messageKey} className="fusioni-message-wrapper">
                 <div className={`fusioni-message ${message.role}`}>
+                  {!(message.role === 'assistant' && message.loading) && (
                   <div className="fusioni-message-avatar">
                     {message.role === 'user' ? (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -208,6 +209,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                       />
                     )}
                   </div>
+                  )}
                   
                   <div className="fusioni-message-content">
                     
@@ -228,29 +230,32 @@ export const MessageList: React.FC<MessageListProps> = ({
                           }}
                         />
                       ) : (
-                        <Message
-                          message={message}
-                          showThoughts={showThoughts}
-                          onDelete={onDeleteMessage}
-                          onConfirmation={onConfirmation}
-                          enableButtons={enableButtons && isLastMessage}
-                          streamLoading={
-                            message.loading ? (
-                              <MessageStreamLoading
-                                streamMessages={streamMessages}
-                                loadingLabel={t('chat.messages.loading')}
-                              />
-                            ) : undefined
-                          }
-                          apiBaseUrl={apiBaseUrl}
-                          apiKey={apiKey}
-                          agencyId={agencyId}
-                          currentLanguage={currentLanguage}
-                          onOpenGallery={openGallery}
-                        />
+                        <>
+                          {message.loading && (
+                            <MessageStreamLoading
+                              streamMessages={streamMessages}
+                              loadingLabel={t('chat.messages.loading')}
+                            />
+                          )}
+                          {!message.loading && (
+                          <Message
+                            message={message}
+                            showThoughts={showThoughts}
+                            onDelete={onDeleteMessage}
+                            onConfirmation={onConfirmation}
+                            enableButtons={enableButtons && isLastMessage}
+                            apiBaseUrl={apiBaseUrl}
+                            apiKey={apiKey}
+                            agencyId={agencyId}
+                            currentLanguage={currentLanguage}
+                            onOpenGallery={openGallery}
+                          />
+                        )}
+                        </>
                       )}
                     </div>
 
+                    {!message.loading && (
                     <div className="fusioni-message-footer">
                       {/* <span className="fusioni-message-role">
                         {message.role === 'user' ? '' : 'Fusioni'}
@@ -325,6 +330,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         </div>
                       )}
                     </div>
+                    )}
                     
                     {showThoughts && message.thoughts && (
                       <div className="fusioni-message-thoughts">

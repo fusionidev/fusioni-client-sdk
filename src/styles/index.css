@@ -1166,6 +1166,20 @@
   border-bottom-left-radius: 0.25rem;
 }
 
+/* Bubble shell is a no-op while streaming UI lives in MessageList (MessageStreamLoading sibling). */
+.fusioni-message-bubble.fusioni-message-bubble--loading-empty {
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.fusioni-message-bubble.fusioni-message-bubble--loading-empty:hover {
+  box-shadow: none;
+}
+
 .fusioni-message-error {
   background: var(--fusioni-error);
   color: white;

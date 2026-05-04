@@ -195,7 +195,6 @@ export const Message: React.FC<MessageProps> = ({
                                                     onDelete,
                                                     onConfirmation,
                                                     enableButtons = true,
-                                                    streamLoading,
                                                     apiBaseUrl,
                                                     apiKey,
                                                     agencyId,
@@ -556,8 +555,18 @@ export const Message: React.FC<MessageProps> = ({
         : message.content;
     const extractedUrls = useMemo(() => extractUrlsFromContent(message.content), [message.content]);
 
+    const hasVisibleWhileLoading =
+        Boolean(message.extra_data) ||
+        (showThoughts && Boolean(message.thoughts)) ||
+        Boolean(message.has_error);
+    const collapseEmptyLoadingBubble = Boolean(message.loading) && !hasVisibleWhileLoading;
+
     return (
-        <div className={getMessageClasses()}>
+        <div
+            className={`${getMessageClasses()}${
+                collapseEmptyLoadingBubble ? ' fusioni-message-bubble--loading-empty' : ''
+            }`.trim()}
+        >
             {/* Main content — hidden while loading (parity with Angular assistant bubble) */}
             {message.content && !message.loading && (
                 <div
@@ -567,8 +576,6 @@ export const Message: React.FC<MessageProps> = ({
                     }}
                 />
             )}
-
-            {message.loading && streamLoading}
 
             {/* URL Previews for message content */}
             {!message.loading && extractedUrls.length > 0 && message.role !== 'user' && (
