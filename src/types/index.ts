@@ -101,6 +101,9 @@ export interface FusioniSDKConfig {
   agencyId: string;
   accessToken?: string;
   theme?: 'light' | 'dark' | 'auto';
+  showThemeToggle?: boolean;
+  showFullscreenToggle?: boolean;
+  showLanguageSwitcher?: boolean;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   primaryColor?: string;
   showConversationList?: boolean;
@@ -177,3 +180,9 @@ export interface ChatEvent {
 export type MessageRole = 'user' | 'assistant' | 'system';
 export type Theme = 'light' | 'dark' | 'auto';
 export type Position = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+
+/** Imperative API for `ChatWidget` ref and script-tag `Fusioni.init` / `Fusioni.mount` result */
+export interface FusioniChatWidgetHandle {
+  setLanguage: (language: 'en' | 'el') => void;
+  setTheme: (theme: Theme) => void;
+}

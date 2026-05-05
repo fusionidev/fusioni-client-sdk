@@ -105,9 +105,11 @@ When including via `<script src="...">`, the SDK exposes a global `Fusioni` obje
     position: 'bottom-right',
     primaryColor: '#6366f1'
   });
-  // Optional: unmount later
+  // Optional: unmount or change language/theme later
   // const result = Fusioni.mount('#my-chat', config);
   // result.unmount();
+  // result.setLanguage('el');
+  // result.setTheme('auto');
 </script>
 ```
 
@@ -115,9 +117,67 @@ When including via `<script src="...">`, the SDK exposes a global `Fusioni` obje
 
 | Method | Description |
 |--------|-------------|
-| `Fusioni.init(config)` | Mounts the chat widget with default placement (creates `#fusioni-chat-root`). Returns `{ unmount }`. |
-| `Fusioni.mount(container, config)` | Mounts into `container` (CSS selector string or `HTMLElement`). Returns `{ unmount }`. |
+| `Fusioni.init(config)` | Mounts the chat widget with default placement (creates `#fusioni-chat-root`). Returns [`FusioniMountResult`](#changing-language-and-theme-after-init). |
+| `Fusioni.mount(container, config)` | Mounts into `container` (CSS selector string or `HTMLElement`). Returns [`FusioniMountResult`](#changing-language-and-theme-after-init). |
 | `Fusioni.version` | SDK version string. |
+
+### Changing language and theme after init
+
+`Fusioni.init` and `Fusioni.mount` return the same handle (in TypeScript: `FusioniMountResult`), which includes **`setLanguage`** and **`setTheme`** so you can switch locale or appearance without remounting.
+
+| Property / method | Description |
+|-------------------|-------------|
+| `unmount()` | Removes the widget and cleans up the React root. |
+| `setLanguage(language)` | Sets UI language to `'en'` or `'el'`. Invalid values are ignored. |
+| `setTheme(theme)` | Sets appearance to `'light'`, `'dark'`, or `'auto'` (follows system preference). Persists like the in-widget theme control. |
+
+**Script example:**
+
+```html
+<script src="path/to/fusioni-sdk.umd.js"></script>
+<script>
+  const chat = Fusioni.init({
+    apiBaseUrl: 'https://your-fusioni-api.com',
+    agencyId: 'your-agency-id',
+    theme: 'light',
+    language: 'en'
+  });
+
+  document.getElementById('locale-el').addEventListener('click', () => {
+    chat.setLanguage('el');
+  });
+  document.getElementById('theme-dark').addEventListener('click', () => {
+    chat.setTheme('dark');
+  });
+</script>
+```
+
+**React (npm) example:** pass a ref to `ChatWidget` and call the same methods (type: `FusioniChatWidgetHandle`).
+
+```tsx
+import { useRef } from 'react';
+import { ChatWidget, type FusioniChatWidgetHandle, type FusioniSDKConfig } from '@fusioni/client-sdk';
+
+function App() {
+  const chatRef = useRef<FusioniChatWidgetHandle>(null);
+  const config: FusioniSDKConfig = {
+    apiBaseUrl: 'https://your-fusioni-api.com',
+    agencyId: 'your-agency-id',
+  };
+
+  return (
+    <>
+      <button type="button" onClick={() => chatRef.current?.setLanguage('el')}>
+        Greek
+      </button>
+      <button type="button" onClick={() => chatRef.current?.setTheme('dark')}>
+        Dark mode
+      </button>
+      <ChatWidget ref={chatRef} config={config} />
+    </>
+  );
+}
+```
 
 ### Advanced Usage with Event Handlers
 
@@ -187,7 +247,11 @@ export default App;
 | `apiBaseUrl` | `string` | **Required** | Base URL of your Fusioni API |
 | `agencyId` | `string` | **Required** | Your agency ID |
 | `accessToken` | `string` | `undefined` | Optional access token for authentication |
-| `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | UI theme preference |
+| `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | UI theme preference (can be changed later via [`setTheme`](#changing-language-and-theme-after-init)) |
+| `language` | `'en' \| 'el'` | `'en'` | UI copy language (can be changed later via [`setLanguage`](#changing-language-and-theme-after-init)) |
+| `showThemeToggle` | `boolean` | `true` | Show/hide the theme toggle button in the chat header |
+| `showFullscreenToggle` | `boolean` | `true` | Show/hide the fullscreen toggle button in the chat header |
+| `showLanguageSwitcher` | `boolean` | `true` | Show/hide the language switcher in the chat header |
 | `position` | `'bottom-right' \| 'bottom-left' \| 'top-right' \| 'top-left'` | `'bottom-right'` | Position of the floating button |
 | `primaryColor` | `string` | `'#6366f1'` | Primary color for the UI |
 | `showConversationList` | `boolean` | `true` | Whether to show the conversation sidebar |
@@ -195,6 +259,7 @@ export default App;
 | `enableFileUpload` | `boolean` | `true` | Enable file upload functionality |
 | `maxFileSize` | `number` | `10` | Maximum file size in MB |
 | `allowedFileTypes` | `string[]` | `['image/*']` | Allowed MIME types for uploads |
+| `buttonVariant` | `'minimal' \| 'glass' \| 'solid'` | `'glass'` | Floating launcher button style |
 
 ## Event Handlers
 
@@ -386,4 +451,4 @@ For support and questions:
 
 ./fusioni-client-sdk && npm run build && npm link
 
-./usion-client-sdk-example && npm link @fusioni/client-sdk
+./fusion-client-sdk-example && npm link @fusioni/client-sdk

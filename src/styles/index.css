@@ -432,7 +432,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  z-index: 50;
+  z-index: 100;
   backdrop-filter: blur(20px);
   box-sizing: border-box;
 }

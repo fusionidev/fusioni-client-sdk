@@ -10,7 +10,7 @@ declare const __FUSIONI_SDK_VERSION__: string;
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { ChatWidget } from './components/ChatWidget';
-import type { FusioniSDKConfig } from './types';
+import type { FusioniChatWidgetHandle, FusioniSDKConfig } from './types';
 import './styles/index.css';
 
 const DEFAULT_ROOT_ID = 'fusioni-chat-root';
@@ -19,6 +19,8 @@ export interface FusioniScriptConfig extends FusioniSDKConfig {}
 
 export interface FusioniMountResult {
   unmount: () => void;
+  setLanguage: FusioniChatWidgetHandle['setLanguage'];
+  setTheme: FusioniChatWidgetHandle['setTheme'];
 }
 
 function getContainer(container: string | HTMLElement): HTMLElement {
@@ -60,12 +62,19 @@ function mount(
   const el = getContainer(container);
   const root = createRoot(el);
   mountedRoots.set(el, root);
-  root.render(React.createElement(ChatWidget, { config }));
+  const widgetRef = React.createRef<FusioniChatWidgetHandle>();
+  root.render(React.createElement(ChatWidget, { config, ref: widgetRef }));
 
   return {
     unmount() {
       root.unmount();
       mountedRoots.delete(el);
+    },
+    setLanguage(language) {
+      widgetRef.current?.setLanguage(language);
+    },
+    setTheme(theme) {
+      widgetRef.current?.setTheme(theme);
     },
   };
 }

@@ -48,6 +48,7 @@ export type {
   
   // Configuration types
   FusioniSDKConfig,
+  FusioniChatWidgetHandle,
   ChatWidgetProps,
   MessageProps,
   ConversationListProps,

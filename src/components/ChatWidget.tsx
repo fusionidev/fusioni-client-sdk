@@ -1,5 +1,12 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ChatWidgetProps, Conversation, FusioniMemoryMessage, FusioniSDKConfig} from '../types';
+import React, {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
+import {
+  ChatWidgetProps,
+  Conversation,
+  FusioniChatWidgetHandle,
+  FusioniMemoryMessage,
+  FusioniSDKConfig
+} from '../types';
+import {Language, isValidLanguage} from '../i18n';
 import {initializeApiClient} from '../services/ApiClient';
 import {getConversationService} from '../services/ConversationService';
 import {getPipelineService} from '../services/PipelineService';
@@ -19,14 +26,18 @@ import {useTranslation} from '../hooks/useTranslation';
 import {useIsMobileLayout} from '../hooks/useIsMobileLayout';
 import '../styles/index.css';
 
-export const ChatWidget: React.FC<ChatWidgetProps> = ({
-  config,
-  onMessageSent,
-  onMessageReceived,
-  onConversationCreated,
-  onConversationDeleted,
-  onError
-}) => {
+export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(function ChatWidget(
+  {
+    config,
+    onMessageSent,
+    onMessageReceived,
+    onConversationCreated,
+    onConversationDeleted,
+    onError
+  },
+  ref
+) {
+  const [languageOverride, setLanguageOverride] = useState<Language | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +54,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   // Refs
   const floatingButtonRef = useRef<HTMLButtonElement>(null);
   
+  const translationDefault: Language =
+    languageOverride ?? mergedConfig?.language ?? config.language ?? 'en';
+
   // Translation and language management - use merged config or fallback to user config
-  const { t, currentLanguage, changeLanguage } = useTranslation(mergedConfig?.language || config.language || 'en');
+  const { t, currentLanguage, changeLanguage } = useTranslation(translationDefault);
   
   const {
     conversations,
@@ -66,8 +80,31 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     clearMessages
   } = useChatState(mergedConfig?.agencyId || config.agencyId);
 
-  const { theme, toggleTheme } = useTheme(mergedConfig?.theme || config.theme);
+  const { theme, toggleTheme, setTheme } = useTheme(mergedConfig?.theme || config.theme);
   const isMobileLayout = useIsMobileLayout();
+
+  const handleLanguageChange = useCallback(
+    (language: Language) => {
+      setLanguageOverride(language);
+      changeLanguage(language);
+    },
+    [changeLanguage]
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      setLanguage: (language: Language) => {
+        if (!isValidLanguage(language)) {
+          return;
+        }
+        setLanguageOverride(language);
+        changeLanguage(language);
+      },
+      setTheme,
+    }),
+    [changeLanguage, setTheme]
+  );
   
   // Initialize API client and fetch server configuration
   useEffect(() => {
@@ -700,6 +737,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                       </svg>
                     </button>
                   )}
+                  {mergedConfig.showThemeToggle !== false && (
                   <button
                     type="button"
                     onClick={toggleTheme}
@@ -724,6 +762,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                       </svg>
                     )}
                   </button>
+                  )}
+                  {mergedConfig.showFullscreenToggle !== false && (
                   <button
                     type="button"
                     onClick={handleToggleFullscreen}
@@ -740,10 +780,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                       </svg>
                     )}
                   </button>
+                  )}
+                  {mergedConfig.showLanguageSwitcher !== false && (
                   <LanguageSwitcher
                     currentLanguage={currentLanguage}
-                    onLanguageChange={changeLanguage}
+                    onLanguageChange={handleLanguageChange}
                   />
+                  )}
                 </div>
               </div>
               
@@ -822,4 +865,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       />
     </div>
   );
-};
+});
+
+ChatWidget.displayName = 'ChatWidget';
