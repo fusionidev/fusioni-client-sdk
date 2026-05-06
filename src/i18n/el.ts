@@ -54,6 +54,10 @@ export const el = {
       light: 'Εναλλαγή σε φωτεινό θέμα',
       dark: 'Εναλλαγή σε σκοτεινό θέμα'
     },
+    emptyState: {
+      title: 'Ξεκινήστε μια συνομιλία',
+      description: 'Στείλτε ένα μήνυμα για να ξεκινήσετε συνομιλία με τον βοηθό AI'
+    },
     errors: {
       failedToCreateConversation: 'Αποτυχία δημιουργίας συνομιλίας',
       failedToLoadConversation: 'Αποτυχία φόρτωσης συνομιλίας',

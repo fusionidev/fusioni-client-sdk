@@ -54,6 +54,10 @@ export const en = {
       light: 'Switch to light theme',
       dark: 'Switch to dark theme'
     },
+    emptyState: {
+      title: 'Start a conversation',
+      description: 'Send a message to begin chatting with the AI assistant'
+    },
     errors: {
       failedToCreateConversation: 'Failed to create conversation',
       failedToLoadConversation: 'Failed to load conversation',

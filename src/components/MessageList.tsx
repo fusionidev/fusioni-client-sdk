@@ -167,8 +167,8 @@ export const MessageList: React.FC<MessageListProps> = ({
                   strokeLinejoin="round"
                 />
               </svg>
-              <h3>Start a conversation</h3>
-              <p>Send a message to begin chatting with the AI assistant</p>
+              <h3>{t('chat.emptyState.title')}</h3>
+              <p>{t('chat.emptyState.description')}</p>
             </div>
           </div>
         ) : (
