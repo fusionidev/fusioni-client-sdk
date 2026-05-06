@@ -1189,6 +1189,10 @@
   line-height: 1.5;
 }
 
+.fusioni-message-text[contenteditable="true"] p, .fusioni-message-text[contenteditable=""] p {
+  padding: 13px;
+}
+
 .fusioni-message-text h1,
 .fusioni-message-text h2,
 .fusioni-message-text h3 {
@@ -1604,9 +1608,12 @@
 
 .fusioni-btn-icon:hover {
   background: var(--fusioni-primary);
-  color: white;
   border-color: var(--fusioni-primary);
   transform: scale(1.05);
+}
+
+.dark .fusioni-btn-icon:hover {
+  color: white;
 }
 
 .fusioni-btn-primary {
