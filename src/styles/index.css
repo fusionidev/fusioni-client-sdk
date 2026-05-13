@@ -1233,6 +1233,77 @@
   text-decoration: underline;
 }
 
+/* Tables in assistant/user message HTML (parity with fusion-web .message table) */
+.fusioni-message-text table {
+  width: 100%;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: left;
+  color: #374151;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  margin: 1.25rem 0;
+}
+
+[dir="rtl"] .fusioni-message-text table {
+  text-align: right;
+}
+
+.fusioni-message-text table th {
+  padding: 1rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #374151;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fusioni-message-text table td {
+  padding: 1rem;
+  vertical-align: top;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.fusioni-message-text table tbody tr {
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fusioni-message-text table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.fusioni-message-text table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.fusioni-chat-widget.dark .fusioni-message-text table {
+  color: #d1d5db;
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.fusioni-chat-widget.dark .fusioni-message-text table th {
+  color: #e5e7eb;
+  background-color: #111827;
+  border-bottom-color: #374151;
+}
+
+.fusioni-chat-widget.dark .fusioni-message-text table td {
+  border-bottom-color: #374151;
+}
+
+.fusioni-chat-widget.dark .fusioni-message-text table tbody tr:hover {
+  background-color: #374151;
+}
+
 .fusioni-message-extra {
   margin-top: 0.5rem;
 }
