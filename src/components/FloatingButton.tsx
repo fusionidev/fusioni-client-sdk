@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Position } from '../types';
 
 interface FloatingButtonProps {
@@ -30,17 +30,15 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
   const [isAttentionActive, setIsAttentionActive] = useState(false);
 
   useEffect(() => {
-    // Sophisticated entrance animation
     const entranceTimer = setTimeout(() => {
       setIsVisible(true);
     }, 200);
 
-    // Periodic attention sequence (every 15 seconds)
     const attentionInterval = setInterval(() => {
       if (!isHovered && !isOpen) {
         setShowAttentionSequence(true);
         setIsAttentionActive(true);
-        
+
         setTimeout(() => {
           setShowAttentionSequence(false);
           setIsAttentionActive(false);
@@ -53,6 +51,7 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
       clearInterval(attentionInterval);
     };
   }, [isHovered, isOpen]);
+
   const getPositionClasses = () => {
     switch (position) {
       case 'bottom-left':
@@ -80,13 +79,10 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
       style={{ '--primary-color': primaryColor } as React.CSSProperties}
       aria-label={isOpen ? 'Close chat' : 'Open chat'}
     >
-      
-      {/* Pulsing Attention Rings */}
       <div className="fusioni-floating-button-attention-ring"></div>
       <div className="fusioni-floating-button-attention-ring-2"></div>
       <div className="fusioni-floating-button-attention-ring-3"></div>
 
-      {/* Neural Network Particle Effects */}
       <div className="fusioni-floating-button-neural-particles">
         <div className="fusioni-neural-particle"></div>
         <div className="fusioni-neural-particle"></div>
@@ -96,10 +92,8 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
         <div className="fusioni-neural-particle"></div>
       </div>
 
-      {/* AI Brain Activity Indicator */}
       <div className="fusioni-floating-button-brain-activity"></div>
 
-      {/* Attention Sequence Animation */}
       {showAttentionSequence && (
         <div className="fusioni-floating-button-attention-sequence">
           <div className="fusioni-attention-wave"></div>
@@ -108,16 +102,10 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
         </div>
       )}
 
-      {/* Periodic Attention Pulse */}
       <div className="fusioni-floating-button-periodic-pulse"></div>
-
-      {/* Enhanced Glow Effect */}
       <div className="fusioni-floating-button-glow"></div>
-
-      {/* Magnetic Field Effect */}
       <div className="fusioni-floating-button-magnetic-field"></div>
 
-      {/* Professional Notification Indicator */}
       {showNotification && (
         <div className="fusioni-floating-button-indicator">
           <div className="fusioni-floating-button-indicator-dot"></div>

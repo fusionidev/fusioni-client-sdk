@@ -288,22 +288,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
   ) => {
     if (!mergedConfig) return;
     
-    // Debug logging for conversation state
-    console.log('🔍 ChatWidget.handleSendMessage - Starting message send:', {
-      currentConversation: currentConversation,
-      conversationId: currentConversation?.id,
-      content: content?.substring(0, 100) + (content?.length > 100 ? '...' : ''),
-      hasImage: !!image,
-      hasAudio: !!audio,
-      agencyId: mergedConfig.agencyId
-    });
-
     if (!currentConversation || (!content.trim() && !audio)) {
-      console.warn('⚠️ ChatWidget.handleSendMessage - Early return:', {
-        hasCurrentConversation: !!currentConversation,
-        hasContent: !!content?.trim(),
-        hasAudio: !!audio
-      });
       return;
     }
 
@@ -314,19 +299,10 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
       
       // If this is a new conversation (null ID), create it on the server first
       if (!conversationId) {
-        console.log('🔍 ChatWidget.handleSendMessage - Creating server conversation for new conversation:', {
-          agencyId: mergedConfig.agencyId
-        });
-
         const conversationService = getConversationService();
         conversationId = await conversationService.createConversation({
           title: t('chat.conversations.newConversation'),
           agency_id: mergedConfig.agencyId,
-        });
-
-        console.log('🔍 ChatWidget.handleSendMessage - Server conversation created:', {
-          conversationId: conversationId,
-          conversationIdType: typeof conversationId
         });
 
         // Update the conversation with the real server ID
@@ -339,10 +315,6 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
         updateConversation(updatedConversation.id, updatedConversation);
         setCurrentConversation(updatedConversation);
         
-        console.log('🔍 ChatWidget.handleSendMessage - Conversation ID updated:', {
-          conversationId: conversationId,
-          updatedConversation: updatedConversation
-        });
       }
 
       // Clear stream messages for new conversation
@@ -401,7 +373,6 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
         onMessageSent?.(userMessage);
       }
 
-      // Debug logging before pipeline execution
       const pipelineRequest = {
         conversation_id: conversationId,
         agency_id: mergedConfig.agencyId,
@@ -410,15 +381,6 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
         audio,
         message_id: messageId
       };
-      
-      console.log('🔍 ChatWidget.handleSendMessage - About to call executePipeline:', {
-        conversationId: conversationId,
-        conversationIdType: typeof conversationId,
-        conversationIdLength: conversationId?.length,
-        isNewConversation: !conversationId,
-        pipelineRequest: pipelineRequest,
-        currentConversation: currentConversation
-      });
 
       // Execute pipeline - this calls /pipeline/${agency_id}/exec
       const pipelineService = getPipelineService();
@@ -659,10 +621,6 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
       </div>
     );
   }
-
-  // Debug: Log the primary color and button variant being applied
-  console.log('Primary color being applied:', mergedConfig.primaryColor || '#6366f1');
-  console.log('Button variant being applied:', mergedConfig.buttonVariant || 'glass');
 
   return (
     <div 

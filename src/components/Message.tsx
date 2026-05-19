@@ -187,6 +187,7 @@ const DocumentVideoGrid: React.FC<DocumentVideoGridProps> = ({
 // Module-level Set to track which message IDs have been animated
 // This persists across component unmounts/remounts (e.g., when chat closes and reopens)
 const animatedMessageIds = new Set<string>();
+const TYPING_PREVIEW_CHARACTER_LIMIT = 200;
 
 export const Message: React.FC<MessageProps> = ({
                                                     message,
@@ -204,7 +205,7 @@ export const Message: React.FC<MessageProps> = ({
     const {t} = useTranslation(currentLanguage);
     const [displayedContent, setDisplayedContent] = useState<string>('');
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const typingSpeed = 15; // milliseconds per character
+    const typingSpeed = 5; // milliseconds per character
 
     const enhanceMessageContent = (content: string): string => {
         if (!content) return content;
@@ -468,6 +469,7 @@ export const Message: React.FC<MessageProps> = ({
         // Now animate through segments
         let segmentIndex = 0;
         let textIndex = 0;
+        let typedCharacterCount = 0;
 
         const nextTextStep = (text: string, index: number): { nextIndex: number; slice: string } => {
             if (index >= text.length) return { nextIndex: index, slice: '' };
@@ -508,6 +510,12 @@ export const Message: React.FC<MessageProps> = ({
                 // Continue immediately for tags (no delay)
                 typingIntervalRef.current = setTimeout(typeNextChar, 0);
             } else {
+                if (typedCharacterCount >= TYPING_PREVIEW_CHARACTER_LIMIT) {
+                    setDisplayedContent(fullContent);
+                    animatedMessageIds.add(messageId);
+                    return;
+                }
+
                 // Text segments are typed character by character
                 if (textIndex < segment.content.length) {
                     const step = nextTextStep(segment.content, textIndex);
@@ -526,6 +534,16 @@ export const Message: React.FC<MessageProps> = ({
                     content += step.slice;
                     setDisplayedContent(content);
                     textIndex = step.nextIndex;
+                    typedCharacterCount++;
+
+                    if (typedCharacterCount >= TYPING_PREVIEW_CHARACTER_LIMIT) {
+                        typingIntervalRef.current = setTimeout(() => {
+                            setDisplayedContent(fullContent);
+                            animatedMessageIds.add(messageId);
+                        }, typingSpeed);
+                        return;
+                    }
+
                     typingIntervalRef.current = setTimeout(typeNextChar, typingSpeed);
                 } else {
                     // Current text segment is complete, move to next segment
