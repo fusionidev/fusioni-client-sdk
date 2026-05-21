@@ -26,6 +26,33 @@ import {useTranslation} from '../hooks/useTranslation';
 import {useIsMobileLayout} from '../hooks/useIsMobileLayout';
 import '../styles/index.css';
 
+const getStoredConversationIdKey = (agencyId: string) => `fusioni:selectedConversationId:${agencyId}`;
+
+const readStoredConversationId = (agencyId: string): string | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    return window.sessionStorage.getItem(getStoredConversationIdKey(agencyId));
+  } catch {
+    return null;
+  }
+};
+
+const writeStoredConversationId = (agencyId: string, conversationId: string | null) => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const key = getStoredConversationIdKey(agencyId);
+    if (conversationId) {
+      window.sessionStorage.setItem(key, conversationId);
+    } else {
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Storage can be unavailable in restricted browser contexts.
+  }
+};
+
 export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(function ChatWidget(
   {
     config,
@@ -50,15 +77,18 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [isDeleteMessageDialogOpen, setIsDeleteMessageDialogOpen] = useState(false);
+  const [hasLoadedConversations, setHasLoadedConversations] = useState(false);
   
   // Refs
   const floatingButtonRef = useRef<HTMLButtonElement>(null);
+  const restoredConversationIdRef = useRef<string | null>(null);
   
   const translationDefault: Language =
     languageOverride ?? mergedConfig?.language ?? config.language ?? 'en';
 
   // Translation and language management - use merged config or fallback to user config
   const { t, currentLanguage, changeLanguage } = useTranslation(translationDefault);
+  const activeAgencyId = mergedConfig?.agencyId || config.agencyId;
   
   const {
     conversations,
@@ -78,7 +108,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
     loadConversations,
     loadMessages,
     clearMessages
-  } = useChatState(mergedConfig?.agencyId || config.agencyId);
+  } = useChatState(activeAgencyId);
 
   const { theme, toggleTheme, setTheme } = useTheme(mergedConfig?.theme || config.theme);
   const isMobileLayout = useIsMobileLayout();
@@ -158,13 +188,25 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
 
   // Load initial conversations
   useEffect(() => {
-    if (mergedConfig?.agencyId) {
-      loadConversations().then();
+    if (activeAgencyId) {
+      let isCancelled = false;
+
+      restoredConversationIdRef.current = null;
+      setHasLoadedConversations(false);
+      loadConversations().finally(() => {
+        if (!isCancelled) {
+          setHasLoadedConversations(true);
+        }
+      });
+
+      return () => {
+        isCancelled = true;
+      };
     }
-  }, [mergedConfig?.agencyId, loadConversations]);
+  }, [activeAgencyId, loadConversations]);
 
   // SSE connection for real-time updates - only when a chat panel is open
-  const eventSource = useSSE(mergedConfig?.agencyId || config.agencyId, (data) => {
+  const eventSource = useSSE(activeAgencyId, (data) => {
     // Same as fusioni-web chat.component: latest SSE line replaces stream (single loading row updates)
     if (data?.data != null && String(data.data).trim() !== '') {
       setStreamMessages([String(data.data)]);
@@ -192,6 +234,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
 
   const handleCreateConversation = useCallback(() => {
     if (!mergedConfig) return;
+    writeStoredConversationId(activeAgencyId, null);
     
     // Create a new conversation with null ID - will be created on server when first message is sent
     const newConversation: Conversation = {
@@ -212,7 +255,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
     setIsConversationListOpen(false);
     
     onConversationCreated?.(newConversation);
-  }, [mergedConfig, addConversation, setCurrentConversation, clearMessages, onConversationCreated, t]);
+  }, [activeAgencyId, mergedConfig, addConversation, setCurrentConversation, clearMessages, onConversationCreated, t]);
 
   const handleSelectConversation = useCallback(async (conversation: Conversation) => {
     try {
@@ -223,6 +266,9 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
       setStreamMessages([]);
       
       setCurrentConversation(conversation);
+      if (conversation.id) {
+        writeStoredConversationId(activeAgencyId, conversation.id);
+      }
       
       // Auto-hide conversation list when a conversation is selected
       setIsConversationListOpen(false);
@@ -237,7 +283,61 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
     } finally {
       setIsLoading(false);
     }
-  }, [setCurrentConversation, loadMessages, clearMessages, onError]);
+  }, [activeAgencyId, setCurrentConversation, loadMessages, clearMessages, onError, t]);
+
+  useEffect(() => {
+    if (!hasLoadedConversations || !activeAgencyId || currentConversation) {
+      return;
+    }
+
+    const storedConversationId = readStoredConversationId(activeAgencyId);
+    if (!storedConversationId || restoredConversationIdRef.current === storedConversationId) {
+      return;
+    }
+
+    restoredConversationIdRef.current = storedConversationId;
+    let isCancelled = false;
+
+    const restoreConversation = async () => {
+      let storedConversation = conversations.find((conversation) => conversation.id === storedConversationId);
+
+      if (!storedConversation) {
+        try {
+          storedConversation = await getConversationService().getConversation(storedConversationId);
+        } catch {
+          storedConversation = undefined;
+        }
+      }
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (!storedConversation) {
+        writeStoredConversationId(activeAgencyId, null);
+        return;
+      }
+
+      if (!conversations.some((conversation) => conversation.id === storedConversation?.id)) {
+        addConversation(storedConversation);
+      }
+
+      handleSelectConversation(storedConversation);
+    };
+
+    restoreConversation();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    addConversation,
+    activeAgencyId,
+    conversations,
+    currentConversation,
+    handleSelectConversation,
+    hasLoadedConversations
+  ]);
 
   const handleDeleteConversation = useCallback((conversationId: string) => {
     setConversationToDelete(conversationId);
@@ -253,6 +353,9 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
       await conversationService.deleteConversation(conversationToDelete);
       
       removeConversation(conversationToDelete);
+      if (readStoredConversationId(activeAgencyId) === conversationToDelete) {
+        writeStoredConversationId(activeAgencyId, null);
+      }
       if (currentConversation?.id === conversationToDelete) {
         setCurrentConversation(null);
         clearMessages();
@@ -273,7 +376,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
     } finally {
       setIsLoading(false);
     }
-  }, [conversationToDelete, removeConversation, currentConversation, setCurrentConversation, clearMessages, setStreamMessages, onConversationDeleted, onError, t]);
+  }, [activeAgencyId, conversationToDelete, removeConversation, currentConversation, setCurrentConversation, clearMessages, setStreamMessages, onConversationDeleted, onError, t]);
 
   const cancelDeleteConversation = useCallback(() => {
     setIsDeleteDialogOpen(false);
@@ -314,6 +417,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
         // Update the conversation in the list and set as current
         updateConversation(updatedConversation.id, updatedConversation);
         setCurrentConversation(updatedConversation);
+        writeStoredConversationId(activeAgencyId, conversationId);
         
       }
 
@@ -437,6 +541,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
     }
   }, [
     currentConversation,
+    activeAgencyId,
     mergedConfig,
     messages,
     addMessage,
@@ -682,19 +787,6 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
                   <span className="fusioni-chat-main-header-title">{t('chat.title')}</span>
                 )}
                 <div className="fusioni-header-actions">
-                  {isMobileLayout && (
-                    <button
-                      type="button"
-                      onClick={() => setIsOpen(false)}
-                      className="fusioni-btn fusioni-btn-icon fusioni-chat-toolbar-close-mobile"
-                      title={t('common.close')}
-                      aria-label={t('common.close')}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                        <path d="M18 6L6 18M6 6L18 18" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  )}
                   {mergedConfig.showThemeToggle !== false && (
                   <button
                     type="button"
@@ -745,6 +837,17 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
                     onLanguageChange={handleLanguageChange}
                   />
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="fusioni-btn fusioni-btn-icon fusioni-chat-toolbar-close-mobile"
+                    title={t('common.close')}
+                    aria-label={t('common.close')}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d="M18 6L6 18M6 6L18 18" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
               
