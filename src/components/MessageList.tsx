@@ -180,39 +180,42 @@ export const MessageList: React.FC<MessageListProps> = ({
               return (
               <div key={messageKey} className="fusioni-message-wrapper">
                 <div className={`fusioni-message ${message.role}`}>
-                  {!(message.role === 'assistant' && message.loading) && (
-                  <div className="fusioni-message-avatar">
-                    {message.role === 'user' ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <circle
-                          cx="12"
-                          cy="7"
-                          r="4"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    ) : (
-                      <img 
-                        src={FUSIONI_LOGO_BASE64} 
-                        alt="Fusioni Logo" 
-                        width="24" 
-                        height="24"
-                      />
-                    )}
-                  </div>
-                  )}
-                  
                   <div className="fusioni-message-content">
-                    
-                    
+                    {!(message.role === 'assistant' && message.loading) && (
+                    <div className="fusioni-message-author-row">
+                      <div className="fusioni-message-avatar">
+                        {message.role === 'user' ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path
+                              d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <circle
+                              cx="12"
+                              cy="7"
+                              r="4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            />
+                          </svg>
+                        ) : (
+                          <img
+                            src={FUSIONI_LOGO_BASE64}
+                            alt="Fusioni Logo"
+                            width="22"
+                            height="22"
+                          />
+                        )}
+                      </div>
+                      <span className="fusioni-message-author-label">
+                        {message.role === 'user' ? 'You' : 'Fusioni'}
+                      </span>
+                    </div>
+                    )}
+
                     <div className="fusioni-message-body">
                       {message.role === 'user' && editingMessageId === message.id ? (
                         <div
