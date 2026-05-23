@@ -4401,6 +4401,103 @@
   border-radius: 12px;
 }
 
+.fusioni-empty-messages {
+  padding: 1.5rem;
+}
+
+.fusioni-empty-messages-content {
+  height: auto;
+  max-width: 340px;
+  padding: 1.5rem 0;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-empty-icon-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 1.125rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.9), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 12%, #fff), var(--fusioni-bg-primary));
+  border: 1px solid color-mix(in srgb, var(--fusioni-primary) 18%, var(--fusioni-border));
+  box-shadow: 0 16px 34px rgb(16 24 40 / 0.1);
+}
+
+.fusioni-empty-icon-frame::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--fusioni-success);
+  border: 3px solid var(--fusioni-bg-primary);
+  box-shadow: 0 0 0 4px rgb(18 183 106 / 0.12);
+}
+
+.fusioni-empty-logo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.fusioni-empty-messages-content h3 {
+  margin: 0;
+  color: var(--fusioni-text-primary);
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.fusioni-empty-messages-content p {
+  margin: 0.625rem 0 0;
+  color: var(--fusioni-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.fusioni-empty-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.125rem;
+}
+
+.fusioni-empty-suggestions span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0.375rem 0.625rem;
+  border-radius: 999px;
+  color: var(--fusioni-text-secondary);
+  background: color-mix(in srgb, var(--fusioni-bg-primary) 82%, var(--fusioni-primary) 5%);
+  border: 1px solid var(--fusioni-border-light);
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.fusioni-chat-widget.dark .fusioni-empty-icon-frame {
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.13), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 15%, var(--fusioni-bg-secondary)), var(--fusioni-bg-primary));
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.24);
+}
+
+.fusioni-chat-widget.dark .fusioni-empty-suggestions span {
+  background: color-mix(in srgb, var(--fusioni-bg-secondary) 88%, var(--fusioni-primary) 10%);
+  border-color: var(--fusioni-border);
+}
+
 @keyframes fusioniLauncherIn {
   from {
     opacity: 0;

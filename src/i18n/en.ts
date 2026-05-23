@@ -55,8 +55,11 @@ export const en = {
       dark: 'Switch to dark theme'
     },
     emptyState: {
-      title: 'Start a conversation',
-      description: 'Send a message to begin chatting with the AI assistant'
+      title: 'How can I help today?',
+      description: 'Ask a question, share a task, or describe what you need. Fusioni is ready when you are.',
+      suggestionOne: 'Ask a question',
+      suggestionTwo: 'Compare options',
+      suggestionThree: 'Get next steps'
     },
     errors: {
       failedToCreateConversation: 'Failed to create conversation',
