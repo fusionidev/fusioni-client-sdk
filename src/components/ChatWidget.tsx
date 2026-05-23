@@ -787,6 +787,24 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
                   <span className="fusioni-chat-main-header-title">{t('chat.title')}</span>
                 )}
                 <div className="fusioni-header-actions">
+                  <button
+                    type="button"
+                    onClick={handleCreateConversation}
+                    disabled={isLoading}
+                    className="fusioni-btn fusioni-btn-icon"
+                    title={t('chat.conversations.newConversation')}
+                    aria-label={t('chat.conversations.newConversation')}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M12 5V19M5 12H19"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
                   {mergedConfig.showThemeToggle !== false && (
                   <button
                     type="button"
