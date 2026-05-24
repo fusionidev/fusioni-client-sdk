@@ -884,6 +884,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
                     agencyId={mergedConfig.agencyId}
                     currentLanguage={currentLanguage}
                     theme={theme}
+                    onSuggestionClick={(prompt) => handleSendMessage(prompt)}
                   />
                   <ChatInput
                     onSendMessage={handleSendMessage}

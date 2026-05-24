@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FusioniMemoryMessage } from '../types';
 import { Message } from './Message';
@@ -7,6 +7,7 @@ import { ChatLoader } from './ChatLoader';
 import { useTranslation } from '../hooks/useTranslation';
 import { ImageGallery } from './ImageGallery';
 import { FUSIONI_LOGO_BASE64 } from '../assets/logo-base64';
+import { ActionSuggestion, getActionService, toActionSuggestion } from '../services/ActionService';
 
 interface MessageListProps {
   messages: FusioniMemoryMessage[];
@@ -21,6 +22,7 @@ interface MessageListProps {
   agencyId: string;
   currentLanguage?: 'en' | 'el';
   theme?: 'light' | 'dark';
+  onSuggestionClick?: (prompt: string) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -35,9 +37,11 @@ export const MessageList: React.FC<MessageListProps> = ({
   apiKey,
   agencyId,
   currentLanguage = 'en',
-  theme = 'light'
+  theme = 'light',
+  onSuggestionClick,
 }) => {
   const { t } = useTranslation(currentLanguage);
+  const [suggestions, setSuggestions] = useState<ActionSuggestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
@@ -77,6 +81,57 @@ export const MessageList: React.FC<MessageListProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamMessages]);
+
+  useEffect(() => {
+    if (!agencyId) {
+      setSuggestions([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    getActionService()
+      .findEnabledByAgencyId(agencyId)
+      .then((actions) => {
+        if (cancelled) {
+          return;
+        }
+        const items = actions
+          .map((action) => toActionSuggestion(action, currentLanguage))
+          .filter((item): item is ActionSuggestion => item !== null);
+        setSuggestions(items);
+      })
+      .catch((error) => {
+        console.error('Failed to load action suggestions:', error);
+        if (!cancelled) {
+          setSuggestions([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [agencyId, currentLanguage]);
+
+  const defaultSuggestions = useMemo((): ActionSuggestion[] => [
+    {
+      id: 'default-suggestion-1',
+      label: t('chat.emptyState.suggestionOne'),
+      prompt: t('chat.emptyState.suggestionOne'),
+    },
+    {
+      id: 'default-suggestion-2',
+      label: t('chat.emptyState.suggestionTwo'),
+      prompt: t('chat.emptyState.suggestionTwo'),
+    },
+    {
+      id: 'default-suggestion-3',
+      label: t('chat.emptyState.suggestionThree'),
+      prompt: t('chat.emptyState.suggestionThree'),
+    },
+  ], [t, currentLanguage]);
+
+  const displaySuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
 
   const formatDate = (date: Date): string => {
     const now = new Date();
@@ -156,17 +211,26 @@ export const MessageList: React.FC<MessageListProps> = ({
                 <img
                   src={FUSIONI_LOGO_BASE64}
                   alt=""
-                  width="40"
-                  height="40"
+                  width="60"
+                  height="60"
                   className="fusioni-empty-logo"
                 />
               </div>
               <h3>{t('chat.emptyState.title')}</h3>
               <p>{t('chat.emptyState.description')}</p>
-              <div className="fusioni-empty-suggestions" aria-hidden="true">
-                <span>{t('chat.emptyState.suggestionOne')}</span>
-                <span>{t('chat.emptyState.suggestionTwo')}</span>
-                <span>{t('chat.emptyState.suggestionThree')}</span>
+              <div className="fusioni-empty-suggestions" role="list" aria-label={t('chat.emptyState.suggestionsLabel')}>
+                {displaySuggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion.id ?? `action-suggestion-${index}`}
+                    type="button"
+                    className="fusioni-empty-suggestion-chip"
+                    role="listitem"
+                    disabled={!onSuggestionClick}
+                    onClick={() => onSuggestionClick?.(suggestion.prompt)}
+                  >
+                    {suggestion.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

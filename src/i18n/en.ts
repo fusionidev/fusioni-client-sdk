@@ -57,6 +57,7 @@ export const en = {
     emptyState: {
       title: 'How can I help today?',
       description: 'Ask a question, share a task, or describe what you need. Fusioni is ready when you are.',
+      suggestionsLabel: 'Suggested actions',
       suggestionOne: 'Ask a question',
       suggestionTwo: 'Compare options',
       suggestionThree: 'Get next steps'

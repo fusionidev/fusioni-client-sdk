@@ -23,6 +23,13 @@ export { ApiClient, getApiClient, initializeApiClient } from './services/ApiClie
 export { getConversationService } from './services/ConversationService';
 export { PipelineService, getPipelineService } from './services/PipelineService';
 export { MessageService, getMessageService } from './services/MessageService';
+export {
+  ActionService,
+  getActionService,
+  toActionSuggestion,
+  resolveActionLiteral,
+} from './services/ActionService';
+export type { Action, ActionLiteral, ActionSuggestion } from './services/ActionService';
 
 // Hook exports
 export { useChatState } from './hooks/useChatState';
