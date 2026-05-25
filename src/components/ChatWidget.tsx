@@ -27,6 +27,7 @@ import {useIsMobileLayout} from '../hooks/useIsMobileLayout';
 import '../styles/index.css';
 
 const getStoredConversationIdKey = (agencyId: string) => `fusioni:selectedConversationId:${agencyId}`;
+const getStoredChatPanelOpenKey = (agencyId: string) => `fusioni:chatPanelOpen:${agencyId}`;
 
 const readStoredConversationId = (agencyId: string): string | null => {
   if (typeof window === 'undefined') return null;
@@ -48,6 +49,26 @@ const writeStoredConversationId = (agencyId: string, conversationId: string | nu
     } else {
       window.sessionStorage.removeItem(key);
     }
+  } catch {
+    // Storage can be unavailable in restricted browser contexts.
+  }
+};
+
+const readStoredChatPanelOpen = (agencyId: string): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    return window.sessionStorage.getItem(getStoredChatPanelOpenKey(agencyId)) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+const writeStoredChatPanelOpen = (agencyId: string, isOpen: boolean) => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.sessionStorage.setItem(getStoredChatPanelOpenKey(agencyId), String(isOpen));
   } catch {
     // Storage can be unavailable in restricted browser contexts.
   }
@@ -89,6 +110,16 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
   // Translation and language management - use merged config or fallback to user config
   const { t, currentLanguage, changeLanguage } = useTranslation(translationDefault);
   const activeAgencyId = mergedConfig?.agencyId || config.agencyId;
+
+  const updateChatOpen = useCallback((nextIsOpen: boolean) => {
+    setIsOpen(nextIsOpen);
+    if (activeAgencyId) {
+      writeStoredChatPanelOpen(activeAgencyId, nextIsOpen);
+    }
+    if (!nextIsOpen) {
+      setIsConversationListOpen(false);
+    }
+  }, [activeAgencyId]);
   
   const {
     conversations,
@@ -205,6 +236,14 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
     }
   }, [activeAgencyId, loadConversations]);
 
+  useEffect(() => {
+    if (!activeAgencyId) {
+      return;
+    }
+
+    setIsOpen(readStoredChatPanelOpen(activeAgencyId));
+  }, [activeAgencyId]);
+
   // SSE connection for real-time updates - only when a chat panel is open
   const eventSource = useSSE(activeAgencyId, (data) => {
     // Same as fusioni-web chat.component: latest SSE line replaces stream (single loading row updates)
@@ -221,8 +260,17 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
   }, []);
 
   const handleToggleChat = useCallback(() => {
-    setIsOpen(prev => !prev);
-  }, []);
+    setIsOpen(prev => {
+      const nextIsOpen = !prev;
+      if (activeAgencyId) {
+        writeStoredChatPanelOpen(activeAgencyId, nextIsOpen);
+      }
+      if (!nextIsOpen) {
+        setIsConversationListOpen(false);
+      }
+      return nextIsOpen;
+    });
+  }, [activeAgencyId]);
 
   const handleToggleConversationList = useCallback(() => {
     setIsConversationListOpen(prev => !prev);
@@ -746,7 +794,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
       {isOpen && (
         <ChatPanel
           isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
+          onClose={() => updateChatOpen(false)}
           position={mergedConfig.position || 'bottom-right'}
           isFullscreen={isFullscreen}
           floatingButtonRef={floatingButtonRef}
@@ -857,7 +905,7 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
                   )}
                   <button
                     type="button"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => updateChatOpen(false)}
                     className="fusioni-btn fusioni-btn-icon fusioni-chat-toolbar-close-mobile"
                     title={t('common.close')}
                     aria-label={t('common.close')}
