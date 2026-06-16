@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "prebuild": "node scripts/generate-logo-base64.js",
-    "build": "rollup -c",
+    "build": "rollup -c && node scripts/extract-css.js",
     "dev": "rollup -c -w",
     "test": "jest",
     "lint": "eslint src --ext .ts,.tsx",

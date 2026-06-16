@@ -1,5 +1,7 @@
 // Main SDK exports
 export { ChatWidget } from './components/ChatWidget';
+export { ShadowDomRoot } from './components/ShadowDomRoot';
+export type { ShadowDomRootProps } from './components/ShadowDomRoot';
 
 // Component exports
 export { FloatingButton } from './components/FloatingButton';

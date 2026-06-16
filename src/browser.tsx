@@ -11,7 +11,6 @@ import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { ChatWidget } from './components/ChatWidget';
 import type { FusioniChatWidgetHandle, FusioniSDKConfig } from './types';
-import './styles/index.css';
 
 const DEFAULT_ROOT_ID = 'fusioni-chat-root';
 
@@ -51,6 +50,8 @@ const mountedRoots = new Map<HTMLElement, Root>();
 
 /**
  * Mount the chat widget into a container.
+ * The widget is rendered inside a Shadow DOM for style isolation from the host page.
+ *
  * @param container - CSS selector (e.g. '#chat') or HTMLElement
  * @param config - Fusioni SDK configuration
  * @returns Object with unmount() to tear down the widget
@@ -59,16 +60,16 @@ function mount(
   container: string | HTMLElement,
   config: FusioniScriptConfig
 ): FusioniMountResult {
-  const el = getContainer(container);
-  const root = createRoot(el);
-  mountedRoots.set(el, root);
+  const target = getContainer(container);
+  const root = createRoot(target);
+  mountedRoots.set(target, root);
   const widgetRef = React.createRef<FusioniChatWidgetHandle>();
   root.render(React.createElement(ChatWidget, { config, ref: widgetRef }));
 
   return {
     unmount() {
       root.unmount();
-      mountedRoots.delete(el);
+      mountedRoots.delete(target);
     },
     setLanguage(language) {
       widgetRef.current?.setLanguage(language);

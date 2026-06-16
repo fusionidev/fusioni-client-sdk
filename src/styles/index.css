@@ -1,8 +1,20 @@
 /* Fusioni Chat SDK Styles */
 /* Based on fusioni-backoffice design with Tailwind-like utilities */
 
+/* Shadow DOM host reset: cut inherited typography leaking from the host page.
+   `all: initial` neutralizes inherited properties (font, color, line-height, etc.)
+   without touching custom properties. Avoid transform/filter/contain/perspective/
+   will-change here so the widget's position: fixed elements stay viewport-anchored.
+   In light DOM (npm build) `:host` simply matches nothing. */
+:host {
+  all: initial;
+  display: block;
+}
+
 /* CSS Variables for theming */
-:root {
+/* `:host` lets the variables resolve inside the shadow tree; `:root` keeps the
+   light-DOM (npm) build working since `:root` does not match across a shadow boundary. */
+:root, :host {
   --fusioni-primary: #2563eb;
   --fusioni-primary-light: #3b82f6;
   --fusioni-primary-dark: #1d4ed8;

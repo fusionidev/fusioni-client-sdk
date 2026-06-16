@@ -35,7 +35,10 @@ export default [
         tsconfig: './tsconfig.json',
       }),
       postcss({
-        extract: true,
+        // Bundle CSS as a string for ShadowDomRoot injection. dist/index.css is
+        // generated separately in postbuild for legacy consumers.
+        inject: false,
+        extract: false,
         minimize: true,
       }),
     ],
@@ -68,7 +71,10 @@ export default [
         tsconfig: './tsconfig.json',
       }),
       postcss({
-        inject: true,
+        // Shadow DOM build: do not auto-inject into <head>. With extract:false the
+        // processed CSS is exposed as the module's default export string, which
+        // browser.tsx injects into the widget's shadow root for style isolation.
+        inject: false,
         extract: false,
         minimize: true,
       }),

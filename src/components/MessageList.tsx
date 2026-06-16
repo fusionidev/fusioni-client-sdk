@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FusioniMemoryMessage } from '../types';
+import { PortalContainerContext } from '../context/PortalContainerContext';
 import { Message } from './Message';
 import { MessageStreamLoading } from './MessageStreamLoading';
 import { ChatLoader } from './ChatLoader';
@@ -41,6 +42,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   onSuggestionClick,
 }) => {
   const { t } = useTranslation(currentLanguage);
+  const portalContainer = useContext(PortalContainerContext);
   const [suggestions, setSuggestions] = useState<ActionSuggestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -426,7 +428,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           theme={theme}
           onClose={() => setGallerySession(null)}
         />,
-        document.body
+        portalContainer ?? document.body
       )}
     </>
   );

@@ -24,7 +24,7 @@ import {useSSE} from '../hooks/useSSE';
 import {useTheme} from '../hooks/useTheme';
 import {useTranslation} from '../hooks/useTranslation';
 import {useIsMobileLayout} from '../hooks/useIsMobileLayout';
-import '../styles/index.css';
+import {ShadowDomRoot} from './ShadowDomRoot';
 
 const getStoredConversationIdKey = (agencyId: string) => `fusioni:selectedConversationId:${agencyId}`;
 const getStoredChatPanelOpenKey = (agencyId: string) => `fusioni:chatPanelOpen:${agencyId}`;
@@ -74,7 +74,7 @@ const writeStoredChatPanelOpen = (agencyId: string, isOpen: boolean) => {
   }
 };
 
-export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(function ChatWidget(
+const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(function ChatWidgetInner(
   {
     config,
     onMessageSent,
@@ -992,6 +992,19 @@ export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(f
         variant="danger"
       />
     </div>
+  );
+});
+
+ChatWidgetInner.displayName = 'ChatWidgetInner';
+
+export const ChatWidget = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(function ChatWidget(
+  props,
+  ref
+) {
+  return (
+    <ShadowDomRoot>
+      <ChatWidgetInner {...props} ref={ref} />
+    </ShadowDomRoot>
   );
 });
 
