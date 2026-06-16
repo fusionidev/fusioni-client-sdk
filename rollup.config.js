@@ -6,8 +6,16 @@ import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import postcss from 'rollup-plugin-postcss';
 import dts from 'rollup-plugin-dts';
 import { readFileSync } from 'fs';
+import postcssRemIsolation from './scripts/postcss-rem-isolation.js';
 
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
+
+const postcssOptions = {
+  inject: false,
+  extract: false,
+  minimize: true,
+  plugins: [postcssRemIsolation()],
+};
 
 export default [
   // Library builds (CJS + ESM) – for npm / import
@@ -37,9 +45,7 @@ export default [
       postcss({
         // Bundle CSS as a string for ShadowDomRoot injection. dist/index.css is
         // generated separately in postbuild for legacy consumers.
-        inject: false,
-        extract: false,
-        minimize: true,
+        ...postcssOptions,
       }),
     ],
     external: ['react', 'react-dom'],
@@ -73,10 +79,8 @@ export default [
       postcss({
         // Shadow DOM build: do not auto-inject into <head>. With extract:false the
         // processed CSS is exposed as the module's default export string, which
-        // browser.tsx injects into the widget's shadow root for style isolation.
-        inject: false,
-        extract: false,
-        minimize: true,
+        // ShadowDomRoot injects into the widget's shadow root for style isolation.
+        ...postcssOptions,
       }),
     ],
   },

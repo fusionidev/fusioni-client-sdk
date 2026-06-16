@@ -54,6 +54,10 @@
   
   --fusioni-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --fusioni-transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Local rem base (14px). At build time all `rem` units in this file are converted
+     to fixed `px` values so host-page html font-size cannot shrink SDK typography. */
+  --fusioni-rem: 14px;
 }
 
 /* Fusioni Chat Widget - Override with custom primary color */
