@@ -42,6 +42,9 @@ export const el = {
         cancel: 'Ακύρωση'
       }
     },
+    thoughts: {
+      title: 'Σκέψεις'
+    },
     connection: {
       connected: 'Συνδεδεμένο για ενημερώσεις σε πραγματικό χρόνο',
       disconnected: 'Αποσυνδεδεμένο από ενημερώσεις σε πραγματικό χρόνο'

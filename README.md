@@ -84,6 +84,7 @@ When including via `<script src="...">`, the SDK exposes a global `Fusioni` obje
     position: 'bottom-right',
     primaryColor: '#6366f1',
     showConversationList: true,
+    showThoughts: false,
     enableAudioRecording: true,
     enableFileUpload: true,
     maxFileSize: 10,
@@ -252,6 +253,7 @@ export default App;
 | `showThemeToggle` | `boolean` | `true` | Show/hide the theme toggle button in the chat header |
 | `showFullscreenToggle` | `boolean` | `true` | Show/hide the fullscreen toggle button in the chat header |
 | `showLanguageSwitcher` | `boolean` | `true` | Show/hide the language switcher in the chat header |
+| `showThoughts` | `boolean` | `false` | Show each message's `thoughts` field in a collapsible panel |
 | `position` | `'bottom-right' \| 'bottom-left' \| 'top-right' \| 'top-left'` | `'bottom-right'` | Position of the floating button |
 | `primaryColor` | `string` | `'#6366f1'` | Primary color for the UI |
 | `showConversationList` | `boolean` | `true` | Whether to show the conversation sidebar |

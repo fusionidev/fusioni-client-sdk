@@ -1464,17 +1464,59 @@
 }
 
 .fusioni-message-thoughts {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
+  margin-top: 0.625rem;
+  color: var(--fusioni-text-secondary);
+}
+
+.fusioni-message-thoughts-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border: 1px solid var(--fusioni-border-light);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  background: color-mix(in srgb, var(--fusioni-bg-primary) 92%, var(--fusioni-bg-tertiary));
+}
+
+.fusioni-message-thoughts-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
   color: var(--fusioni-text-muted);
+  transform: translateY(0.05rem);
 }
 
-.fusioni-message-thoughts details {
-  cursor: pointer;
+.fusioni-message-thoughts-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
-.fusioni-message-thoughts summary {
-  font-weight: 500;
+.fusioni-message-thoughts-content {
+  min-width: 0;
+  margin: 0;
+  color: var(--fusioni-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fusioni-message-user .fusioni-message-thoughts-panel {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.fusioni-message-user .fusioni-message-thoughts-icon,
+.fusioni-message-user .fusioni-message-thoughts-content {
+  color: #fff;
+}
+
+.fusioni-chat-widget.dark .fusioni-message-thoughts-panel {
+  border-color: var(--fusioni-border);
+  background: color-mix(in srgb, var(--fusioni-bg-secondary) 88%, var(--fusioni-bg-primary));
 }
 
 .fusioni-message-actions {

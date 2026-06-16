@@ -189,6 +189,24 @@ const DocumentVideoGrid: React.FC<DocumentVideoGridProps> = ({
 const animatedMessageIds = new Set<string>();
 const TYPING_PREVIEW_CHARACTER_LIMIT = 200;
 
+const formatThoughts = (thoughts: MessageProps['message']['thoughts']): string => {
+    if (thoughts == null) return '';
+
+    if (Array.isArray(thoughts)) {
+        return thoughts.filter(Boolean).join('\n\n');
+    }
+
+    if (typeof thoughts === 'object') {
+        try {
+            return JSON.stringify(thoughts, null, 2);
+        } catch {
+            return String(thoughts);
+        }
+    }
+
+    return String(thoughts);
+};
+
 export const Message: React.FC<MessageProps> = ({
                                                     message,
                                                     showThoughts = false,
@@ -572,10 +590,11 @@ export const Message: React.FC<MessageProps> = ({
         ? displayedContent
         : message.content;
     const extractedUrls = useMemo(() => extractUrlsFromContent(message.content), [message.content]);
+    const thoughtsToDisplay = useMemo(() => formatThoughts(message.thoughts), [message.thoughts]);
 
     const hasVisibleWhileLoading =
         Boolean(message.extra_data) ||
-        (showThoughts && Boolean(message.thoughts)) ||
+        (showThoughts && Boolean(thoughtsToDisplay)) ||
         Boolean(message.has_error);
     const collapseEmptyLoadingBubble = Boolean(message.loading) && !hasVisibleWhileLoading;
 
@@ -686,12 +705,23 @@ export const Message: React.FC<MessageProps> = ({
             )}
 
             {/* Thoughts (if enabled) */}
-            {showThoughts && message.thoughts && (
+            {showThoughts && thoughtsToDisplay && (
                 <div className="fusioni-message-thoughts">
-                    <details>
-                        <summary>AI Thoughts</summary>
-                        <p>{message.thoughts}</p>
-                    </details>
+                    <div className="fusioni-message-thoughts-panel">
+                        <span className="fusioni-message-thoughts-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                <path d="M8.5 4.5C6.57 4.5 5 6.07 5 8C5 8.41 5.07 8.8 5.2 9.17C3.9 9.79 3 11.12 3 12.66C3 14.22 3.93 15.57 5.27 16.18C5.1 16.59 5 17.04 5 17.5C5 19.43 6.57 21 8.5 21C10.43 21 12 19.43 12 17.5V8C12 6.07 10.43 4.5 8.5 4.5Z" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M15.5 4.5C17.43 4.5 19 6.07 19 8C19 8.41 18.93 8.8 18.8 9.17C20.1 9.79 21 11.12 21 12.66C21 14.22 20.07 15.57 18.73 16.18C18.9 16.59 19 17.04 19 17.5C19 19.43 17.43 21 15.5 21C13.57 21 12 19.43 12 17.5V8C12 6.07 13.57 4.5 15.5 4.5Z" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M7 9.25C7.7 9.25 8.31 9.62 8.65 10.18" strokeLinecap="round" />
+                                <path d="M17 9.25C16.3 9.25 15.69 9.62 15.35 10.18" strokeLinecap="round" />
+                                <path d="M7.4 15.75C8.13 15.75 8.75 15.32 9.04 14.7" strokeLinecap="round" />
+                                <path d="M16.6 15.75C15.87 15.75 15.25 15.32 14.96 14.7" strokeLinecap="round" />
+                            </svg>
+                        </span>
+                        <div className="fusioni-message-thoughts-content">
+                            {thoughtsToDisplay}
+                        </div>
+                    </div>
                 </div>
             )}
 

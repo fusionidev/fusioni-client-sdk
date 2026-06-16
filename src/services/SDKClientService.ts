@@ -9,6 +9,7 @@ export interface SDKClientResponse {
   show_theme_toggle?: boolean;
   show_fullscreen_toggle?: boolean;
   show_language_switcher?: boolean;
+  show_thoughts?: boolean | null;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | null;
   primary_color?: string | null;
   show_conversation_list?: boolean | null;
@@ -63,6 +64,9 @@ export class SDKClientService {
       showLanguageSwitcher: serverConfig.show_language_switcher !== undefined
         ? serverConfig.show_language_switcher
         : userConfig.showLanguageSwitcher,
+      showThoughts: typeof serverConfig.show_thoughts === 'boolean'
+        ? serverConfig.show_thoughts
+        : userConfig.showThoughts,
       position: serverConfig.position !== null && serverConfig.position !== undefined 
         ? serverConfig.position 
         : userConfig.position,
@@ -103,4 +107,3 @@ export const getSDKClientService = (): SDKClientService => {
   }
   return sdkClientServiceInstance;
 };
-

@@ -42,6 +42,9 @@ export const en = {
         cancel: 'Cancel'
       }
     },
+    thoughts: {
+      title: 'Thoughts'
+    },
     connection: {
       connected: 'Real-time updates connected',
       disconnected: 'Real-time updates disconnected'

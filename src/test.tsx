@@ -11,6 +11,7 @@ const testConfig: FusioniSDKConfig = {
   position: 'bottom-right',
   primaryColor: '#6366f1',
   showConversationList: true,
+  showThoughts: false,
   enableAudioRecording: true,
   enableFileUpload: true,
   maxFileSize: 10,

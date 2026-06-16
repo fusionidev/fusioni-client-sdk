@@ -400,14 +400,6 @@ export const MessageList: React.FC<MessageListProps> = ({
                     </div>
                     )}
                     
-                    {showThoughts && message.thoughts && (
-                      <div className="fusioni-message-thoughts">
-                        <details>
-                          <summary>Thoughts</summary>
-                          <p>{message.thoughts}</p>
-                        </details>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

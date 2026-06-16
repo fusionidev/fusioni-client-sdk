@@ -31,7 +31,7 @@ export interface FusioniMemoryMessage {
   has_error?: boolean;
   role: 'user' | 'assistant' | 'system';
   keywords: string[] | null;
-  thoughts: string | null;
+  thoughts: string | string[] | Record<string, unknown> | null;
   created: Date;
   content: string;
   loading: boolean;
@@ -104,6 +104,7 @@ export interface FusioniSDKConfig {
   showThemeToggle?: boolean;
   showFullscreenToggle?: boolean;
   showLanguageSwitcher?: boolean;
+  showThoughts?: boolean;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   primaryColor?: string;
   showConversationList?: boolean;
