@@ -32,7 +32,7 @@ export const en = {
     attachedImages: 'Images',
     attachedVideos: 'Videos',
     messages: {
-      loading: 'Working on it...',
+      loading: 'Thinking...',
       error: 'Oops! Something went wrong. Please try again later.',
       delete: 'Delete message',
       deleteConfirm: {

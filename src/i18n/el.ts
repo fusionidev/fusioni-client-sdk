@@ -32,7 +32,7 @@ export const el = {
     attachedImages: 'Εικόνες',
     attachedVideos: 'Βίντεο',
     messages: {
-      loading: 'Εργάζομαι...',
+      loading: 'Thinking...',
       error: 'Ουπς! Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά αργότερα.',
       delete: 'Διαγραφή μηνύματος',
       deleteConfirm: {
