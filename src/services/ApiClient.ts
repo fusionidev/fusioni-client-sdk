@@ -1,6 +1,6 @@
 import axios, {AxiosInstance} from 'axios';
 
-/** Decode SSE `event.data` (plain text or JSON with a `data` field), matching fusioni-web chat usage. */
+/** Decode SSE `event.data` (plain text, JSON with `data`, or chat stream `{ conversation_id, message }`). */
 function normalizeSsePayload(raw: string): string | null {
   const s = raw?.trim() ?? '';
   if (!s) {
@@ -8,18 +8,33 @@ function normalizeSsePayload(raw: string): string | null {
   }
   try {
     const parsed = JSON.parse(s) as unknown;
-    if (parsed !== null && typeof parsed === 'object' && 'data' in parsed) {
-      const inner = (parsed as {data: unknown}).data;
-      if (inner === undefined || inner === null) {
-        return null;
+    if (parsed !== null && typeof parsed === 'object') {
+      if ('data' in parsed) {
+        const inner = (parsed as {data: unknown}).data;
+        if (inner === undefined || inner === null) {
+          return null;
+        }
+        if (typeof inner === 'string') {
+          return inner;
+        }
+        if (typeof inner === 'number' || typeof inner === 'boolean') {
+          return String(inner);
+        }
+        return JSON.stringify(inner);
       }
-      if (typeof inner === 'string') {
-        return inner;
+      if ('message' in parsed) {
+        const message = (parsed as {message: unknown}).message;
+        if (message === undefined || message === null) {
+          return null;
+        }
+        if (typeof message === 'string') {
+          return message;
+        }
+        if (typeof message === 'number' || typeof message === 'boolean') {
+          return String(message);
+        }
+        return JSON.stringify(message);
       }
-      if (typeof inner === 'number' || typeof inner === 'boolean') {
-        return String(inner);
-      }
-      return JSON.stringify(inner);
     }
   } catch {
     /* use raw string */
