@@ -36,6 +36,8 @@ export interface FusioniMemoryMessage {
   content: string;
   loading: boolean;
   shouldAnimate: boolean;
+  like?: number;
+  execution_time_ms?: number | null;
   extra_data?: {
     image?: string;
     image_ref?: string;
@@ -93,6 +95,13 @@ export interface PipelineResponse {
   context_data: any;
   thoughts: string[];
   messages: FusioniMemoryMessage[];
+  agency_id?: string;
+  conversation_id?: string | null;
+  agent_id?: string | null;
+  has_error?: boolean;
+  error_message?: string | null;
+  extra_data?: Record<string, any> | null;
+  execution_time_ms?: number | null;
 }
 
 // SDK Configuration
@@ -100,6 +109,8 @@ export interface FusioniSDKConfig {
   apiBaseUrl: string;
   agencyId: string;
   accessToken?: string;
+  /** Current user's Fusion owner id. When omitted, the SDK reads `oid` from a JWT access token. */
+  ownerId?: string;
   theme?: 'light' | 'dark' | 'auto';
   showThemeToggle?: boolean;
   showFullscreenToggle?: boolean;
@@ -133,6 +144,8 @@ export interface ConfirmationResult {
 
 export interface MessageProps {
   message: FusioniMemoryMessage;
+  /** Whether this message belongs to the current SDK user. Defaults to `role === 'user'`. */
+  isOwnMessage?: boolean;
   showThoughts?: boolean;
   fontSize?: string;
   onDelete?: (messageId: string) => void;

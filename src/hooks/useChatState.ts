@@ -2,9 +2,10 @@ import {useCallback, useState} from 'react';
 import {Conversation, FusioniMemoryMessage} from '../types';
 import {getConversationService} from '../services/ConversationService';
 import {getMessageService} from "../services/MessageService";
+import {FUSIONI_SDK_OPTIMISTIC_USER} from '../utils/messageBubble';
 
-/** Set on `extra_data` for the local user bubble before pipeline exec; used to drop it when the server echoes the turn. */
-export const FUSIONI_SDK_OPTIMISTIC_USER = 'fusion_sdk_optimistic_user' as const;
+/** Set on `extra_data` for the local user bubble before async execution; used to drop it when SSE echoes the turn. */
+export {FUSIONI_SDK_OPTIMISTIC_USER};
 
 export function isFusioniSdkOptimisticUserMessage(m: FusioniMemoryMessage): boolean {
   return m.role === 'user' && m.extra_data?.[FUSIONI_SDK_OPTIMISTIC_USER] === true;
@@ -87,6 +88,63 @@ export const useChatState = (agencyId: string) => {
     });
   }, []);
 
+  /** Reconcile a persisted message batch received from `message_stream`. */
+  const reconcileMessages = useCallback((
+    incomingMessages: FusioniMemoryMessage[],
+    options: {
+      loadingMessageId?: string;
+      keepLoading?: boolean;
+      editedMessageId?: string | null;
+    } = {},
+  ) => {
+    setMessages((previousMessages) => {
+      const loadingMessage = options.loadingMessageId
+        ? previousMessages.find((message) => message.id === options.loadingMessageId)
+        : undefined;
+      let nextMessages = options.loadingMessageId
+        ? previousMessages.filter((message) => message.id !== options.loadingMessageId)
+        : [...previousMessages];
+
+      const includesPersistedUser = incomingMessages.some((message) => message.role === 'user');
+      if (includesPersistedUser) {
+        nextMessages = nextMessages.filter((message) => !isFusioniSdkOptimisticUserMessage(message));
+        if (options.editedMessageId) {
+          nextMessages = nextMessages.filter((message) => message.id !== options.editedMessageId);
+        }
+      }
+
+      if (incomingMessages.length > 0) {
+        const firstIncomingId = incomingMessages[0]?.id;
+        const firstExistingIndex = firstIncomingId
+          ? nextMessages.findIndex((message) => message.id === firstIncomingId)
+          : -1;
+
+        if (firstExistingIndex !== -1) {
+          nextMessages = [
+            ...nextMessages.slice(0, firstExistingIndex),
+            ...incomingMessages,
+          ];
+        } else {
+          const incomingIds = new Set(
+            incomingMessages
+              .map((message) => message.id)
+              .filter((id): id is string => Boolean(id)),
+          );
+          nextMessages = nextMessages.filter(
+            (message) => !message.id || !incomingIds.has(message.id),
+          );
+          nextMessages.push(...incomingMessages);
+        }
+      }
+
+      if (options.keepLoading && loadingMessage) {
+        nextMessages.push(loadingMessage);
+      }
+
+      return nextMessages;
+    });
+  }, []);
+
   const addConversation = useCallback((conversation: Conversation) => {
     setConversations(prev => [conversation, ...prev]);
   }, []);
@@ -126,6 +184,7 @@ export const useChatState = (agencyId: string) => {
     removeMessage,
     removeOptimisticUserMessages,
     truncateMessagesAt,
+    reconcileMessages,
     addConversation,
     updateConversation,
     removeConversation,

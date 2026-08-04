@@ -1,7 +1,19 @@
 import axios, {AxiosInstance} from 'axios';
 
-/** Decode SSE `event.data` (plain text, JSON with `data`, or chat stream `{ conversation_id, message }`). */
-function normalizeSsePayload(raw: string): string | null {
+export interface FusioniSSEMessage {
+  event: string;
+  data: string;
+  /** Parsed JSON payload when the server event contains JSON. */
+  payload?: unknown;
+}
+
+interface DecodedSSEPayload {
+  data: string;
+  payload?: unknown;
+}
+
+/** Decode SSE `event.data` while retaining the full JSON payload for typed consumers. */
+function decodeSsePayload(raw: string): DecodedSSEPayload | null {
   const s = raw?.trim() ?? '';
   if (!s) {
     return null;
@@ -15,12 +27,12 @@ function normalizeSsePayload(raw: string): string | null {
           return null;
         }
         if (typeof inner === 'string') {
-          return inner;
+          return {data: inner, payload: parsed};
         }
         if (typeof inner === 'number' || typeof inner === 'boolean') {
-          return String(inner);
+          return {data: String(inner), payload: parsed};
         }
-        return JSON.stringify(inner);
+        return {data: JSON.stringify(inner), payload: parsed};
       }
       if ('message' in parsed) {
         const message = (parsed as {message: unknown}).message;
@@ -28,18 +40,22 @@ function normalizeSsePayload(raw: string): string | null {
           return null;
         }
         if (typeof message === 'string') {
-          return message;
+          return {data: message, payload: parsed};
         }
         if (typeof message === 'number' || typeof message === 'boolean') {
-          return String(message);
+          return {data: String(message), payload: parsed};
         }
-        return JSON.stringify(message);
+        return {data: JSON.stringify(message), payload: parsed};
       }
+
+      // `message_stream` sends a JourneyResponse object. Keep it intact so the
+      // widget can correlate it by conversation and reconcile returned messages.
+      return {data: s, payload: parsed};
     }
   } catch {
     /* use raw string */
   }
-  return s;
+  return {data: s};
 }
 
 export class ApiClient {
@@ -118,26 +134,35 @@ export class ApiClient {
   }
 
   // Server-Sent Events for real-time updates
-  connectToSSE(agencyId: string, onMessage: (data: any) => void): EventSource {
+  connectToSSE(agencyId: string, onMessage: (data: FusioniSSEMessage) => void, conversationId?: string): EventSource {
     const token = this.accessToken || 'test';
-    const url = `${this.baseUrl}/sse/connect?agency_id=${agencyId}&token=${token}`;
+    const params = new URLSearchParams({
+      agency_id: agencyId,
+      token,
+    });
+    if (conversationId) {
+      params.set('conversation_id', conversationId);
+    }
+    const url = `${this.baseUrl}/sse/connect?${params.toString()}`;
     const eventSource = new EventSource(url, { withCredentials: false });
 
     const deliver = (eventName: string, event: Event) => {
       try {
         const me = event as MessageEvent;
-        const normalized = normalizeSsePayload(String(me.data ?? ''));
-        if (normalized === null) {
+        const decoded = decodeSsePayload(String(me.data ?? ''));
+        if (decoded === null) {
           return;
         }
-        onMessage({event: eventName, data: normalized});
+        onMessage({event: eventName, ...decoded});
       } catch (error) {
         console.error('Error handling SSE event:', eventName, error);
       }
     };
 
-    // fusioni-web EventSourceService uses ['chat_stream'] for chat execution progress
+    // Match fusion-web: progress arrives on `chat_stream`; completed journey
+    // responses (including persisted messages) arrive on `message_stream`.
     eventSource.addEventListener('chat_stream', (e) => deliver('chat_stream', e));
+    eventSource.addEventListener('message_stream', (e) => deliver('message_stream', e));
     eventSource.addEventListener('process_info', (e) => deliver('process_info', e));
 
     eventSource.onerror = (error) => {

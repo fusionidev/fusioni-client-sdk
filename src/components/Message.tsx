@@ -4,6 +4,13 @@ import {UrlPreview} from './UrlPreview';
 import {Map} from './Map';
 import {useTranslation} from '../hooks/useTranslation';
 import {GALLERY_STRIP_MAX_ROWS, PaginatedGalleryStrip, useGalleryStripColumns} from './PaginatedGalleryStrip';
+import {
+    getAgentAccentClass,
+    getAgentBubbleStyle,
+    getAgentName,
+    highlightAgentMentions,
+    isAgentMessage,
+} from '../utils/messageBubble';
 
 interface DocumentImageGridProps {
     images: string[];
@@ -188,6 +195,39 @@ const DocumentVideoGrid: React.FC<DocumentVideoGridProps> = ({
 // This persists across component unmounts/remounts (e.g., when chat closes and reopens)
 const animatedMessageIds = new Set<string>();
 const TYPING_PREVIEW_CHARACTER_LIMIT = 200;
+const URL_PREVIEW_VISIBLE_LIMIT = 2;
+
+const enhanceMessageContent = (content: string): string => {
+    if (!content) return content;
+
+    return content.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, (_match, escapedHtml: string) =>
+        escapedHtml
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&')
+    );
+};
+
+const renderMessageContent = (content: string): string =>
+    enhanceMessageContent(highlightAgentMentions(content));
+
+const extractUrlsFromContent = (content: string): string[] => {
+    if (!content) return [];
+
+    const urls: string[] = [];
+    for (const match of content.matchAll(/href=["'](https?:\/\/[^"']+)["']/gi)) {
+        if (match[1]) urls.push(match[1]);
+    }
+    for (const match of content.matchAll(/(?:src|data-url|data-href)=["'](https?:\/\/[^"']+)["']/gi)) {
+        if (match[1]) urls.push(match[1]);
+    }
+
+    const plainText = content.replace(/<[^>]*>/g, '');
+    urls.push(...(plainText.match(/(https?:\/\/[^\s<>"']+)/g) || []));
+    return [...new Set(urls)];
+};
 
 const formatThoughts = (thoughts: MessageProps['message']['thoughts']): string => {
     if (thoughts == null) return '';
@@ -209,9 +249,9 @@ const formatThoughts = (thoughts: MessageProps['message']['thoughts']): string =
 
 export const Message: React.FC<MessageProps> = ({
                                                     message,
+                                                    isOwnMessage: ownMessageOverride,
                                                     showThoughts = false,
                                                     fontSize = 'text-sm',
-                                                    onDelete,
                                                     onConfirmation,
                                                     enableButtons = true,
                                                     apiBaseUrl,
@@ -222,40 +262,10 @@ export const Message: React.FC<MessageProps> = ({
                                                 }) => {
     const {t} = useTranslation(currentLanguage);
     const [displayedContent, setDisplayedContent] = useState<string>('');
+    const [urlPreviewsExpanded, setUrlPreviewsExpanded] = useState(false);
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const typingSpeed = 5; // milliseconds per character
-
-    const enhanceMessageContent = (content: string): string => {
-        if (!content) return content;
-
-        // Check if content contains <pre> <code> blocks with escaped HTML
-        const preCodeRegex = /<pre><code>([\s\S]*?)<\/code><\/pre>/gi;
-
-        // Use replace it with a callback to handle all matches
-        return content.replace(preCodeRegex, (match, escapedHtml) => {
-            // Decode HTML entities: decode &amp; last to avoid interfering with other entities
-            // &lt; -> <, &gt; -> >, &quot; -> ", &#39; -> ', &amp; -> &
-            // Replace the <pre> <code> block with the decoded HTML
-            return escapedHtml
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'")
-                .replace(/&amp;/g, '&');
-        });
-
-    };
-
-    const extractUrlsFromContent = (content: string): string[] => {
-        if (!content) return [];
-
-        // URL regex pattern that matches http/https URLs
-        const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/gi;
-        const urls = content.match(urlRegex) || [];
-
-        // Remove duplicates and return
-        return [...new Set(urls)];
-    };
+    const ownMessage = ownMessageOverride ?? message.role === 'user';
 
     const renderImage = (imageUrl: string) => {
         if (!imageUrl) return null;
@@ -372,12 +382,15 @@ export const Message: React.FC<MessageProps> = ({
 
     const getMessageClasses = () => {
         const baseClasses = `fusioni-message-bubble ${fontSize}`;
-        const roleClasses = message.role === 'user'
+        const roleClasses = ownMessage
             ? 'fusioni-message-user'
             : 'fusioni-message-assistant';
+        const agentClasses = isAgentMessage(message)
+            ? `fusioni-message-agent ${getAgentAccentClass(message)}`
+            : '';
         const errorClasses = message.has_error ? 'fusioni-message-error' : '';
 
-        return `${baseClasses} ${roleClasses} ${errorClasses}`.trim();
+        return `${baseClasses} ${roleClasses} ${agentClasses} ${errorClasses}`.trim();
     };
 
     const sendConfirmation = (confirmed: 'Confirmed' | 'NotConfirmed', key?: string) => {
@@ -396,12 +409,6 @@ export const Message: React.FC<MessageProps> = ({
             clearTimeout(typingIntervalRef.current);
         }
 
-        // Safety check: ensure message exists
-        if (!message) {
-            setDisplayedContent('');
-            return;
-        }
-
         // If a message is loading or has no content, reset displayed content
         if (message.loading || !message.content) {
             setDisplayedContent('');
@@ -415,7 +422,7 @@ export const Message: React.FC<MessageProps> = ({
         // This prevents re-animation when chat is closed and reopened
         // The animatedMessageIds Set persists across component unmounts/remounts
         if (!message.shouldAnimate || animatedMessageIds.has(messageId)) {
-            setDisplayedContent(message.content);
+            setDisplayedContent(renderMessageContent(message.content));
             return;
         }
 
@@ -423,7 +430,7 @@ export const Message: React.FC<MessageProps> = ({
         setDisplayedContent('');
         // Type the same HTML string that will be rendered (after any transformations),
         // otherwise we can end up animating an HTML-escaped variant.
-        const fullContent = enhanceMessageContent(message.content);
+        const fullContent = renderMessageContent(message.content);
 
         // Parse content into segments: text segments and HTML tag segments.
         // Important: this parser is quote-aware so it won't break on `>` inside quoted attributes.
@@ -581,16 +588,24 @@ export const Message: React.FC<MessageProps> = ({
                 clearTimeout(typingIntervalRef.current);
             }
         };
-    }, [message?.content, message?.shouldAnimate, message?.loading, typingSpeed]);
+    }, [message.id, message.content, message.shouldAnimate, message.loading, typingSpeed]);
 
     // Determine which content to display
     // If animating, use displayedContent (which starts empty and fills up)
     // If not animating, always use message.content directly
     const contentToDisplay = message.shouldAnimate
         ? displayedContent
-        : message.content;
+        : renderMessageContent(message.content);
     const extractedUrls = useMemo(() => extractUrlsFromContent(message.content), [message.content]);
+    const visibleUrls = urlPreviewsExpanded
+        ? extractedUrls
+        : extractedUrls.slice(0, URL_PREVIEW_VISIBLE_LIMIT);
+    const hasCollapsibleUrlPreviews = extractedUrls.length > URL_PREVIEW_VISIBLE_LIMIT;
     const thoughtsToDisplay = useMemo(() => formatThoughts(message.thoughts), [message.thoughts]);
+
+    useEffect(() => {
+        setUrlPreviewsExpanded(false);
+    }, [message.id, message.content]);
 
     const hasVisibleWhileLoading =
         Boolean(message.extra_data) ||
@@ -603,32 +618,53 @@ export const Message: React.FC<MessageProps> = ({
             className={`${getMessageClasses()}${
                 collapseEmptyLoadingBubble ? ' fusioni-message-bubble--loading-empty' : ''
             }`.trim()}
+            style={getAgentBubbleStyle(message) as React.CSSProperties}
         >
+            {isAgentMessage(message) && !message.loading && (
+                <div className="fusioni-agent-message-header">
+                    <span className="fusioni-agent-message-name">{getAgentName(message)}</span>
+                    <span className="fusioni-agent-message-type">{t('chat.messages.agent')}</span>
+                </div>
+            )}
+
             {/* Main content — hidden while loading (parity with Angular assistant bubble) */}
             {message.content && !message.loading && (
                 <div
                     className="fusioni-message-text"
                     dangerouslySetInnerHTML={{
-                        __html: enhanceMessageContent(contentToDisplay)
+                        __html: contentToDisplay
                     }}
                 />
             )}
 
             {/* URL Previews for message content */}
-            {!message.loading && extractedUrls.length > 0 && message.role !== 'user' && (
+            {!message.loading && extractedUrls.length > 0 && !ownMessage && (
                 <div className="fusioni-message-url-previews">
-                    {extractedUrls.map((url) => (
+                    {visibleUrls.map((url) => (
                         <UrlPreview
                             key={url}
                             url={url}
                             agencyId={agencyId}
                             showCloseButton={false}
-                            compact={true}
+                            compact={false}
                             autoFetch={true}
                             apiBaseUrl={apiBaseUrl}
                             apiKey={apiKey}
                         />
                     ))}
+                    {hasCollapsibleUrlPreviews && (
+                        <button
+                            type="button"
+                            className="fusioni-url-previews-toggle"
+                            aria-expanded={urlPreviewsExpanded}
+                            onClick={() => setUrlPreviewsExpanded((expanded) => !expanded)}
+                        >
+                            <span aria-hidden="true">{urlPreviewsExpanded ? '−' : '+'}</span>
+                            {t(urlPreviewsExpanded
+                                ? 'chat.messages.showLessLinks'
+                                : 'chat.messages.showMoreLinks')}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -685,22 +721,47 @@ export const Message: React.FC<MessageProps> = ({
             {/* Confirmation Widget */}
             {message.extra_data?.widget === 'Confirmation' && (
                 <div className="fusioni-confirmation-widget">
-                    <button
-                        type="button"
-                        disabled={!enableButtons}
-                        onClick={() => sendConfirmation('Confirmed', message.extra_data?.key)}
-                        className="fusioni-btn fusioni-btn-primary fusioni-btn-confirm"
-                    >
-                        {t('common.yes')}
-                    </button>
-                    <button
-                        type="button"
-                        disabled={!enableButtons}
-                        onClick={() => sendConfirmation('NotConfirmed', message.extra_data?.key)}
-                        className="fusioni-btn fusioni-btn-secondary fusioni-btn-cancel"
-                    >
-                        {t('common.no')}
-                    </button>
+                    {message.extra_data.approval && (
+                        <div className="fusioni-approval-card">
+                            <div className="fusioni-approval-action">
+                                {message.extra_data.approval.action}
+                            </div>
+                            {message.extra_data.approval.reason && (
+                                <div className="fusioni-approval-reason">
+                                    <strong>{t('chat.messages.approvalReason')}:</strong>{' '}
+                                    {message.extra_data.approval.reason}
+                                </div>
+                            )}
+                            {message.extra_data.approval.payload != null && (
+                                <div className="fusioni-approval-parameters">
+                                    <strong>{t('chat.messages.approvalParameters')}:</strong>
+                                    <pre>{JSON.stringify(message.extra_data.approval.payload, null, 2)}</pre>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <div className="fusioni-confirmation-actions">
+                        <button
+                            type="button"
+                            disabled={!enableButtons}
+                            onClick={() => sendConfirmation('Confirmed', message.extra_data?.key)}
+                            className="fusioni-btn fusioni-btn-primary fusioni-btn-confirm"
+                        >
+                            {message.extra_data.approval
+                                ? t('chat.messages.approve')
+                                : t('common.yes')}
+                        </button>
+                        {message.extra_data.approval && (
+                            <button
+                                type="button"
+                                disabled={!enableButtons}
+                                onClick={() => sendConfirmation('NotConfirmed', message.extra_data?.key)}
+                                className="fusioni-btn fusioni-btn-secondary fusioni-btn-cancel"
+                            >
+                                {t('chat.messages.deny')}
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -753,7 +814,7 @@ export const Message: React.FC<MessageProps> = ({
                             strokeWidth="2"
                         />
                     </svg>
-                    <span>Error occurred</span>
+                    <span>{t('chat.messages.errorIndicator')}</span>
                 </div>
             )}
         </div>

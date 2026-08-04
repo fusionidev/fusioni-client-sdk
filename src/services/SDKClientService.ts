@@ -51,6 +51,10 @@ export class SDKClientService {
 
     return {
       ...userConfig,
+      // Journey messages created through the SDK are owned by the SDK client
+      // record. Preserve its id so MessageList can apply the same owner-id
+      // comparison used by fusion-web's MemoryService.isMessageOwner().
+      ownerId: userConfig.ownerId || serverConfig.id || undefined,
       // Only override if server value is not null
       theme: serverConfig.theme !== null && serverConfig.theme !== undefined 
         ? serverConfig.theme 

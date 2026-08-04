@@ -22,9 +22,11 @@ export { ImageGallery } from './components/ImageGallery';
 
 // Service exports
 export { ApiClient, getApiClient, initializeApiClient } from './services/ApiClient';
+export type { FusioniSSEMessage } from './services/ApiClient';
 export { getConversationService } from './services/ConversationService';
 export { PipelineService, getPipelineService } from './services/PipelineService';
 export { MessageService, getMessageService } from './services/MessageService';
+export { AgentService, getAgentService } from './services/AgentService';
 export {
   ActionService,
   getActionService,
@@ -39,6 +41,9 @@ export { useSSE } from './hooks/useSSE';
 export { useTheme } from './hooks/useTheme';
 export { useTranslation } from './hooks/useTranslation';
 export { useIsMobileLayout } from './hooks/useIsMobileLayout';
+
+// Message ownership helpers
+export { getOwnerIdFromAccessToken, isMessageOwner } from './utils/messageBubble';
 
 // i18n exports
 export { getTranslation, getAvailableLanguages, isValidLanguage } from './i18n';

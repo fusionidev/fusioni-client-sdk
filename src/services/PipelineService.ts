@@ -56,6 +56,23 @@ export class PipelineService {
     
     return response.data;
   }
+
+  /**
+   * Queue a pipeline execution and return its acknowledgement.
+   *
+   * The completed response is emitted separately as a `message_stream` SSE event.
+   */
+  async executePipelineAsync(request: PipelineRequest): Promise<PipelineResponse> {
+    if (!request.conversation_id) {
+      throw new Error('conversation_id is required for pipeline execution');
+    }
+
+    if (!request.agency_id) {
+      throw new Error('agency_id is required for pipeline execution');
+    }
+
+    return this.getApiClient().post<PipelineResponse>('/journey/exec_async', request);
+  }
 }
 
 // Singleton instance

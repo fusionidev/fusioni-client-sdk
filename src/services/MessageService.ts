@@ -22,6 +22,15 @@ export class MessageService {
         });
     }
 
+    async likeMessage(messageId: string, agencyId: string, like: -1 | 0 | 1): Promise<boolean> {
+        const apiClient = this.getApiClient();
+        return apiClient.put<boolean>('/mem/like', {
+            message_id: messageId,
+            agency_id: agencyId,
+            like,
+        });
+    }
+
     /**
      * Get Messages
      * @param conversationId

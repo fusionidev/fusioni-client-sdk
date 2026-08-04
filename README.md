@@ -248,6 +248,7 @@ export default App;
 | `apiBaseUrl` | `string` | **Required** | Base URL of your Fusioni API |
 | `agencyId` | `string` | **Required** | Your agency ID |
 | `accessToken` | `string` | `undefined` | Optional access token for authentication |
+| `ownerId` | `string` | SDK client ID or JWT `oid` | Current sender's Fusion owner ID. Normally resolved automatically from the SDK client configuration or a JWT access token |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'light'` | UI theme preference (can be changed later via [`setTheme`](#changing-language-and-theme-after-init)) |
 | `language` | `'en' \| 'el'` | `'en'` | UI copy language (can be changed later via [`setLanguage`](#changing-language-and-theme-after-init)) |
 | `showThemeToggle` | `boolean` | `true` | Show/hide the theme toggle button in the chat header |
@@ -281,9 +282,9 @@ The SDK automatically handles communication with your Fusioni API endpoints:
 
 - **Conversations**: `/api/conversation`
 - **Messages**: `/api/mem`
-- **Pipeline**: `/api/pipeline/exec`
+- **Journey execution**: `/api/journey/exec_async` (acknowledgement)
 - **File Upload**: `/api/upload`
-- **Server-Sent Events**: `/api/sse/connect`
+- **Server-Sent Events**: `/api/sse/connect` (`chat_stream` progress and `message_stream` responses)
 
 ## Styling
 

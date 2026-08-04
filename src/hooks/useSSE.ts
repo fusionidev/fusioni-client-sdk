@@ -1,8 +1,17 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { getApiClient } from '../services/ApiClient';
+import { FusioniSSEMessage, getApiClient } from '../services/ApiClient';
 
-export const useSSE = (agencyId: string, onMessage: (data: any) => void, isConnected: boolean = true, accessToken?: string) => {
+const RECONNECT_DELAY_MS = 3000;
+
+export const useSSE = (
+  agencyId: string,
+  onMessage: (data: FusioniSSEMessage) => void,
+  isConnected: boolean = true,
+  accessToken?: string,
+  conversationId?: string,
+) => {
   const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onMessageRef = useRef(onMessage);
 
   // Keep the callback ref up to date
@@ -11,70 +20,79 @@ export const useSSE = (agencyId: string, onMessage: (data: any) => void, isConne
   }, [onMessage]);
 
   // Stable callback that uses the ref
-  const stableOnMessage = useCallback((data: any) => {
+  const stableOnMessage = useCallback((data: FusioniSSEMessage) => {
     onMessageRef.current(data);
   }, []);
 
   useEffect(() => {
-    if (!agencyId || !isConnected) {
-      // Disconnect if not connected or no agency ID
+    let disposed = false;
+
+    const clearReconnectTimer = () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    };
+
+    const disconnect = () => {
+      clearReconnectTimer();
       if (eventSourceRef.current) {
-        console.log('Disconnecting SSE (panel closed or no agency ID)...');
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
-      return;
-    }
-
-    // Only connect if we don't already have a connection
-    if (eventSourceRef.current) {
-      return;
-    }
-
-    try {
-      const apiClient = getApiClient();
-      if (!apiClient) {
-        console.error('API client not initialized for SSE connection');
-        return;
-      }
-      
-      // Update access token if provided
-      if (accessToken) {
-        apiClient.setAccessToken(accessToken);
-      }
-      
-      console.log('Connecting to SSE (panel opened)...');
-      const eventSource = apiClient.connectToSSE(agencyId, stableOnMessage);
-      eventSourceRef.current = eventSource;
-
-      eventSource.onopen = () => {
-        console.log('SSE connection opened');
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
-        // Close the connection on error
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-          eventSourceRef.current = null;
-        }
-      };
-
-    } catch (error) {
-      console.error('Failed to connect to SSE:', error);
-    }
-  }, [agencyId, stableOnMessage, isConnected, accessToken]);
-
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      if (eventSourceRef.current) {
-        console.log('Disconnecting SSE...');
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
     };
-  }, []);
+
+    if (!agencyId || !isConnected) {
+      disconnect();
+      return undefined;
+    }
+
+    const connect = () => {
+      if (disposed || eventSourceRef.current) {
+        return;
+      }
+
+      try {
+        const apiClient = getApiClient();
+        if (accessToken) {
+          apiClient.setAccessToken(accessToken);
+        }
+
+        const eventSource = apiClient.connectToSSE(agencyId, stableOnMessage, conversationId);
+        eventSourceRef.current = eventSource;
+
+        eventSource.onopen = () => {
+          clearReconnectTimer();
+          console.log('SSE connection opened');
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('SSE connection error:', error);
+          eventSource.close();
+          if (eventSourceRef.current === eventSource) {
+            eventSourceRef.current = null;
+          }
+
+          if (!disposed) {
+            clearReconnectTimer();
+            reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+          }
+        };
+      } catch (error) {
+        console.error('Failed to connect to SSE:', error);
+        if (!disposed) {
+          reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+        }
+      }
+    };
+
+    connect();
+
+    return () => {
+      disposed = true;
+      disconnect();
+    };
+  }, [accessToken, agencyId, conversationId, isConnected, stableOnMessage]);
 
   return eventSourceRef.current;
 };
