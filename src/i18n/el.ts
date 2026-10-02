@@ -33,6 +33,7 @@ export const el = {
     attachedVideos: 'Βίντεο',
     messages: {
       loading: 'Thinking...',
+      newMessageReceived: 'Λήφθηκε νέο μήνυμα',
       error: 'Ουπς! Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά αργότερα.',
       delete: 'Διαγραφή μηνύματος',
       agent: 'Agent',

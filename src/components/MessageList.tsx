@@ -11,6 +11,7 @@ import { FUSIONI_LOGO_BASE64 } from '../assets/logo-base64';
 import { ActionSuggestion, getActionService, toActionSuggestion } from '../services/ActionService';
 import { getAgentService } from '../services/AgentService';
 import {
+  FUSIONI_SDK_OPTIMISTIC_USER,
   getAgentAccentClass,
   getAgentBubbleStyle,
   getAgentInitials,
@@ -22,6 +23,7 @@ import {
 interface MessageListProps {
   messages: FusioniMemoryMessage[];
   streamMessages: string[];
+  conversationId?: string | null;
   showThoughts?: boolean;
   onDeleteMessage?: (messageId: string) => void;
   onEditMessage?: (payload: { messageId: string; content: string }) => void;
@@ -119,9 +121,24 @@ const MessageAvatar: React.FC<MessageAvatarProps> = ({ message, agencyId, isOwnM
 const formatExecutionTime = (milliseconds: number): string =>
   milliseconds < 1000 ? `${Math.round(milliseconds)} ms` : `${(milliseconds / 1000).toFixed(2)} s`;
 
+const AUTO_SCROLL_THRESHOLD_PX = 48;
+
+const getMessageScrollKey = (message?: FusioniMemoryMessage): string => {
+  if (!message) return '';
+
+  return [
+    message.id || '',
+    message.role,
+    message.loading ? 'loading' : 'ready',
+    message.has_error ? 'error' : 'ok',
+    message.content || '',
+  ].join('\u0000');
+};
+
 export const MessageList: React.FC<MessageListProps> = ({
   messages,
   streamMessages,
+  conversationId,
   showThoughts = false,
   onDeleteMessage,
   onEditMessage,
@@ -144,6 +161,17 @@ export const MessageList: React.FC<MessageListProps> = ({
   const editRef = useRef<HTMLDivElement>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [showNewMessageButton, setShowNewMessageButton] = useState(false);
+  const shouldAutoScrollRef = useRef(true);
+  const scrollSnapshotRef = useRef({
+    conversationId,
+    messageCount: messages.length,
+    tailKey: getMessageScrollKey(messages[messages.length - 1]),
+    streamKey: streamMessages.join('\u0000'),
+    hasOptimisticUserMessage: messages.some(
+      (message) => message.extra_data?.[FUSIONI_SDK_OPTIMISTIC_USER] === true,
+    ),
+  });
   const [gallerySession, setGallerySession] = useState<{
     key: number;
     images: string[];
@@ -158,26 +186,81 @@ export const MessageList: React.FC<MessageListProps> = ({
     }));
   }, []);
 
-  const scrollToBottom = () => {
-    // Use double requestAnimationFrame to ensure DOM and layout have fully updated
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'auto') => {
+    shouldAutoScrollRef.current = true;
+    setShowNewMessageButton(false);
+
+    // Use double requestAnimationFrame to ensure DOM and layout have fully updated.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (scrollContainerRef.current) {
-          // Scroll to the very bottom with smooth animation
-          // This ensures the last message is fully visible
           const container = scrollContainerRef.current;
           container.scrollTo({
             top: container.scrollHeight,
-            behavior: 'smooth'
+            behavior,
           });
         }
       });
     });
-  };
+  }, []);
+
+  const handleMessageListScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const isNearBottom = distanceFromBottom <= AUTO_SCROLL_THRESHOLD_PX;
+    shouldAutoScrollRef.current = isNearBottom;
+
+    if (isNearBottom) {
+      setShowNewMessageButton(false);
+    }
+  }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamMessages]);
+    scrollToBottom('auto');
+  }, [conversationId, scrollToBottom]);
+
+  useEffect(() => {
+    const previous = scrollSnapshotRef.current;
+    const tailKey = getMessageScrollKey(messages[messages.length - 1]);
+    const streamKey = streamMessages.join('\u0000');
+    const hasOptimisticUserMessage = messages.some(
+      (message) => message.extra_data?.[FUSIONI_SDK_OPTIMISTIC_USER] === true,
+    );
+    const nextSnapshot = {
+      conversationId,
+      messageCount: messages.length,
+      tailKey,
+      streamKey,
+      hasOptimisticUserMessage,
+    };
+    scrollSnapshotRef.current = nextSnapshot;
+
+    if (previous.conversationId !== conversationId) return;
+
+    const ownMessageWasSent =
+      hasOptimisticUserMessage && !previous.hasOptimisticUserMessage;
+    const messageWasAdded = messages.length > previous.messageCount;
+    const tailWasUpdated =
+      messages.length === previous.messageCount && tailKey !== previous.tailKey;
+    const streamWasUpdated =
+      streamMessages.length > 0 && streamKey !== previous.streamKey;
+
+    if (ownMessageWasSent) {
+      scrollToBottom('auto');
+      return;
+    }
+
+    if (!messageWasAdded && !tailWasUpdated && !streamWasUpdated) return;
+
+    if (shouldAutoScrollRef.current) {
+      scrollToBottom('auto');
+    } else {
+      setShowNewMessageButton(true);
+    }
+  }, [conversationId, messages, scrollToBottom, streamMessages]);
 
   useEffect(() => {
     if (!agencyId) {
@@ -348,8 +431,13 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <>
-    <div className="fusioni-message-list" ref={scrollContainerRef}>
-      <div className="fusioni-messages-container">
+    <div className="fusioni-message-list-shell">
+      <div
+        className="fusioni-message-list"
+        ref={scrollContainerRef}
+        onScroll={handleMessageListScroll}
+      >
+        <div className="fusioni-messages-container">
         {messages.length === 0 ? (
           <div className="fusioni-empty-messages">
             <div className="fusioni-empty-messages-content">
@@ -493,8 +581,24 @@ export const MessageList: React.FC<MessageListProps> = ({
             })}
           </div>
         )}
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
+      {showNewMessageButton && (
+        <button
+          type="button"
+          className="fusioni-new-message-button"
+          onClick={() => scrollToBottom('smooth')}
+          title={t('chat.messages.newMessageReceived')}
+          aria-label={t('chat.messages.newMessageReceived')}
+          aria-live="polite"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>{t('chat.messages.newMessageReceived')}</span>
+        </button>
+      )}
     </div>
     {gallerySession &&
       typeof document !== 'undefined' &&

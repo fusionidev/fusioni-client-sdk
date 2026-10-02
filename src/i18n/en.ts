@@ -33,6 +33,7 @@ export const en = {
     attachedVideos: 'Videos',
     messages: {
       loading: 'Thinking...',
+      newMessageReceived: 'New message received',
       error: 'Oops! Something went wrong. Please try again later.',
       delete: 'Delete message',
       agent: 'Agent',

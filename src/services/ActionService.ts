@@ -13,6 +13,8 @@ export interface Action {
   agency_id: string;
   enabled?: boolean;
   literals?: ActionLiteral[];
+  groups?: string[];
+  conversation_profile_id?: string | null;
 }
 
 export interface ActionSuggestion {

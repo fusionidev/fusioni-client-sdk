@@ -1098,6 +1098,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                   <MessageList
                     messages={messages}
                     streamMessages={streamMessages}
+                    conversationId={currentConversation.id}
                     showThoughts={mergedConfig.showThoughts === true}
                     onDeleteMessage={handleDeleteMessage}
                     onEditMessage={handleEditMessage}
