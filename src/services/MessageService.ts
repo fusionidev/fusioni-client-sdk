@@ -1,10 +1,11 @@
-import {getApiClient} from './ApiClient';
+import {ApiClient, getApiClient} from './ApiClient';
 import {FusioniMemoryMessage, FusioniPayload} from "../types";
-import {AxiosResponse} from "axios";
 
 export class MessageService {
+    constructor(private readonly apiClient?: ApiClient) {}
+
     private getApiClient() {
-        return getApiClient();
+        return this.apiClient ?? getApiClient();
     }
 
     /**
@@ -36,23 +37,20 @@ export class MessageService {
      * @param conversationId
      * @param agencyId
      */
-    async getMessages(conversationId: string, agencyId: string): Promise<FusioniMemoryMessage[]> {
+    async getMessages(conversationId: string, agencyId: string, signal?: AbortSignal): Promise<FusioniMemoryMessage[]> {
         const apiClient = this.getApiClient();
-        const response: AxiosResponse<FusioniPayload<FusioniMemoryMessage>> = await (apiClient as any).client.get(
+        const response = await apiClient.get<FusioniPayload<FusioniMemoryMessage>>(
             '/mem/messages',
             {
                 params: {
                     agency_id: agencyId,
                     conversation_id: conversationId
-                }
+                },
+                signal,
             }
         );
 
-        if (response.data) {
-            return response.data.body || [];
-        }
-
-        return [];
+        return response?.body || [];
     }
 }
 

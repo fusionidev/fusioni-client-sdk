@@ -1,13 +1,14 @@
-import { AxiosResponse } from 'axios';
 import {
   PipelineRequest,
   PipelineResponse
 } from '../types';
-import { getApiClient } from './ApiClient';
+import { ApiClient, getApiClient } from './ApiClient';
 
 export class PipelineService {
+  constructor(private readonly apiClient?: ApiClient) {}
+
   private getApiClient() {
-    return getApiClient();
+    return this.apiClient ?? getApiClient();
   }
 
   /**
@@ -19,7 +20,7 @@ export class PipelineService {
    * merging `response.messages` (ChatWidget tags it with `fusion_sdk_optimistic_user`
    * in `extra_data` and strips it—same pattern as removing the loading message).
    */
-  async executePipeline(request: PipelineRequest): Promise<PipelineResponse> {
+  async executePipeline(request: PipelineRequest, signal?: AbortSignal): Promise<PipelineResponse> {
     // Debug logging to track conversation_id
     console.log('🔍 PipelineService.executePipeline - Request received:', {
       conversation_id: request.conversation_id,
@@ -43,18 +44,19 @@ export class PipelineService {
     }
 
     const apiClient = this.getApiClient();
-    const response: AxiosResponse<PipelineResponse> = await (apiClient as any).client.post(
+    const response = await apiClient.post<PipelineResponse>(
       `/journey/${request.agency_id}/exec`,
-      request
+      request,
+      {signal}
     );
     
     console.log('✅ PipelineService.executePipeline - Response received:', {
-      answerCount: response.data.answer?.length || 0,
-      messagesCount: response.data.messages?.length || 0,
-      thoughtsCount: response.data.thoughts?.length || 0
+      answerCount: response.answer?.length || 0,
+      messagesCount: response.messages?.length || 0,
+      thoughtsCount: response.thoughts?.length || 0
     });
     
-    return response.data;
+    return response;
   }
 
   /**
@@ -62,7 +64,7 @@ export class PipelineService {
    *
    * The completed response is emitted separately as a `message_stream` SSE event.
    */
-  async executePipelineAsync(request: PipelineRequest): Promise<PipelineResponse> {
+  async executePipelineAsync(request: PipelineRequest, signal?: AbortSignal): Promise<PipelineResponse> {
     if (!request.conversation_id) {
       throw new Error('conversation_id is required for pipeline execution');
     }
@@ -71,7 +73,7 @@ export class PipelineService {
       throw new Error('agency_id is required for pipeline execution');
     }
 
-    return this.getApiClient().post<PipelineResponse>('/journey/exec_async', request);
+    return this.getApiClient().post<PipelineResponse>('/journey/exec_async', request, {signal});
   }
 }
 

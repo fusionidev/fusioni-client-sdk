@@ -1,4 +1,4 @@
-import axios, {AxiosInstance} from 'axios';
+import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
 
 export interface FusioniSSEMessage {
   event: string;
@@ -106,7 +106,17 @@ export class ApiClient {
     this.accessToken = token;
   }
 
+  /** Connection settings used by reusable media and link-preview components. */
+  getBaseUrl(): string { return this.baseUrl; }
+
+  getAccessToken(): string | undefined { return this.accessToken; }
+
   // HTTP method wrappers to isolate axios client
+  async request<T = unknown>(url: string, config: AxiosRequestConfig = {}): Promise<T> {
+    const response = await this.client.request<T>({...config, url});
+    return response.data;
+  }
+
   async get<T = any>(url: string, config?: any): Promise<T> {
     const response = await this.client.get(url, config);
     return response.data;

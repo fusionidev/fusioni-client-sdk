@@ -12,19 +12,38 @@ const ChatInput: React.FC<ChatInputProps> = ({
                                                  enableFileUpload = true,
                                                  maxFileSize = 10,
                                                  allowedFileTypes = ['image/*'],
-                                                 currentLanguage = 'en'
+                                                 currentLanguage = 'en',
+                                                 value, onValueChange, clearOnSend = true,
+                                                 inputId, ariaLabel, ariaInvalid, ariaDescribedBy,
+                                                 maxAttachments = 1, onAttachmentsChange, onUploadingChange
                                              }) => {
     const {t} = useTranslation(currentLanguage);
-    const [message, setMessage] = useState('');
-    const [isRecording, setIsRecording] = useState(false);
+    const [draft, setDraft] = useState('');
+    const message = value ?? draft;
     const [audioPreview, setAudioPreview] = useState<string | null>(null);
     const [showAudioPreview, setShowAudioPreview] = useState(false);
-    const [isProcessingAudio, setIsProcessingAudio] = useState(false);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const imagesRef = useRef(imagePreviews);
+    imagesRef.current = imagePreviews;
+    const uploadIdRef = useRef(0);
+    const attachmentLimit = Number.isFinite(maxAttachments) ? Math.max(1, Math.floor(maxAttachments)) : 1;
     const [isUploading, setIsUploading] = useState(false);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const setMessage = useCallback((text: string) => {
+        setDraft(text);
+        onValueChange?.(text);
+    }, [onValueChange]);
+
+    const setImages = useCallback((images: string[]) => {
+        imagesRef.current = images;
+        setImagePreviews(images);
+        onAttachmentsChange?.(images);
+    }, [onAttachmentsChange]);
+
+    useEffect(() => () => { uploadIdRef.current += 1; }, []);
 
     const adjustTextareaHeight = useCallback(() => {
         const textarea = textareaRef.current;
@@ -47,28 +66,36 @@ const ChatInput: React.FC<ChatInputProps> = ({
     };
 
     const handleSendMessage = useCallback(() => {
-        if (disabled || (!message.trim() && !audioPreview)) return;
+        if (disabled || isUploading || (!message.trim() && !audioPreview)) return;
 
         const content = message.trim();
-        onSendMessage(content, imagePreview || undefined, audioPreview || undefined);
+        onSendMessage(content, imagePreviews[0] || undefined, audioPreview || undefined);
+
+        if (!clearOnSend) return;
 
         // Reset state
         setMessage('');
         setAudioPreview(null);
         setShowAudioPreview(false);
-        setImagePreview(null);
+        setImages([]);
 
         // Reset textarea height
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
         }
-    }, [message, audioPreview, imagePreview, disabled, onSendMessage]);
+    }, [message, audioPreview, imagePreviews, disabled, isUploading, onSendMessage, clearOnSend, setMessage, setImages]);
 
-    const handleFileSelect = useCallback(async (file: File) => {
-        if (!enableFileUpload) return;
+    const handleFileSelect = useCallback(async (files: File[]) => {
+        if (!enableFileUpload || disabled || isUploading) return;
+        const accepted = files.slice(0, attachmentLimit === 1 ? 1 : attachmentLimit - imagesRef.current.length);
+        if (!accepted.length) return;
+        const uploadId = ++uploadIdRef.current;
 
         try {
             setIsUploading(true);
+            onUploadingChange?.(true);
+
+            for (const file of accepted) {
 
             // Validate file size
             // TODO handle this without throwing an error
@@ -89,22 +116,28 @@ const ChatInput: React.FC<ChatInputProps> = ({
             if (!isValidType) {
                 throw new Error(`File type not allowed. Allowed types: ${allowedFileTypes.join(', ')}`);
             }
+            }
 
             // Convert file to base64 (onFileUpload now returns base64 directly)
-            const base64Data = await onFileUpload(file);
-            console.log('File converted to base64:', base64Data);
+            const images = await Promise.all(accepted.map(file => onFileUpload(file)));
 
             // Set preview
-            setImagePreview(base64Data);
+            if (uploadId === uploadIdRef.current) {
+                setImages(attachmentLimit === 1 ? images : [...imagesRef.current, ...images].slice(0, attachmentLimit));
+            }
         } catch (error) {
+            if (uploadId !== uploadIdRef.current) return;
             console.error('File upload error:', error);
             alert(error instanceof Error ? error.message : 'Failed to upload file');
         } finally {
-            setIsUploading(false);
+            if (uploadId === uploadIdRef.current) {
+                setIsUploading(false);
+                onUploadingChange?.(false);
+            }
         }
-    }, [enableFileUpload, maxFileSize, allowedFileTypes, onFileUpload]);
+    }, [enableFileUpload, disabled, isUploading, maxFileSize, allowedFileTypes, onFileUpload, attachmentLimit, setImages, onUploadingChange]);
 
-    const handleAudioRecorded = useCallback((audioBlob: Blob, duration: number) => {
+    const handleAudioRecorded = useCallback((audioBlob: Blob, _duration: number) => {
         const reader = new FileReader();
         reader.onload = () => {
             const base64Audio = reader.result as string;
@@ -119,9 +152,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
         setShowAudioPreview(false);
     }, []);
 
-    const handleClearImagePreview = useCallback(() => {
-        setImagePreview(null);
-    }, []);
+    const handleClearImagePreview = useCallback((index: number) => {
+        setImages(imagesRef.current.filter((_, itemIndex) => itemIndex !== index));
+    }, [setImages]);
 
     const handleFileInputClick = () => {
         if (enableFileUpload && fileInputRef.current) {
@@ -137,12 +170,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
     return (
         <div className="fusioni-chat-input">
             {/* Image Preview */}
-            {imagePreview && (
-                <div className="fusioni-image-preview">
+            {imagePreviews.map((imagePreview, index) => (
+                <div className="fusioni-image-preview" key={`${index}:${imagePreview}`}>
                     <div className="fusioni-image-preview-content">
                         <img src={imagePreview} alt="Preview" className="fusioni-preview-image"/>
                         <button
-                            onClick={handleClearImagePreview}
+                            type="button"
+                            onClick={() => handleClearImagePreview(index)}
                             className="fusioni-btn fusioni-btn-icon fusioni-btn-danger"
                             title="Remove image"
                         >
@@ -158,7 +192,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                         </button>
                     </div>
                 </div>
-            )}
+            ))}
 
             {/* Audio Preview */}
             {showAudioPreview && audioPreview && (
@@ -176,6 +210,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                             </svg>
                             <span>Audio Preview</span>
                             <button
+                                type="button"
                                 onClick={handleClearAudioPreview}
                                 className="fusioni-btn fusioni-btn-icon fusioni-btn-danger"
                                 title="Remove audio"
@@ -210,6 +245,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <div className="fusioni-input-container">
                 <div className="fusioni-input-wrapper">
           <textarea
+              id={inputId}
+              aria-label={ariaLabel || t('chat.input.placeholder')}
+              aria-invalid={ariaInvalid}
+              aria-describedby={ariaDescribedBy}
               ref={textareaRef}
               value={message}
               onChange={handleInputChange}
@@ -224,8 +263,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
                         {/* File Upload */}
                         {enableFileUpload && (
                             <button
+                                type="button"
                                 onClick={handleFileInputClick}
-                                disabled={disabled || isUploading}
+                                disabled={disabled || isUploading || (attachmentLimit > 1 && imagePreviews.length >= attachmentLimit)}
                                 className="fusioni-btn fusioni-btn-icon"
                                 title="Upload file"
                             >
@@ -272,8 +312,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
                         {/* Send Button */}
                         <button
+                            type="button"
                             onClick={handleSendMessage}
-                            disabled={disabled || (!message.trim() && !audioPreview)}
+                            disabled={disabled || isUploading || (!message.trim() && !audioPreview)}
                             className={`fusioni-btn fusioni-btn-icon fusioni-btn-send ${
                                 audioPreview ? 'fusioni-btn-send-audio' : ''
                             }`}
@@ -297,12 +338,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <input
                 ref={fileInputRef}
                 type="file"
+                multiple={attachmentLimit > 1}
+                disabled={disabled || isUploading}
                 accept={allowedFileTypes.join(',')}
                 onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                        handleFileSelect(file);
-                    }
+                    const files = Array.from(e.target.files || []);
+                    if (files.length) void handleFileSelect(files);
+                    e.target.value = '';
                 }}
                 style={{display: 'none'}}
             />

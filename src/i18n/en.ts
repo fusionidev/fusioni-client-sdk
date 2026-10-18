@@ -1,4 +1,28 @@
 export const en = {
+  actions: {
+    available: 'Available actions', loading: 'Loading actions…', empty: 'No actions found',
+    loadFailed: 'Actions could not be loaded.', profileFailed: 'The conversation profile could not be loaded.',
+    executionFailed: 'The action could not be completed. Please try again.', run: 'Run action', running: 'Running action',
+    success: 'Success', submit: 'Run action', result: 'Action result', conversation: 'Conversation',
+    fieldsPrompt: 'Complete the fields below to run this action.', required: 'Required', optional: 'Optional',
+    attachFiles: 'Attach files', fieldRequired: 'This field is required.', fieldInvalid: 'Enter a valid value.',
+    jsonPlaceholder: 'Enter valid JSON', listPlaceholder: 'Comma-separated values or a JSON array',
+    validation: {
+      equals: 'Must equal {value}.', not_equals: 'Must not equal {value}.', contains: 'Must contain {value}.',
+      not_contains: 'Must not contain {value}.', greater_than: 'Must be greater than {value}.',
+      greater_than_or_equal: 'Must be at least {value}.', less_than: 'Must be less than {value}.',
+      less_than_or_equal: 'Must be at most {value}.', min_length: 'Must have at least {value} items or characters.',
+      max_length: 'Must have at most {value} items or characters.',
+    },
+  },
+  miniApp: {
+    reload: 'Reload',
+    failed: 'The mini app could not be started.',
+    empty: 'This mini app has no web component bundle yet.',
+    loading: 'Loading mini apps',
+    loadFailed: 'Mini apps could not be loaded.',
+    notFound: 'No mini apps found',
+  },
   // Chat Interface
   chat: {
     title: 'Fusioni AI',

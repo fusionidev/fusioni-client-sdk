@@ -1,5 +1,5 @@
 import {Conversation, FusioniPayload} from '../types';
-import {getApiClient} from './ApiClient';
+import {ApiClient, getApiClient} from './ApiClient';
 
 export interface IConversationService {
     getConversation(conversationId: string): Promise<Conversation | undefined>;
@@ -93,20 +93,22 @@ export class LocalConversationService implements IConversationService {
 }
 
 export class RemoteConversationService implements IConversationService {
+    constructor(private readonly apiClient?: ApiClient) {}
+
     private getApiClient() {
-        return getApiClient();
+        return this.apiClient ?? getApiClient();
     }
 
     /**
      * Create a new conversation
      */
-    async createConversation(conversation: Omit<Conversation, 'id'>): Promise<string> {
+    async createConversation(conversation: Omit<Conversation, 'id'>, signal?: AbortSignal): Promise<string> {
         try {
             const apiClient = this.getApiClient();
             console.log('Creating conversation with data:', conversation);
 
             // ApiClient.post returns the data directly, not the full response
-            const responseData: any = await apiClient.post('/conversation', conversation);
+            const responseData: any = await apiClient.post('/conversation', conversation, {signal});
 
             // Handle different response formats
             let conversationId: string = responseData.trim();

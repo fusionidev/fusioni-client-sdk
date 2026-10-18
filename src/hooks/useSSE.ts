@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { FusioniSSEMessage, getApiClient } from '../services/ApiClient';
+import { ApiClient, FusioniSSEMessage, getApiClient } from '../services/ApiClient';
 
 const RECONNECT_DELAY_MS = 3000;
 
@@ -9,6 +9,7 @@ export const useSSE = (
   isConnected: boolean = true,
   accessToken?: string,
   conversationId?: string,
+  suppliedClient?: ApiClient,
 ) => {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,7 +54,7 @@ export const useSSE = (
       }
 
       try {
-        const apiClient = getApiClient();
+        const apiClient = suppliedClient ?? getApiClient();
         if (accessToken) {
           apiClient.setAccessToken(accessToken);
         }
@@ -92,7 +93,7 @@ export const useSSE = (
       disposed = true;
       disconnect();
     };
-  }, [accessToken, agencyId, conversationId, isConnected, stableOnMessage]);
+  }, [accessToken, agencyId, conversationId, isConnected, stableOnMessage, suppliedClient]);
 
   return eventSourceRef.current;
 };

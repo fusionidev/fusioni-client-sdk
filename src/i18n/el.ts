@@ -1,4 +1,28 @@
 export const el = {
+  actions: {
+    available: 'Διαθέσιμες ενέργειες', loading: 'Φόρτωση ενεργειών…', empty: 'Δεν βρέθηκαν ενέργειες',
+    loadFailed: 'Δεν ήταν δυνατή η φόρτωση των ενεργειών.', profileFailed: 'Δεν ήταν δυνατή η φόρτωση του προφίλ συνομιλίας.',
+    executionFailed: 'Η ενέργεια δεν ολοκληρώθηκε. Δοκιμάστε ξανά.', run: 'Εκτέλεση ενέργειας', running: 'Εκτέλεση ενέργειας',
+    success: 'Επιτυχία', submit: 'Εκτέλεση ενέργειας', result: 'Αποτέλεσμα ενέργειας', conversation: 'Συνομιλία',
+    fieldsPrompt: 'Συμπληρώστε τα παρακάτω πεδία για να εκτελέσετε την ενέργεια.', required: 'Υποχρεωτικό', optional: 'Προαιρετικό',
+    attachFiles: 'Επισύναψη αρχείων', fieldRequired: 'Το πεδίο είναι υποχρεωτικό.', fieldInvalid: 'Εισαγάγετε μια έγκυρη τιμή.',
+    jsonPlaceholder: 'Εισαγάγετε έγκυρο JSON', listPlaceholder: 'Τιμές χωρισμένες με κόμμα ή πίνακας JSON',
+    validation: {
+      equals: 'Πρέπει να ισούται με {value}.', not_equals: 'Δεν πρέπει να ισούται με {value}.', contains: 'Πρέπει να περιέχει {value}.',
+      not_contains: 'Δεν πρέπει να περιέχει {value}.', greater_than: 'Πρέπει να είναι μεγαλύτερο από {value}.',
+      greater_than_or_equal: 'Πρέπει να είναι τουλάχιστον {value}.', less_than: 'Πρέπει να είναι μικρότερο από {value}.',
+      less_than_or_equal: 'Πρέπει να είναι το πολύ {value}.', min_length: 'Απαιτούνται τουλάχιστον {value} στοιχεία ή χαρακτήρες.',
+      max_length: 'Επιτρέπονται το πολύ {value} στοιχεία ή χαρακτήρες.',
+    },
+  },
+  miniApp: {
+    reload: 'Επαναφόρτωση',
+    failed: 'Η mini app δεν ήταν δυνατό να ξεκινήσει.',
+    empty: 'Αυτή η mini app δεν έχει ακόμη πακέτο web component.',
+    loading: 'Φόρτωση mini apps',
+    loadFailed: 'Δεν ήταν δυνατή η φόρτωση των mini apps.',
+    notFound: 'Δεν βρέθηκαν mini apps',
+  },
   // Chat Interface
   chat: {
     title: 'Fusioni AI',

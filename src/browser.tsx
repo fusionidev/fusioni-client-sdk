@@ -10,7 +10,12 @@ declare const __FUSIONI_SDK_VERSION__: string;
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { ChatWidget } from './components/ChatWidget';
+import { MiniAppRenderer } from './components/MiniAppRenderer';
+import { ActionButtons } from './components/ActionButtons';
+import { ShadowDomRoot } from './components/ShadowDomRoot';
 import type { FusioniChatWidgetHandle, FusioniSDKConfig } from './types';
+import type { MiniAppRendererHandle, MiniAppRendererProps } from './types/miniApp';
+import type {ActionButtonsHandle, ActionButtonsProps} from './types/actionButtons';
 
 const DEFAULT_ROOT_ID = 'fusioni-chat-root';
 
@@ -20,6 +25,14 @@ export interface FusioniMountResult {
   unmount: () => void;
   setLanguage: FusioniChatWidgetHandle['setLanguage'];
   setTheme: FusioniChatWidgetHandle['setTheme'];
+}
+
+export interface FusioniMiniAppMountResult extends MiniAppRendererHandle {
+  unmount(): void;
+}
+
+export interface FusioniActionButtonsMountResult extends ActionButtonsHandle {
+  unmount(): void;
 }
 
 function getContainer(container: string | HTMLElement): HTMLElement {
@@ -91,9 +104,63 @@ function init(config: FusioniScriptConfig): FusioniMountResult {
   return mount(rootEl, config);
 }
 
+/** Mount one Mini App or a collection, with the same props as the React renderer. */
+function mountMiniApp(
+  container: string | HTMLElement,
+  props: MiniAppRendererProps,
+): FusioniMiniAppMountResult {
+  const target = getContainer(container);
+  mountedRoots.get(target)?.unmount();
+  const root = createRoot(target);
+  mountedRoots.set(target, root);
+  const rendererRef = React.createRef<MiniAppRendererHandle>();
+  root.render(
+    <ShadowDomRoot>
+      <MiniAppRenderer {...props} ref={rendererRef} />
+    </ShadowDomRoot>,
+  );
+  return {
+    get api() { return rendererRef.current?.api ?? null; },
+    run: () => rendererRef.current?.run() ?? Promise.resolve(),
+    loadMiniApps: () => rendererRef.current?.loadMiniApps(),
+    unmount() {
+      if (mountedRoots.get(target) !== root) return;
+      root.unmount();
+      mountedRoots.delete(target);
+    },
+  };
+}
+
+/** Mount tagged actions with isolated styles and the React component's imperative API. */
+function mountActionButtons(container: string | HTMLElement, props: ActionButtonsProps): FusioniActionButtonsMountResult {
+  const target = getContainer(container);
+  mountedRoots.get(target)?.unmount();
+  const root = createRoot(target);
+  mountedRoots.set(target, root);
+  const actionRef = React.createRef<ActionButtonsHandle>();
+  root.render(<ShadowDomRoot><ActionButtons {...props} ref={actionRef} /></ShadowDomRoot>);
+  return {
+    get selectedAction() { return actionRef.current?.selectedAction ?? null; },
+    get results() { return actionRef.current?.results ?? []; },
+    get conversationMessages() { return actionRef.current?.conversationMessages ?? []; },
+    loadActions: () => actionRef.current?.loadActions(),
+    executeAction: action => actionRef.current?.executeAction(action) ?? Promise.resolve(),
+    submitFields: () => actionRef.current?.submitFields() ?? Promise.resolve(),
+    cancelFields: () => actionRef.current?.cancelFields(),
+    startNewConversation: action => actionRef.current?.startNewConversation(action),
+    unmount() {
+      if (mountedRoots.get(target) !== root) return;
+      root.unmount();
+      mountedRoots.delete(target);
+    },
+  };
+}
+
 const Fusioni = {
   init,
   mount,
+  mountMiniApp,
+  mountActionButtons,
   version: __FUSIONI_SDK_VERSION__,
 };
 

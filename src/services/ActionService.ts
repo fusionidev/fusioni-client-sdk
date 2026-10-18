@@ -1,8 +1,10 @@
-import { FusioniPayload } from '../types';
-import { getApiClient } from './ApiClient';
+import { FusioniPayload, PipelineResponse } from '../types';
+import { ApiClient, getApiClient } from './ApiClient';
+import type {ConversationInputFieldData, ConversationProfile} from '../types/conversationProfile';
 
 export interface ActionLiteral {
   text: string;
+  description?: string;
   prompt: string;
   language: string;
 }
@@ -10,11 +12,26 @@ export interface ActionLiteral {
 export interface Action {
   id?: string;
   title: string;
+  key?: string | null;
+  icon?: string | null;
+  icon_color?: string | null;
   agency_id: string;
   enabled?: boolean;
   literals?: ActionLiteral[];
   groups?: string[];
   conversation_profile_id?: string | null;
+  conversation_profile_input_field_names?: string[] | null;
+  maintain_conversation?: boolean;
+  results_sort?: 'asc' | 'desc';
+  show_results?: boolean;
+}
+
+export interface ExecuteAction {
+  action_id: string;
+  lang: string;
+  conversation_id?: string;
+  context?: ConversationInputFieldData;
+  image?: string | string[];
 }
 
 export interface ActionSuggestion {
@@ -31,7 +48,7 @@ export function resolveActionLiteral(
     return undefined;
   }
   return (
-    action.literals.find((l) => l.language === language)
+    action.literals.find((l) => l.language.toLowerCase().split(/[-_]/)[0] === language.toLowerCase().split(/[-_]/)[0])
     ?? action.literals.find((l) => l.language === 'en')
     ?? action.literals[0]
   );
@@ -58,8 +75,36 @@ export function toActionSuggestion(
 }
 
 export class ActionService {
+  constructor(private readonly apiClient?: ApiClient) {}
+
   private getApiClient() {
-    return getApiClient();
+    return this.apiClient ?? getApiClient();
+  }
+
+  async findByActionGroupTags(agencyId: string, tags: readonly string[], signal?: AbortSignal): Promise<Action[]> {
+    return (await this.getApiClient().get<Action[]>('/action/by_group_tags', {
+      params: {agency_id: agencyId, tags: [...tags]},
+      paramsSerializer: {indexes: null},
+      signal,
+    })) || [];
+  }
+
+  async getConversationProfiles(agencyId: string, signal?: AbortSignal): Promise<ConversationProfile[]> {
+    return (await this.getApiClient().get<ConversationProfile[]>('/action/conversation-profiles', {
+      params: {agency_id: agencyId}, signal,
+    })) || [];
+  }
+
+  getConversationProfile(profileId: string, signal?: AbortSignal): Promise<ConversationProfile> {
+    return this.getApiClient().get<ConversationProfile>('/conversation-profile', {
+      params: {item_id: profileId}, signal,
+    });
+  }
+
+  execute(agencyId: string, request: ExecuteAction, signal?: AbortSignal): Promise<PipelineResponse> {
+    return this.getApiClient().post<PipelineResponse>('/action/exec', request, {
+      params: {agency_id: agencyId}, signal,
+    });
   }
 
   async findEnabledByAgencyId(agencyId: string): Promise<Action[]> {

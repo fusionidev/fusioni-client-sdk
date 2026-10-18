@@ -258,7 +258,8 @@ export const Message: React.FC<MessageProps> = ({
                                                     apiKey,
                                                     agencyId,
                                                     currentLanguage = 'en',
-                                                    onOpenGallery
+                                                    onOpenGallery,
+                                                    urlPreviewUrls: propsUrlPreviews,
                                                 }) => {
     const {t} = useTranslation(currentLanguage);
     const [displayedContent, setDisplayedContent] = useState<string>('');
@@ -596,7 +597,7 @@ export const Message: React.FC<MessageProps> = ({
     const contentToDisplay = message.shouldAnimate
         ? displayedContent
         : renderMessageContent(message.content);
-    const extractedUrls = useMemo(() => extractUrlsFromContent(message.content), [message.content]);
+    const extractedUrls = useMemo(() => propsUrlPreviews ?? extractUrlsFromContent(message.content), [message.content, propsUrlPreviews]);
     const visibleUrls = urlPreviewsExpanded
         ? extractedUrls
         : extractedUrls.slice(0, URL_PREVIEW_VISIBLE_LIMIT);

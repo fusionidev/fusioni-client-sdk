@@ -1,7 +1,12 @@
 import React, { useRef, useCallback } from 'react';
 
-interface FileUploadProps {
-  onFileSelect: (file: File) => void;
+export interface FileUploadProps {
+  onFileSelect?: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
+  multiple?: boolean;
+  inputId?: string;
+  label?: string;
+  onError?: (error: Error) => void;
   accept?: string;
   maxSize?: number; // in MB
   disabled?: boolean;
@@ -10,6 +15,7 @@ interface FileUploadProps {
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   onFileSelect,
+  onFilesSelect, multiple = false, inputId, label = 'Upload file', onError,
   accept = 'image/*',
   maxSize = 10,
   disabled = false,
@@ -18,22 +24,30 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    if (disabled) return;
+    const valid: File[] = [];
+    for (const file of files) {
       // Validate file size
       if (file.size > maxSize * 1024 * 1024) {
-        alert(`File size must be less than ${maxSize}MB`);
-        return;
+        const error = new Error(`File size must be less than ${maxSize}MB`);
+        if (onError) onError(error);
+        else alert(error.message);
+        continue;
       }
 
-      onFileSelect(file);
+      valid.push(file);
+    }
+    if (valid.length) {
+      onFilesSelect?.(valid);
+      onFileSelect?.(valid[0]);
     }
 
     // Reset input value to allow selecting the same file again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [onFileSelect, maxSize]);
+  }, [onFileSelect, onFilesSelect, maxSize, disabled, onError]);
 
   const handleClick = useCallback(() => {
     if (!disabled && fileInputRef.current) {
@@ -46,16 +60,20 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       <input
         ref={fileInputRef}
         type="file"
+        id={inputId}
+        multiple={multiple}
         accept={accept}
         onChange={handleFileChange}
         style={{ display: 'none' }}
         disabled={disabled}
       />
       <button
+        type="button"
         onClick={handleClick}
         disabled={disabled}
         className="fusioni-btn fusioni-btn-icon"
-        title="Upload file"
+        title={label}
+        aria-label={label}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path

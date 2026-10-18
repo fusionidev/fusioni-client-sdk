@@ -21,6 +21,7 @@ export interface Conversation {
   created?: Date | null;
   updated?: Date | null;
   messages?: FusioniMemoryMessage[] | null;
+  conversation_profile_id?: string | null;
 }
 
 export interface FusioniMemoryMessage {
@@ -84,6 +85,7 @@ export interface PipelineRequest {
   agency_id: string;
   inp?: string | null;
   image?: string | ArrayBuffer | null;
+  images?: string[];
   audio?: string | ArrayBuffer | null;
   message_id?: string | null;
   agent_id?: string | null;
@@ -102,6 +104,7 @@ export interface PipelineResponse {
   error_message?: string | null;
   extra_data?: Record<string, any> | null;
   execution_time_ms?: number | null;
+  output_variables?: Record<string, unknown>[] | null;
 }
 
 // SDK Configuration
@@ -157,6 +160,8 @@ export interface MessageProps {
   currentLanguage?: 'en' | 'el';
   /** Opens full-screen gallery (fusioni-web parity with `ImageGalleryComponent`) */
   onOpenGallery?: (payload: { images: string[]; index: number }) => void;
+  /** Optional media-filtered links supplied by an action transcript. */
+  urlPreviewUrls?: string[];
 }
 
 export interface ConversationListProps {
@@ -181,6 +186,17 @@ export interface ChatInputProps {
   maxFileSize?: number;
   allowedFileTypes?: string[];
   currentLanguage?: 'en' | 'el';
+  /** Controlled draft for profile forms; ordinary chat inputs remain uncontrolled. */
+  value?: string;
+  onValueChange?: (value: string) => void;
+  clearOnSend?: boolean;
+  inputId?: string;
+  ariaLabel?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
+  maxAttachments?: number;
+  onAttachmentsChange?: (images: string[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
 // Event types
