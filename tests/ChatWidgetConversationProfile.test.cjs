@@ -43,4 +43,31 @@ describe('chat widget conversation profile', () => {
     });
     expect(pipeline.executePipelineAsync).toHaveBeenCalledWith(expect.objectContaining({conversation_id: 'conversation-1'}));
   });
+  it('serializes the assigned profile in the actual HTTP conversation creation body', async () => {
+    const client = new api.ApiClient('/api', 'test-token');
+    const requests = [];
+    client.client.defaults.adapter = async config => {
+      requests.push({url: config.url, method: config.method, body: config.data ? JSON.parse(config.data) : undefined});
+      const data = config.url === '/sdk-client/agency/website'
+        ? {conversation_profile_id: 'server-profile'}
+        : config.url === '/conversation' ? 'conversation-1' : [];
+      return {data, status: 200, statusText: 'OK', headers: {}, config};
+    };
+    jest.spyOn(api, 'getApiClient').mockReturnValue(client);
+    conversations.getConversationService.mockReturnValue(new conversations.LocalConversationService(
+      new conversations.RemoteConversationService(client),
+    ));
+    await act(async () => root.render(React.createElement(ChatWidget, {
+      config: {agencyId: 'agency', apiBaseUrl: '/api', showConversationList: false},
+    })));
+    await act(async () => container.querySelector('.fusioni-chat-welcome button').click());
+    expect(requests.filter(request => request.method === 'post')).toEqual([]);
+    await act(async () => container.querySelector('[data-send]').click());
+    expect(requests.find(request => request.method === 'post' && request.url === '/conversation')).toEqual({
+      url: '/conversation', method: 'post', body: {
+        title: expect.any(String), agency_id: 'agency', conversation_profile_id: 'server-profile',
+      },
+    });
+  });
+
 });
