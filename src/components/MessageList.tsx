@@ -32,6 +32,7 @@ interface MessageListProps {
   apiBaseUrl?: string;
   apiKey?: string;
   agencyId: string;
+  conversationProfileId?: string | null;
   ownerId?: string;
   currentLanguage?: 'en' | 'el';
   theme?: 'light' | 'dark';
@@ -147,6 +148,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   apiBaseUrl,
   apiKey,
   agencyId,
+  conversationProfileId,
   ownerId,
   currentLanguage = 'en',
   theme = 'light',
@@ -263,15 +265,16 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [conversationId, messages, scrollToBottom, streamMessages]);
 
   useEffect(() => {
-    if (!agencyId) {
-      setSuggestions([]);
+    setSuggestions([]);
+    if (!agencyId || !conversationProfileId) {
       return;
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
     getActionService()
-      .findEnabledByAgencyId(agencyId)
+      .findByConversationProfileId(agencyId, conversationProfileId, controller.signal)
       .then((actions) => {
         if (cancelled) {
           return;
@@ -282,16 +285,18 @@ export const MessageList: React.FC<MessageListProps> = ({
         setSuggestions(items);
       })
       .catch((error) => {
-        console.error('Failed to load action suggestions:', error);
         if (!cancelled) {
+          console.error('Failed to load action suggestions:', error);
           setSuggestions([]);
         }
       });
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [agencyId, currentLanguage]);
+    // Reload when the SDK client switches conversation profiles.
+  }, [agencyId, conversationProfileId, currentLanguage]);
 
   const defaultSuggestions = useMemo((): ActionSuggestion[] => [
     {

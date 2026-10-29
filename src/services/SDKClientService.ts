@@ -5,6 +5,7 @@ export interface SDKClientResponse {
   id?: string;
   website_url?: string;
   agency_id?: string;
+  conversation_profile_id?: string | null;
   theme?: 'light' | 'dark' | 'auto' | null;
   show_theme_toggle?: boolean;
   show_fullscreen_toggle?: boolean;
@@ -51,6 +52,7 @@ export class SDKClientService {
 
     return {
       ...userConfig,
+      conversationProfileId: serverConfig.conversation_profile_id ?? null,
       // Journey messages created through the SDK are owned by the SDK client
       // record. Preserve its id so MessageList can apply the same owner-id
       // comparison used by fusion-web's MemoryService.isMessageOwner().

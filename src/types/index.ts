@@ -114,6 +114,8 @@ export interface FusioniSDKConfig {
   accessToken?: string;
   /** Current user's Fusion owner id. When omitted, the SDK reads `oid` from a JWT access token. */
   ownerId?: string;
+  /** Conversation profile used to scope the chat widget action suggestions. */
+  conversationProfileId?: string | null;
   theme?: 'light' | 'dark' | 'auto';
   showThemeToggle?: boolean;
   showFullscreenToggle?: boolean;

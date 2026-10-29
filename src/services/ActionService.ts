@@ -107,6 +107,14 @@ export class ActionService {
     });
   }
 
+  async findByConversationProfileId(agencyId: string, conversationProfileId: string, signal?: AbortSignal): Promise<Action[]> {
+    if (!agencyId || !conversationProfileId?.trim()) return [];
+    return (await this.getApiClient().get<Action[]>('/action/by_conversation_profile', {
+      params: {agency_id: agencyId, conversation_profile_id: conversationProfileId},
+      signal,
+    })) || [];
+  }
+
   async findEnabledByAgencyId(agencyId: string): Promise<Action[]> {
     const apiClient = this.getApiClient();
     return await apiClient.get<Action[]>('/action/enabled', {

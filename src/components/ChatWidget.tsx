@@ -1107,6 +1107,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                     apiBaseUrl={mergedConfig.apiBaseUrl}
                     apiKey={mergedConfig.accessToken}
                     agencyId={mergedConfig.agencyId}
+                    conversationProfileId={mergedConfig.conversationProfileId}
                     ownerId={currentOwnerId}
                     currentLanguage={currentLanguage}
                     theme={theme}
