@@ -495,6 +495,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       id: null,
       title: t('chat.conversations.newConversation'),
       agency_id: mergedConfig.agencyId,
+      ...(mergedConfig.conversationProfileId ? {conversation_profile_id: mergedConfig.conversationProfileId} : {}),
       messages: []
     };
 
@@ -661,14 +662,17 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       // If this is a new conversation (null ID), create it on the server first
       if (!conversationId) {
         const conversationService = getConversationService();
+        const conversationProfileId = currentConversation.conversation_profile_id || mergedConfig.conversationProfileId;
         conversationId = await conversationService.createConversation({
           title: t('chat.conversations.newConversation'),
           agency_id: mergedConfig.agencyId,
+          ...(conversationProfileId ? {conversation_profile_id: conversationProfileId} : {}),
         });
 
         // Update the conversation with the real server ID
         const updatedConversation = {
           ...currentConversation,
+          ...(conversationProfileId ? {conversation_profile_id: conversationProfileId} : {}),
           id: conversationId
         };
         

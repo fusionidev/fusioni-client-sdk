@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FusioniMemoryMessage } from '../types';
 import { PortalContainerContext } from '../context/PortalContainerContext';
@@ -298,26 +298,6 @@ export const MessageList: React.FC<MessageListProps> = ({
     // Reload when the SDK client switches conversation profiles.
   }, [agencyId, conversationProfileId, currentLanguage]);
 
-  const defaultSuggestions = useMemo((): ActionSuggestion[] => [
-    {
-      id: 'default-suggestion-1',
-      label: t('chat.emptyState.suggestionOne'),
-      prompt: t('chat.emptyState.suggestionOne'),
-    },
-    {
-      id: 'default-suggestion-2',
-      label: t('chat.emptyState.suggestionTwo'),
-      prompt: t('chat.emptyState.suggestionTwo'),
-    },
-    {
-      id: 'default-suggestion-3',
-      label: t('chat.emptyState.suggestionThree'),
-      prompt: t('chat.emptyState.suggestionThree'),
-    },
-  ], [t]);
-
-  const displaySuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
-
   const formatDate = (date: Date): string => {
     const now = new Date();
     const diffInMilliseconds = now.getTime() - new Date(date).getTime();
@@ -457,8 +437,8 @@ export const MessageList: React.FC<MessageListProps> = ({
               </div>
               <h3>{t('chat.emptyState.title')}</h3>
               <p>{t('chat.emptyState.description')}</p>
-              <div className="fusioni-empty-suggestions" role="list" aria-label={t('chat.emptyState.suggestionsLabel')}>
-                {displaySuggestions.map((suggestion, index) => (
+              {suggestions.length > 0 && <div className="fusioni-empty-suggestions" role="list" aria-label={t('chat.emptyState.suggestionsLabel')}>
+                {suggestions.map((suggestion, index) => (
                   <button
                     key={suggestion.id ?? `action-suggestion-${index}`}
                     type="button"
@@ -470,7 +450,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                     {suggestion.label}
                   </button>
                 ))}
-              </div>
+              </div>}
             </div>
           </div>
         ) : (

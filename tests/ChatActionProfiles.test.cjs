@@ -57,6 +57,17 @@ describe('chat action suggestions', () => {
     await render('profile'); expect(container.textContent).toContain('Book');
     await render(null); expect(container.textContent).not.toContain('Book'); expect(all).not.toHaveBeenCalled();
   });
+  it('hides the suggestions section when the server returns no actions', async () => {
+    await render('profile'); expect(container.querySelector('.fusioni-empty-suggestions')).not.toBeNull();
+    find.mockResolvedValueOnce([]); await render('empty-profile');
+    expect(container.querySelector('.fusioni-empty-suggestions')).toBeNull();
+    expect(container.querySelector('.fusioni-empty-suggestion-chip')).toBeNull();
+  });
+  it('hides the suggestions section when no profile is assigned or all actions are disabled', async () => {
+    await render(null); expect(container.querySelector('.fusioni-empty-suggestions')).toBeNull();
+    find.mockResolvedValueOnce([action('Disabled', false)]); await render('profile');
+    expect(container.querySelector('.fusioni-empty-suggestions')).toBeNull();
+  });
   it('ignores responses for a previous profile', async () => {
     let resolve;
     find.mockReturnValueOnce(new Promise(yes => {resolve = yes;}));
