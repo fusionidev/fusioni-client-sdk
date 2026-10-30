@@ -1135,6 +1135,17 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                     allowedFileTypes={mergedConfig.allowedFileTypes || ['image/*']}
                     currentLanguage={currentLanguage}
                   />
+                  <div className="fusioni-chat-powered-by">
+                    Powered by{' '}
+                    <a
+                      href="https://fusioni.ai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Fusioni Platform (opens in a new window)"
+                    >
+                      Fusioni Platform
+                    </a>
+                  </div>
                 </>
               ) : (
                 <div className="fusioni-chat-welcome">

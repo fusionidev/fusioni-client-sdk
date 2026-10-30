@@ -796,6 +796,7 @@
   align-items: center;
   justify-content: center;
   color: white;
+  background: var(--fusioni-primary);
   box-shadow: var(--fusioni-shadow-md);
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
@@ -2961,11 +2962,7 @@
   justify-content: center;
   overflow: hidden;
   box-shadow: var(--fusioni-shadow-lg);
-  background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
-}
-
-.fusioni-chat-widget.dark .fusioni-stream-message-logo-frame {
-  background: linear-gradient(to bottom right, #1f2937, #111827);
+  background: var(--fusioni-primary);
 }
 
 .fusioni-stream-message-logo-img {
@@ -4274,9 +4271,7 @@
   width: 60px;
   height: 60px;
   border: 1px solid color-mix(in srgb, var(--fusioni-primary) 28%, #fff);
-  background:
-    radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.34), transparent 34%),
-    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 94%, #fff), var(--fusioni-primary-dark));
+  background: var(--primary-color, var(--fusioni-primary));
   box-shadow: 0 18px 36px color-mix(in srgb, var(--fusioni-primary) 26%, transparent), 0 10px 24px rgb(16 24 40 / 0.18);
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
   z-index: 1000;
@@ -4284,9 +4279,7 @@
 }
 
 .fusioni-floating-button:hover {
-  background:
-    radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.4), transparent 34%),
-    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 90%, #fff), var(--fusioni-primary-dark));
+  background: var(--primary-color, var(--fusioni-primary));
   transform: translateY(-2px);
   box-shadow: 0 20px 44px color-mix(in srgb, var(--fusioni-primary) 30%, transparent), 0 14px 28px rgb(16 24 40 / 0.2);
 }
@@ -4302,9 +4295,7 @@
 .fusioni-floating-button-glass,
 .fusioni-floating-button-minimal,
 .fusioni-floating-button-solid {
-  background:
-    radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.34), transparent 34%),
-    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 94%, #fff), var(--fusioni-primary-dark));
+  background: var(--primary-color, var(--fusioni-primary));
 }
 
 .fusioni-floating-button-glass .fusioni-floating-button-icon,
@@ -4764,9 +4755,7 @@
   height: 76px;
   margin: 0 auto 1.125rem;
   border-radius: 22px;
-  background:
-    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.9), transparent 38%),
-    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 12%, #fff), var(--fusioni-bg-primary));
+  background: var(--fusioni-primary);
   border: 1px solid color-mix(in srgb, var(--fusioni-primary) 18%, var(--fusioni-border));
   box-shadow: 0 16px 34px rgb(16 24 40 / 0.1);
 }
@@ -4883,9 +4872,6 @@
 }
 
 .fusioni-chat-widget.dark .fusioni-empty-icon-frame {
-  background:
-    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.13), transparent 38%),
-    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 15%, var(--fusioni-bg-secondary)), var(--fusioni-bg-primary));
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.24);
 }
 
@@ -5146,6 +5132,33 @@
   right: 1rem;
   height: 1px;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fusioni-primary) 18%, var(--fusioni-border)), transparent);
+}
+
+.fusioni-chat-powered-by {
+  flex-shrink: 0;
+  padding: 0 1rem 0.75rem;
+  background: var(--fusioni-bg-primary);
+  color: var(--fusioni-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.fusioni-chat-powered-by a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fusioni-chat-powered-by a:hover {
+  color: var(--fusioni-text-primary);
+}
+
+.fusioni-chat-powered-by a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .fusioni-input-container {
@@ -5683,6 +5696,10 @@
   color: var(--fusioni-secondary);
   box-shadow: 0 1px 2px rgb(16 24 40 / 0.06);
   overflow: hidden;
+}
+
+.fusioni-chat-widget .fusioni-message-avatar.fusioni-message-assistant-avatar {
+  background: var(--fusioni-primary);
 }
 
 .fusioni-message-avatar img,
