@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Position } from '../types';
+import { resolveIconColor, safeSvg } from './ActionIcon';
 
 interface FloatingButtonProps {
   isOpen: boolean;
   onClick: () => void;
   position?: Position;
   primaryColor?: string;
+  icon?: string | null;
+  iconColor?: string | null;
   buttonRef?: React.RefObject<HTMLButtonElement>;
   showNotification?: boolean;
   notificationCount?: number;
@@ -18,6 +21,8 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
   onClick,
   position = 'bottom-right',
   primaryColor = '#6366f1',
+  icon,
+  iconColor,
   buttonRef,
   showNotification = false,
   notificationCount = 0,
@@ -28,6 +33,8 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [showAttentionSequence, setShowAttentionSequence] = useState(false);
   const [isAttentionActive, setIsAttentionActive] = useState(false);
+  const color = resolveIconColor(iconColor);
+  const customIcon = useMemo(() => safeSvg(icon, !!color), [icon, color]);
 
   useEffect(() => {
     const entranceTimer = setTimeout(() => {
@@ -121,6 +128,7 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className="fusioni-floating-button-icon"
+            style={{ color }}
           >
             <path
               d="M18 6L6 18M6 6L18 18"
@@ -130,6 +138,13 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
               strokeLinejoin="round"
             />
           </svg>
+        ) : customIcon ? (
+          <span
+            className="fusioni-floating-button-icon fusioni-floating-button-custom-icon"
+            style={{ color }}
+            aria-hidden="true"
+            dangerouslySetInnerHTML={{ __html: customIcon }}
+          />
         ) : (
           <svg
             width="32"
@@ -138,6 +153,7 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className="fusioni-floating-button-icon"
+            style={{ color }}
           >
             <path
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"

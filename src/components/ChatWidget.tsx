@@ -966,6 +966,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
         onClick={handleToggleChat}
         position={mergedConfig.position || 'bottom-right'}
         primaryColor={mergedConfig.primaryColor}
+        icon={mergedConfig.icon}
+        iconColor={mergedConfig.iconColor}
         buttonRef={floatingButtonRef}
         variant={mergedConfig.buttonVariant || 'glass'}
         shouldDisplay={!hasConfigError && (!isMobileLayout || !isOpen)}
@@ -994,6 +996,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                          onCreateConversation={handleCreateConversation}
                          isOpen={isConversationListOpen}
                          currentLanguage={currentLanguage}
+                         botIcon={mergedConfig.icon}
+                         botIconColor={mergedConfig.iconColor}
                        />
               </>
             )}
@@ -1117,6 +1121,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                     theme={theme}
                     onSuggestionClick={(prompt) => handleSendMessage(prompt)}
                     onMessageFeedback={handleMessageFeedback}
+                    botIcon={mergedConfig.icon}
+                    botIconColor={mergedConfig.iconColor}
                   />
                   <ChatInput
                     onSendMessage={handleSendMessage}

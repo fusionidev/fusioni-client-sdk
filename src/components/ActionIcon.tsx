@@ -1,5 +1,6 @@
 import React, {useMemo} from 'react';
 import type {ActionExecutionState} from '../types/actionButtons';
+import {FUSIONI_LOGO_BASE64} from '../assets/logo-base64';
 
 const colors: Record<string, string> = {
   'text-blue-500': '#3b82f6', 'text-emerald-500': '#10b981', 'text-amber-500': '#f59e0b',
@@ -32,7 +33,10 @@ const paths: Record<string, string> = {
   iconoirPlay: 'm8 4 12 8-12 8Z', iconoirPause: 'M7 4v16M17 4v16', iconoirSquare: 'M4 4h16v16H4Z',
 };
 
-function safeSvg(source?: string | null): string | null {
+export const resolveIconColor = (color?: string | null): string | undefined =>
+  color?.trim() ? colors[color.trim()] || color.trim() : undefined;
+
+export function safeSvg(source?: string | null, tint = false): string | null {
   if (!source?.includes('<svg') || typeof DOMParser === 'undefined') return null;
   const doc = new DOMParser().parseFromString(source.replace(/^```(?:svg)?\s*/i, '').replace(/\s*```$/, ''), 'text/html');
   const svg = doc.querySelector('svg');
@@ -43,8 +47,12 @@ function safeSvg(source?: string | null): string | null {
     if (!tags.has(el.tagName.toLowerCase())) { el.remove(); continue; }
     for (const attr of Array.from(el.attributes)) {
       if (!attributes.has(attr.name.toLowerCase()) || /url\s*\(/i.test(attr.value)) el.removeAttribute(attr.name);
+      else if (tint && ['fill', 'stroke'].includes(attr.name.toLowerCase()) && attr.value.trim().toLowerCase() !== 'none') {
+        el.setAttribute(attr.name, 'currentColor');
+      }
     }
   }
+  if (tint && !svg.hasAttribute('fill')) svg.setAttribute('fill', 'currentColor');
   return svg.outerHTML;
 }
 
@@ -54,4 +62,39 @@ export const ActionIcon: React.FC<{icon?: string | null; color?: string | null; 
   if (state === 'idle' && svg) return <span className="fusioni-action-custom-icon" aria-hidden="true" style={{color: colors[color || ''] || colors['text-blue-500']}} dangerouslySetInnerHTML={{__html: svg}} />;
   const path = state === 'success' ? 'm5 12 4 4L19 6' : state === 'error' ? 'm6 6 12 12M18 6 6 18' : paths[icon || ''] || paths.iconoirMessage;
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={state === 'idle' ? colors[color || ''] || colors['text-blue-500'] : 'currentColor'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path} /></svg>;
+};
+
+const isImageIcon = (icon: string): boolean => /^(https?:|data:image\/|\/)/i.test(icon);
+
+/** Chatbot bot mark: a generated SVG, a theme icon, an image, or the default logo. */
+export const BotIcon: React.FC<{
+  icon?: string | null;
+  color?: string | null;
+  className?: string;
+  size?: number;
+}> = ({icon, color, className, size = 32}) => {
+  const value = icon?.trim() || '';
+  const svg = useMemo(() => safeSvg(value), [value]);
+  if (!value || isImageIcon(value)) {
+    return <img className={className} src={value || FUSIONI_LOGO_BASE64} alt="" width={size} height={size} />;
+  }
+  const stroke = colors[color || ''] || colors['text-blue-500'];
+  if (svg) {
+    return (
+      <span
+        className={`fusioni-bot-icon ${className || ''}`}
+        style={{color: stroke, width: size, height: size}}
+        dangerouslySetInnerHTML={{__html: svg}}
+      />
+    );
+  }
+  const path = paths[value];
+  if (!path) {
+    return <img className={className} src={FUSIONI_LOGO_BASE64} alt="" width={size} height={size} />;
+  }
+  return (
+    <svg className={`fusioni-bot-icon ${className || ''}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={path} />
+    </svg>
+  );
 };

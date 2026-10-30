@@ -20,6 +20,8 @@ export interface SDKClientResponse {
   allowed_file_types?: string[] | null;
   language?: 'en' | 'el';
   button_variant?: 'minimal' | 'glass' | 'solid';
+  icon?: string | null;
+  icon_color?: string | null;
 }
 
 export class SDKClientService {
@@ -100,6 +102,12 @@ export class SDKClientService {
       buttonVariant: serverConfig.button_variant !== undefined 
         ? serverConfig.button_variant 
         : userConfig.buttonVariant,
+      icon: serverConfig.icon?.trim()
+        ? serverConfig.icon
+        : userConfig.icon,
+      iconColor: serverConfig.icon_color?.trim()
+        ? serverConfig.icon_color
+        : userConfig.iconColor,
     };
   }
 }

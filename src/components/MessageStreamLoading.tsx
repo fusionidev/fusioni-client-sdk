@@ -1,16 +1,20 @@
 import React from 'react';
 import {Spotlight} from './Spotlight';
-import {FUSIONI_LOGO_BASE64} from '../assets/logo-base64';
+import {BotIcon} from './ActionIcon';
 
 export interface MessageStreamLoadingProps {
     streamMessages: string[];
     loadingLabel: string;
+    botIcon?: string | null;
+    botIconColor?: string | null;
 }
 
 /** Logo + Spotlight: SSE stream lines, or loading label until first stream event */
 export const MessageStreamLoading: React.FC<MessageStreamLoadingProps> = ({
     streamMessages,
     loadingLabel,
+    botIcon,
+    botIconColor,
 }) => {
     const lines = streamMessages.length > 0 ? streamMessages : [loadingLabel];
 
@@ -23,12 +27,11 @@ export const MessageStreamLoading: React.FC<MessageStreamLoadingProps> = ({
                 >
                     <div className="fusioni-stream-message-logo-wrap">
                         <div className="fusioni-stream-message-logo-frame">
-                            <img
+                            <BotIcon
                                 className="fusioni-stream-message-logo-img"
-                                src={FUSIONI_LOGO_BASE64}
-                                alt=""
-                                width={32}
-                                height={32}
+                                icon={botIcon}
+                                color={botIconColor}
+                                size={32}
                             />
                         </div>
                     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ConversationListProps } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
-import { FUSIONI_LOGO_BASE64 } from '../assets/logo-base64';
+import { BotIcon } from './ActionIcon';
 
 export const ConversationList: React.FC<ConversationListProps> = ({
   conversations,
@@ -12,7 +12,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   searchQuery = '',
   onSearchChange,
   isOpen = false,
-  currentLanguage = 'en'
+  currentLanguage = 'en',
+  botIcon,
+  botIconColor,
 }) => {
   const [searchTerm, setSearchTerm] = useState(searchQuery);
   const { t } = useTranslation(currentLanguage);
@@ -69,12 +71,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       <div className="fusioni-conversation-header">
         <div className="fusioni-conversation-title">
           <div className="fusioni-conversation-logo">
-            <img 
-              src={FUSIONI_LOGO_BASE64} 
-              alt="Fusioni Logo" 
-              width="32" 
-              height="32"
-            />
+            <BotIcon icon={botIcon} color={botIconColor} size={32} />
           </div>
           <div className="fusioni-conversation-info">
             <h3>{t('chat.title')}</h3>

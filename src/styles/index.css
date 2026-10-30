@@ -353,6 +353,13 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.fusioni-floating-button-custom-icon,
+.fusioni-floating-button-custom-icon > svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
 .fusioni-floating-button-glass .fusioni-floating-button-icon {
   color: var(--fusioni-text-primary);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
@@ -2968,6 +2975,30 @@
   padding: 4px;
   margin: 0;
   animation: fusioni-spin 1s linear infinite;
+}
+
+.fusioni-bot-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fusioni-bot-icon svg {
+  width: 70%;
+  height: 70%;
+  display: block;
+}
+
+.fusioni-message-avatar > .fusioni-bot-icon,
+.fusioni-empty-icon-frame > .fusioni-bot-icon,
+.fusioni-stream-message-logo-frame > .fusioni-bot-icon {
+  width: 100%;
+  height: 100%;
+}
+
+.fusioni-conversation-logo > .fusioni-bot-icon {
+  width: 32px;
+  height: 32px;
 }
 
 .fusioni-stream-message-spotlight {

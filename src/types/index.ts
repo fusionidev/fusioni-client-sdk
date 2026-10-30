@@ -130,6 +130,10 @@ export interface FusioniSDKConfig {
   allowedFileTypes?: string[];
   language?: 'en' | 'el';
   buttonVariant?: 'minimal' | 'glass' | 'solid';
+  /** SVG markup for the floating button; also used as the chatbot bot icon. */
+  icon?: string | null;
+  /** CSS color or theme color class for `icon`, such as `#2563eb` or `text-blue-500`. */
+  iconColor?: string | null;
 }
 
 // Component Props
@@ -176,6 +180,8 @@ export interface ConversationListProps {
   onSearchChange?: (query: string) => void;
   isOpen?: boolean;
   currentLanguage?: 'en' | 'el';
+  botIcon?: string | null;
+  botIconColor?: string | null;
 }
 
 export interface ChatInputProps {

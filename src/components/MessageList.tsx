@@ -7,7 +7,7 @@ import { MessageStreamLoading } from './MessageStreamLoading';
 import { ChatLoader } from './ChatLoader';
 import { useTranslation } from '../hooks/useTranslation';
 import { ImageGallery } from './ImageGallery';
-import { FUSIONI_LOGO_BASE64 } from '../assets/logo-base64';
+import { BotIcon } from './ActionIcon';
 import { ActionSuggestion, getActionService, toActionSuggestion } from '../services/ActionService';
 import { getAgentService } from '../services/AgentService';
 import {
@@ -38,15 +38,19 @@ interface MessageListProps {
   theme?: 'light' | 'dark';
   onSuggestionClick?: (prompt: string) => void;
   onMessageFeedback?: (messageId: string, like: -1 | 0 | 1) => void;
+  botIcon?: string | null;
+  botIconColor?: string | null;
 }
 
 interface MessageAvatarProps {
   message: FusioniMemoryMessage;
   agencyId: string;
   isOwnMessage: boolean;
+  botIcon?: string | null;
+  botIconColor?: string | null;
 }
 
-const MessageAvatar: React.FC<MessageAvatarProps> = ({ message, agencyId, isOwnMessage }) => {
+const MessageAvatar: React.FC<MessageAvatarProps> = ({ message, agencyId, isOwnMessage, botIcon, botIconColor }) => {
   const [agentAvatar, setAgentAvatar] = useState<string | null>(null);
   const owner = getMessageOwner(message);
   const agentId = typeof owner?.owner_id === 'string' ? owner.owner_id : '';
@@ -114,7 +118,7 @@ const MessageAvatar: React.FC<MessageAvatarProps> = ({ message, agencyId, isOwnM
 
   return (
     <div className="fusioni-message-avatar fusioni-message-assistant-avatar">
-      <img src={FUSIONI_LOGO_BASE64} alt="Fusioni" width="32" height="32" />
+      <BotIcon icon={botIcon} color={botIconColor} size={32} />
     </div>
   );
 };
@@ -154,6 +158,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   theme = 'light',
   onSuggestionClick,
   onMessageFeedback,
+  botIcon,
+  botIconColor,
 }) => {
   const { t } = useTranslation(currentLanguage);
   const portalContainer = useContext(PortalContainerContext);
@@ -427,11 +433,10 @@ export const MessageList: React.FC<MessageListProps> = ({
           <div className="fusioni-empty-messages">
             <div className="fusioni-empty-messages-content">
               <div className="fusioni-empty-icon-frame" aria-hidden="true">
-                <img
-                  src={FUSIONI_LOGO_BASE64}
-                  alt=""
-                  width="60"
-                  height="60"
+                <BotIcon
+                  icon={botIcon}
+                  color={botIconColor}
+                  size={50}
                   className="fusioni-empty-logo"
                 />
               </div>
@@ -468,7 +473,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 <div key={messageKey} className="fusioni-message-wrapper">
                   <div className={`fusioni-message ${isUser ? 'user' : 'assistant'}${isAgentMessage(message) ? ' agent' : ''}`}>
                     {!message.loading && !isUser && (
-                      <MessageAvatar message={message} agencyId={agencyId} isOwnMessage={false} />
+                      <MessageAvatar message={message} agencyId={agencyId} isOwnMessage={false} botIcon={botIcon} botIconColor={botIconColor} />
                     )}
 
                     <div className="fusioni-message-content">
@@ -493,6 +498,8 @@ export const MessageList: React.FC<MessageListProps> = ({
                             <MessageStreamLoading
                               streamMessages={streamMessages}
                               loadingLabel={t('chat.messages.loading')}
+                              botIcon={botIcon}
+                              botIconColor={botIconColor}
                             />
                           ) : (
                             <Message
