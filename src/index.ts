@@ -89,6 +89,7 @@ export type {
   FusioniPayload,
   
   // Configuration types
+  SDKClientLabel,
   FusioniSDKConfig,
   FusioniChatWidgetHandle,
   ChatWidgetProps,

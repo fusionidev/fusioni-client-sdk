@@ -955,10 +955,21 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     );
   }
 
+  const welcomeLabel = mergedConfig.labels?.find(label => label.language.trim().toLowerCase() === currentLanguage)
+    ?? mergedConfig.labels?.find(label => label.language.trim().toLowerCase() === 'en');
+
   return (
     <div 
       className={`fusioni-chat-widget ${theme}`}
-      style={{ '--primary-color': mergedConfig.primaryColor || '#6366f1' } as React.CSSProperties}
+      data-fusioni-custom-icon={
+        mergedConfig.icon?.trim() || mergedConfig.iconColor?.trim() || mergedConfig.iconBg?.trim()
+          ? 'true'
+          : undefined
+      }
+      style={{
+        '--primary-color': mergedConfig.primaryColor || '#6366f1',
+        '--fusioni-icon-bg': mergedConfig.iconBg?.trim() || undefined,
+      } as React.CSSProperties}
     >
       
       <FloatingButton
@@ -1150,8 +1161,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
               ) : (
                 <div className="fusioni-chat-welcome">
                   <div className="fusioni-chat-welcome-content">
-                    <h3>{t('chat.welcome.title')}</h3>
-                    <p>{t('chat.welcome.description')}</p>
+                    <h3>{welcomeLabel?.welcome_message?.trim() || t('chat.welcome.title')}</h3>
+                    <p>{welcomeLabel?.description?.trim() || t('chat.welcome.description')}</p>
                     <button 
                       onClick={handleCreateConversation}
                       disabled={isBusy}

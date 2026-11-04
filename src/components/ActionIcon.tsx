@@ -1,12 +1,16 @@
 import React, {useMemo} from 'react';
 import type {ActionExecutionState} from '../types/actionButtons';
 import {FUSIONI_LOGO_BASE64} from '../assets/logo-base64';
+import {safeSvg} from '../utils/svg';
+
+export {safeSvg} from '../utils/svg';
 
 const colors: Record<string, string> = {
   'text-blue-500': '#3b82f6', 'text-emerald-500': '#10b981', 'text-amber-500': '#f59e0b',
   'text-purple-500': '#a855f7', 'text-cyan-500': '#06b6d4', 'text-orange-500': '#f97316',
   'text-rose-500': '#f43f5e', 'text-pink-500': '#ec4899', 'text-indigo-500': '#6366f1',
   'text-red-500': '#ef4444', 'text-lime-500': '#84cc16', 'text-slate-500': '#64748b',
+  'text-white': '#ffffff',
 };
 const paths: Record<string, string> = {
   iconoirMessage: 'M21 11a8 8 0 0 1-8 8H3l2-5a8 8 0 1 1 16-3Z',
@@ -36,32 +40,14 @@ const paths: Record<string, string> = {
 export const resolveIconColor = (color?: string | null): string | undefined =>
   color?.trim() ? colors[color.trim()] || color.trim() : undefined;
 
-export function safeSvg(source?: string | null, tint = false): string | null {
-  if (!source?.includes('<svg') || typeof DOMParser === 'undefined') return null;
-  const doc = new DOMParser().parseFromString(source.replace(/^```(?:svg)?\s*/i, '').replace(/\s*```$/, ''), 'text/html');
-  const svg = doc.querySelector('svg');
-  if (!svg) return null;
-  const tags = new Set(['svg', 'g', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse', 'title']);
-  const attributes = new Set(['viewbox', 'd', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'points', 'transform', 'opacity']);
-  for (const el of [svg, ...Array.from(svg.querySelectorAll('*'))]) {
-    if (!tags.has(el.tagName.toLowerCase())) { el.remove(); continue; }
-    for (const attr of Array.from(el.attributes)) {
-      if (!attributes.has(attr.name.toLowerCase()) || /url\s*\(/i.test(attr.value)) el.removeAttribute(attr.name);
-      else if (tint && ['fill', 'stroke'].includes(attr.name.toLowerCase()) && attr.value.trim().toLowerCase() !== 'none') {
-        el.setAttribute(attr.name, 'currentColor');
-      }
-    }
-  }
-  if (tint && !svg.hasAttribute('fill')) svg.setAttribute('fill', 'currentColor');
-  return svg.outerHTML;
-}
-
 export const ActionIcon: React.FC<{icon?: string | null; color?: string | null; state: ActionExecutionState}> = ({icon, color, state}) => {
-  const svg = useMemo(() => safeSvg(icon), [icon]);
+  const resolvedColor = resolveIconColor(color);
+  const useCurrentColor = !!resolvedColor;
+  const svg = useMemo(() => safeSvg(icon, useCurrentColor), [icon, useCurrentColor]);
   if (state === 'loading') return <span className="fusioni-spinner" aria-hidden="true" />;
-  if (state === 'idle' && svg) return <span className="fusioni-action-custom-icon" aria-hidden="true" style={{color: colors[color || ''] || colors['text-blue-500']}} dangerouslySetInnerHTML={{__html: svg}} />;
+  if (state === 'idle' && svg) return <span className="fusioni-action-custom-icon" aria-hidden="true" style={{color: resolvedColor || colors['text-blue-500']}} dangerouslySetInnerHTML={{__html: svg}} />;
   const path = state === 'success' ? 'm5 12 4 4L19 6' : state === 'error' ? 'm6 6 12 12M18 6 6 18' : paths[icon || ''] || paths.iconoirMessage;
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={state === 'idle' ? colors[color || ''] || colors['text-blue-500'] : 'currentColor'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path} /></svg>;
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={state === 'idle' ? resolvedColor || colors['text-blue-500'] : 'currentColor'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path} /></svg>;
 };
 
 const isImageIcon = (icon: string): boolean => /^(https?:|data:image\/|\/)/i.test(icon);
@@ -74,11 +60,12 @@ export const BotIcon: React.FC<{
   size?: number;
 }> = ({icon, color, className, size = 32}) => {
   const value = icon?.trim() || '';
-  const svg = useMemo(() => safeSvg(value), [value]);
+  const stroke = resolveIconColor(color) || colors['text-blue-500'];
+  const useCurrentColor = !!color?.trim();
+  const svg = useMemo(() => safeSvg(value, useCurrentColor), [value, useCurrentColor]);
   if (!value || isImageIcon(value)) {
     return <img className={className} src={value || FUSIONI_LOGO_BASE64} alt="" width={size} height={size} />;
   }
-  const stroke = colors[color || ''] || colors['text-blue-500'];
   if (svg) {
     return (
       <span

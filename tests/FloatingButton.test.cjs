@@ -23,24 +23,28 @@ const render = props => act(() => root.render(React.createElement(FloatingButton
 })));
 
 it('renders the server SVG with its configured color and strips active content', () => {
-  const config = new SDKClientService().mergeConfig({agencyId: 'agency'}, {
+  const config = new SDKClientService().mergeConfig({agencyId: 'agency', primaryColor: '#6366f1', iconBg: '#ffffff'}, {
     icon: '<svg viewBox="0 0 24 24" fill="none" onload="alert(1)"><script>alert(1)</script><path d="M2 2h20" stroke="#000" onclick="alert(1)"/><circle cx="12" cy="12" r="3" fill="red"/><foreignObject><div>unsafe</div></foreignObject></svg>',
     icon_color: '#12ab34',
+    icon_bg: '#102030',
   });
   render(config);
   const icon = container.querySelector('.fusioni-floating-button-custom-icon');
   expect(icon.style.color).toBe('rgb(18, 171, 52)');
+  expect(config.iconBg).toBe('#102030');
+  expect(container.querySelector('button').style.getPropertyValue('--fusioni-icon-bg')).toBe('');
+  expect(container.querySelector('button').style.getPropertyValue('--primary-color')).toBe('#6366f1');
   expect(icon.querySelector('svg').getAttribute('viewBox')).toBe('0 0 24 24');
   expect(icon.querySelector('svg').getAttribute('fill')).toBe('none');
-  expect(icon.querySelector('path').getAttribute('stroke')).toBe('currentColor');
-  expect(icon.querySelector('circle').getAttribute('fill')).toBe('currentColor');
+  expect(icon.querySelector('path').getAttribute('stroke')).toBe('#000');
+  expect(icon.querySelector('circle').getAttribute('fill')).toBe('red');
   expect(icon.querySelector('script, foreignObject, [onload], [onclick]')).toBeNull();
 });
 
 it.each([undefined, null, '', '   ', 'not an svg'])('keeps the default chat icon for %p', icon => {
   render({icon, iconColor: 'text-emerald-500'});
   expect(container.querySelector('.fusioni-floating-button-custom-icon')).toBeNull();
-  expect(container.querySelector('.fusioni-floating-button-icon').getAttribute('width')).toBe('32');
+  expect(container.querySelector('.fusioni-floating-button-icon').getAttribute('width')).toBe('36');
   expect(container.querySelector('.fusioni-floating-button-icon').style.color).toBe('rgb(16, 185, 129)');
   expect(container.querySelector('button').getAttribute('aria-label')).toBe('Open chat');
 });

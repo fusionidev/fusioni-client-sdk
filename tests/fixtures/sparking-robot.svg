@@ -1,0 +1,23 @@
+<svg viewBox="2.36 -1.14 44.28 44.28" fill-rule="evenodd" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <title>Sparking Robot</title>
+  <defs>
+    <linearGradient id="grad-body" x1="24" y1="14" x2="24" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="currentColor"/>
+      <stop offset="1" stop-color="currentColor" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="24" cy="43" rx="14" ry="3" fill="#000" fill-opacity="0.15"/>
+  <path d="M22 4h4v6h-4z" fill="currentColor" fill-opacity="0.6"/>
+  <circle cx="24" cy="5" r="3" fill="currentColor"/>
+  <path d="M8 14C8 11.7909 9.79086 10 12 10H36C38.2091 10 40 11.7909 40 14V34C40 37.3137 37.3137 40 34 40H14C10.6863 40 8 37.3137 8 34V14Z" fill="url(#grad-body)"/>
+  <path d="M12 15C12 13.8954 12.8954 13 14 13H34C35.1046 13 36 13.8954 36 15V27C36 28.1046 35.1046 29 34 29H14C12.8954 29 12 28.1046 12 27V15Z" fill="#000" fill-opacity="0.2"/>
+  <rect x="16" y="17" width="6" height="6" rx="1" fill="#fff"/>
+  <rect x="26" y="17" width="6" height="6" rx="1" fill="#fff"/>
+  <rect x="18" y="19" width="2" height="2" fill="currentColor"/>
+  <rect x="28" y="19" width="2" height="2" fill="currentColor"/>
+  <path d="M16 33h2v3h-2zM20 33h2v3h-2zM24 33h2v3h-2zM28 33h2v3h-2zM32 33h2v3h-2z" fill="#fff" fill-opacity="0.4"/>
+  <path d="M40 6L41.5 9.5L45 11L41.5 12.5L40 16L38.5 12.5L35 11L38.5 9.5L40 6Z" fill="currentColor"/>
+  <path d="M7 18L8 20L10 21L8 22L7 24L6 22L4 21L6 20L7 18Z" fill="currentColor" fill-opacity="0.8"/>
+  <path d="M5 18h3v8H5z" fill="currentColor" fill-opacity="0.5"/>
+  <path d="M40 18h3v8h-3z" fill="currentColor" fill-opacity="0.5"/>
+</svg>

@@ -108,6 +108,12 @@ export interface PipelineResponse {
 }
 
 // SDK Configuration
+export interface SDKClientLabel {
+  language: string;
+  welcome_message?: string | null;
+  description?: string | null;
+}
+
 export interface FusioniSDKConfig {
   apiBaseUrl: string;
   agencyId: string;
@@ -129,11 +135,15 @@ export interface FusioniSDKConfig {
   maxFileSize?: number; // in MB
   allowedFileTypes?: string[];
   language?: 'en' | 'el';
+  /** Welcome panel text per language, falling back to English when no language matches. */
+  labels?: SDKClientLabel[] | null;
   buttonVariant?: 'minimal' | 'glass' | 'solid';
   /** SVG markup for the floating button; also used as the chatbot bot icon. */
   icon?: string | null;
   /** CSS color or theme color class for `icon`, such as `#2563eb` or `text-blue-500`. */
   iconColor?: string | null;
+  /** Background color for chatbot icon frames inside the chat. */
+  iconBg?: string | null;
 }
 
 // Component Props

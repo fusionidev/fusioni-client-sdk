@@ -34,7 +34,8 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
   const [showAttentionSequence, setShowAttentionSequence] = useState(false);
   const [isAttentionActive, setIsAttentionActive] = useState(false);
   const color = resolveIconColor(iconColor);
-  const customIcon = useMemo(() => safeSvg(icon, !!color), [icon, color]);
+  const useCurrentColor = !!color;
+  const customIcon = useMemo(() => safeSvg(icon, useCurrentColor), [icon, useCurrentColor]);
 
   useEffect(() => {
     const entranceTimer = setTimeout(() => {
@@ -147,8 +148,8 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
           />
         ) : (
           <svg
-            width="32"
-            height="32"
+            width="36"
+            height="36"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"

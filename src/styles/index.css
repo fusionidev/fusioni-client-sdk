@@ -356,8 +356,8 @@
 .fusioni-floating-button-custom-icon,
 .fusioni-floating-button-custom-icon > svg {
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
 }
 
 .fusioni-floating-button-glass .fusioni-floating-button-icon {
@@ -796,7 +796,6 @@
   align-items: center;
   justify-content: center;
   color: white;
-  background: var(--fusioni-primary);
   box-shadow: var(--fusioni-shadow-md);
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
@@ -2962,7 +2961,11 @@
   justify-content: center;
   overflow: hidden;
   box-shadow: var(--fusioni-shadow-lg);
-  background: var(--fusioni-primary);
+  background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+}
+
+.fusioni-chat-widget.dark .fusioni-stream-message-logo-frame {
+  background: linear-gradient(to bottom right, #1f2937, #111827);
 }
 
 .fusioni-stream-message-logo-img {
@@ -2981,8 +2984,8 @@
 }
 
 .fusioni-bot-icon svg {
-  width: 70%;
-  height: 70%;
+  width: 85%;
+  height: 85%;
   display: block;
 }
 
@@ -4755,7 +4758,9 @@
   height: 76px;
   margin: 0 auto 1.125rem;
   border-radius: 22px;
-  background: var(--fusioni-primary);
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.9), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 12%, #fff), var(--fusioni-bg-primary));
   border: 1px solid color-mix(in srgb, var(--fusioni-primary) 18%, var(--fusioni-border));
   box-shadow: 0 16px 34px rgb(16 24 40 / 0.1);
 }
@@ -4872,6 +4877,9 @@
 }
 
 .fusioni-chat-widget.dark .fusioni-empty-icon-frame {
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.13), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--fusioni-primary) 15%, var(--fusioni-bg-secondary)), var(--fusioni-bg-primary));
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.24);
 }
 
@@ -5698,8 +5706,11 @@
   overflow: hidden;
 }
 
-.fusioni-chat-widget .fusioni-message-avatar.fusioni-message-assistant-avatar {
-  background: var(--fusioni-primary);
+.fusioni-chat-widget[data-fusioni-custom-icon] .fusioni-conversation-logo,
+.fusioni-chat-widget[data-fusioni-custom-icon] .fusioni-stream-message-logo-frame,
+.fusioni-chat-widget[data-fusioni-custom-icon] .fusioni-empty-icon-frame,
+.fusioni-chat-widget[data-fusioni-custom-icon] .fusioni-message-avatar.fusioni-message-assistant-avatar {
+  background: var(--fusioni-icon-bg, var(--fusioni-primary));
 }
 
 .fusioni-message-avatar img,

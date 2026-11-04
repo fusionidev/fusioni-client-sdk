@@ -10,6 +10,7 @@ jest.mock('../src/components/ChatInput', () => ({ChatInput: ({onSendMessage}) =>
   React.createElement('button', {'data-send': true, onClick: () => onSendMessage('Hello')}, 'Send')}));
 const {ChatWidget} = require('../src/components/ChatWidget');
 const {SDKClientService} = require('../src/services/SDKClientService');
+const {FUSIONI_LOGO_BASE64} = require('../src/assets/logo-base64');
 const api = require('../src/services/ApiClient');
 const conversations = require('../src/services/ConversationService');
 const pipelines = require('../src/services/PipelineService');
@@ -28,6 +29,33 @@ describe('chat widget conversation profile', () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
   });
   afterEach(async () => {await act(async () => root.unmount()); container.remove(); jest.restoreAllMocks();});
+  it.each([undefined, null, '', '   '])('uses the original Fusioni logo without custom frame styling for empty icon fields %p', async value => {
+    jest.spyOn(SDKClientService.prototype, 'getClientConfig').mockResolvedValue({
+      icon: value, icon_color: value, icon_bg: value,
+    });
+    await act(async () => root.render(React.createElement(ChatWidget, {
+      config: {agencyId: 'agency', apiBaseUrl: '/api'},
+    })));
+    const widget = container.querySelector('.fusioni-chat-widget');
+    expect(widget.hasAttribute('data-fusioni-custom-icon')).toBe(false);
+    const logo = widget.querySelector('.fusioni-conversation-logo img');
+    expect(logo.getAttribute('src')).toBe(FUSIONI_LOGO_BASE64);
+    expect(logo.getAttribute('width')).toBe('32');
+    expect(widget.querySelector('.fusioni-bot-icon')).toBeNull();
+  });
+
+  it.each([
+    {icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>'},
+    {icon_color: '#ffffff'},
+    {icon_bg: '#334455'},
+  ])('retains custom icon styling when a customization is provided: %p', async appearance => {
+    jest.spyOn(SDKClientService.prototype, 'getClientConfig').mockResolvedValue(appearance);
+    await act(async () => root.render(React.createElement(ChatWidget, {
+      config: {agencyId: 'agency', apiBaseUrl: '/api'},
+    })));
+    expect(container.querySelector('.fusioni-chat-widget').getAttribute('data-fusioni-custom-icon')).toBe('true');
+  });
+
   it.each(['profile-1', null])('creates the conversation with client profile %s', async profile => {
     jest.spyOn(SDKClientService.prototype, 'getClientConfig').mockResolvedValue({conversation_profile_id: profile});
     const onConversationCreated = jest.fn();

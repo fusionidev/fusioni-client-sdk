@@ -1,5 +1,5 @@
 import {getApiClient} from './ApiClient';
-import {FusioniSDKConfig} from '../types';
+import {FusioniSDKConfig, SDKClientLabel} from '../types';
 
 export interface SDKClientResponse {
   id?: string;
@@ -19,9 +19,11 @@ export interface SDKClientResponse {
   max_file_size?: number | null;
   allowed_file_types?: string[] | null;
   language?: 'en' | 'el';
+  labels?: SDKClientLabel[] | null;
   button_variant?: 'minimal' | 'glass' | 'solid';
   icon?: string | null;
   icon_color?: string | null;
+  icon_bg?: string | null;
 }
 
 export class SDKClientService {
@@ -99,6 +101,7 @@ export class SDKClientService {
       language: serverConfig.language !== undefined 
         ? serverConfig.language 
         : userConfig.language,
+      labels: serverConfig.labels ?? userConfig.labels,
       buttonVariant: serverConfig.button_variant !== undefined 
         ? serverConfig.button_variant 
         : userConfig.buttonVariant,
@@ -108,6 +111,9 @@ export class SDKClientService {
       iconColor: serverConfig.icon_color?.trim()
         ? serverConfig.icon_color
         : userConfig.iconColor,
+      iconBg: serverConfig.icon_bg?.trim()
+        ? serverConfig.icon_bg.trim()
+        : userConfig.iconBg,
     };
   }
 }
