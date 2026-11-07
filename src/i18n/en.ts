@@ -1,4 +1,10 @@
 export const en = {
+  search: {
+    label: 'Search', placeholder: 'Search…', submit: 'Search', results: 'Search results',
+    loading: 'Searching…', empty: 'No results found.', failed: 'Search could not be completed.', retry: 'Try again',
+    untitled: 'Untitled result', count: '{count} results', page: 'Page {page}',
+    pagination: 'Search result pages', previous: 'Previous', next: 'Next',
+  },
   actions: {
     available: 'Available actions', loading: 'Loading actions…', empty: 'No actions found',
     loadFailed: 'Actions could not be loaded.', profileFailed: 'The conversation profile could not be loaded.',

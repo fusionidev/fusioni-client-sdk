@@ -13,6 +13,7 @@ A React TypeScript SDK for integrating Fusioni Chat functionality into web appli
 - 🔄 **Real-time Updates** - Server-sent events for live message streaming
 - 🛡️ **TypeScript Support** - Full type safety and IntelliSense support
 - **Mini Apps** - Mount trusted web-component bundles or collections selected by position or tags
+- **Search** - Fusion data search with pagination, input-bound autocomplete, and custom result containers
 
 ## Installation
 
@@ -72,7 +73,48 @@ export default App;
 
 When including via `<script src="...">`, the SDK exposes a global `Fusioni` object. No build step or React setup needed.
 
-**Default placement (floating widget):**
+**Initialize once and chain features:**
+
+```html
+<label for="site-search">Search the site</label>
+<input id="site-search" type="search">
+<div id="search-widget"></div>
+<div id="mini-apps"></div>
+<div id="actions"></div>
+
+<script src="path/to/fusioni-sdk.umd.js"></script>
+<script>
+  const sdk = Fusioni.init({
+    apiBaseUrl: 'https://your-fusioni-api.com/api',
+    agencyId: 'your-agency-id',
+    accessToken: 'your-access-token'
+  })
+    .search('#search-widget', {
+      mode: 'autocomplete',
+      inputElement: '#site-search'
+    })
+    .mountMiniApp('#mini-apps', {position: 'dashboard'})
+    .mountActionButtons('#actions', {tags: ['tools']})
+    .chatWidget();
+
+  // sdk.getSearch('#search-widget').search('setup');
+  // sdk.getMiniApp('#mini-apps').run();
+  // sdk.getActionButtons('#actions').executeAction('report');
+  // sdk.getChatWidget().setLanguage('el');
+  // sdk.unmount('#search-widget'); // Unmount one feature.
+  // sdk.unmount();                 // Unmount all features belonging to this instance.
+</script>
+```
+
+`init()` initializes shared settings and the default API client without creating UI or making requests. Each mount method returns the same `FusioniSDKInstance`. Features inherit `apiBaseUrl`, `agencyId`, `accessToken`, and the configured language; Search also inherits the theme. Per-feature options can override these defaults or provide an explicit `apiClient`. Search, Mini Apps, and Action Buttons retain their initialized connection when another instance is created, and cleanup is scoped to each instance.
+
+Every backend API request includes `agency_id` in the query string, including POST/PUT requests whose JSON body also contains it. The SDK supplies it from the initialized or per-feature agency, while explicit request parameters take precedence. For low-level use, pass the agency as the third argument to `new ApiClient(apiBaseUrl, accessToken, agencyId)` or `initializeApiClient(apiBaseUrl, accessToken, agencyId)`. An unscoped request is rejected before it is sent.
+
+`.chatWidget()` explicitly mounts the floating chat. Use `.chatWidget({theme: 'dark'})` for chat overrides or `.chatWidget('#my-chat', {theme: 'dark'})` for a specific container. The chainable `.mount()` method is also available as a chat alias. `.search()` and `.mountSearch()` are aliases on an initialized instance.
+
+**Migration:** `Fusioni.init(config)` previously mounted chat automatically. Use `Fusioni.init(config).chatWidget()` to retain that behavior. To access the chat's controls, use `sdk.getChatWidget()`; standalone `Fusioni.mount(container, config)` still returns the chat handle directly.
+
+**Default placement (floating chat widget):**
 
 ```html
 <script src="path/to/fusioni-sdk.umd.js"></script>
@@ -90,7 +132,7 @@ When including via `<script src="...">`, the SDK exposes a global `Fusioni` obje
     enableFileUpload: true,
     maxFileSize: 10,
     allowedFileTypes: ['image/*']
-  });
+  }).chatWidget();
 </script>
 ```
 
@@ -119,13 +161,126 @@ When including via `<script src="...">`, the SDK exposes a global `Fusioni` obje
 
 | Method | Description |
 |--------|-------------|
-| `Fusioni.init(config)` | Mounts the chat widget with default placement (creates `#fusioni-chat-root`). Returns [`FusioniMountResult`](#changing-language-and-theme-after-init). |
+| `Fusioni.init(config)` | Initializes shared settings and returns a chainable `FusioniSDKInstance`; mounts no UI. |
 | `Fusioni.mount(container, config)` | Mounts into `container` (CSS selector string or `HTMLElement`). Returns [`FusioniMountResult`](#changing-language-and-theme-after-init). |
+| `Fusioni.mountSearch(container, props)` | Mounts [Search](#search), optionally binding an existing input and rendering results in a separate element. |
+| `Fusioni.mountMiniApp(container, props)` | Mounts Mini Apps and returns their handle. |
+| `Fusioni.mountActionButtons(container, props)` | Mounts Action Buttons and returns their handle. |
 | `Fusioni.version` | SDK version string. |
+
+An initialized instance provides `chatWidget`, `search`, `mountMiniApp`, and `mountActionButtons`, all returning the same instance. `getChatWidget`, `getSearch`, `getMiniApp`, and `getActionButtons` return the corresponding component handle, or `null` when this instance has no matching mount. `unmount(container?)` cleans up one or all mounts owned by the instance. Containers can be CSS selectors or DOM elements; a component handle becomes usable once its component has mounted.
+
+### Search
+
+`Search` supports two modes: `search` (the default) calls `FusionDataResource.search_paginated` on submit, and `autocomplete` calls `FusionDataResource.search_autocomplete` as the user types. Selecting a result follows its `url` in the current tab. Results without a usable HTTP(S) or relative URL are displayed as non-interactive items.
+
+**React:**
+
+```tsx
+import {Search} from '@fusioni/client-sdk';
+
+function SiteSearch() {
+  return <Search
+    apiBaseUrl="https://your-fusioni-api.com/api"
+    agencyId="your-agency-id"
+    accessToken="your-access-token"
+    mode="autocomplete"
+    placeholder="Search the site…"
+  />;
+}
+```
+
+Search includes its own scoped styles. Switch to `mode="search"` for a search form with Previous/Next controls. In autocomplete mode, the dropdown follows the input when the page scrolls or resizes. Use Up/Down to select, Enter to follow a result, and Escape to dismiss.
+
+**Script tag, bound to your existing input:**
+
+```html
+<label for="site-search">Search the site</label>
+<input id="site-search" type="search" placeholder="Search…">
+<div id="search-widget"></div>
+
+<script src="path/to/fusioni-sdk.umd.js"></script>
+<script>
+  const search = Fusioni.mountSearch('#search-widget', {
+    apiBaseUrl: 'https://your-fusioni-api.com/api',
+    agencyId: 'your-agency-id',
+    accessToken: 'your-access-token',
+    mode: 'autocomplete',
+    inputElement: '#site-search'
+  });
+
+  // search.search('setup'); // Run immediately, skipping the debounce.
+  // search.clear();
+  // search.focus();
+  // search.unmount();
+</script>
+```
+
+Leave `inputElement` out to render the SDK's own field. Keep the mounting container separate from the bound input so mounting cannot remove it. Unmounting removes the dropdown, cancels pending work, and restores the input's original autocomplete and accessibility attributes.
+
+**Render results in a particular element:**
+
+```html
+<form>
+  <label for="query">Search</label>
+  <input id="query" type="search">
+  <button type="submit">Search</button>
+</form>
+<div id="search-controller"></div>
+<section id="search-results" aria-label="Search results"></section>
+
+<script>
+  const search = Fusioni.mountSearch('#search-controller', {
+    apiBaseUrl: 'https://your-fusioni-api.com/api',
+    agencyId: 'your-agency-id',
+    accessToken: 'your-access-token',
+    mode: 'search',
+    inputElement: '#query',
+    resultElement: '#search-results',
+    pageSize: 10
+  });
+</script>
+```
+
+`inputElement` and `resultElement` accept CSS selectors or DOM elements in both React and script-tag use. The elements must exist when Search mounts. A supplied result element receives inline results in either mode, preserving its existing children; without one, autocomplete uses a dropdown and full search renders below its field. Enter or submission of the bound input's form runs the search.
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `agencyId` | Required | Fusion agency to search. |
+| `apiBaseUrl`, `accessToken` | Initialized SDK client | Connection settings. Alternatively supply `apiClient`. |
+| `mode` | `'search'` | `'search'` or `'autocomplete'`. |
+| `inputElement` | SDK field | Existing input selector or `HTMLInputElement`. |
+| `resultElement` | Automatic placement | Results selector or `HTMLElement`. |
+| `pageSize` | `25` | Requested page size. Fusion currently caps autocomplete at 10 suggestions regardless of this value. |
+| `minLength` | `2` | Minimum trimmed query length before requesting results. Empty queries never request results. |
+| `debounceMs` | `250` | Delay while typing in autocomplete mode. |
+| `label`, `placeholder` | Localized Search text | Text for the SDK's own field. Label external inputs on the host page. |
+| `currentLanguage` | `'en'` | `'en'` or `'el'`. |
+| `theme` | `'light'` | `'light'`, `'dark'`, or `'auto'`. |
+| `className`, `style` | — | Root styling; inline styles also apply to portaled result panels. |
+| `onResults(response)` | — | Receives `{body, pagination}` after a successful request. |
+| `onError(error)` | — | Receives request errors; the UI also offers a retry. |
+| `onSelect(item)` | Navigate to `item.url` | Return `false` to prevent navigation, for example when handling it with your app's router. |
+
+The script mount returns `search(query?, page?)`, `clear()`, `focus()`, `unmount()`, and read-only `results` and `pagination`. In React, attach a `ref` of type `SearchHandle` for the same API except `unmount()`. Page numbers are zero-based. New input cancels pending requests immediately, and older responses cannot overwrite newer results.
+
+For fetching without a UI, use the exported service with an explicit `ApiClient` or the initialized SDK client:
+
+```ts
+import {ApiClient, SearchService} from '@fusioni/client-sdk';
+
+const search = new SearchService(new ApiClient('https://your-fusioni-api.com/api', 'your-access-token', 'your-agency-id'));
+const suggestions = await search.autocomplete('your-agency-id', 'set');
+const results = await search.search('your-agency-id', 'setup guide', {page: 0, size: 10});
+// Both return {body: SearchItem[], pagination: SearchPagination | null}.
+// Options also accept an AbortSignal as `signal`.
+```
+
+Both methods POST `{agency_id, inp}` with `agency_id`, `page`, and `size` query parameters. Autocomplete uses `/fusion_data/asearch`; full search uses `/fusion_data/psearch`. Requests use the SDK's `ApiKey` authentication and require Fusion data-view access.
 
 ### Changing language and theme after init
 
-`Fusioni.init` and `Fusioni.mount` return the same handle (in TypeScript: `FusioniMountResult`), which includes **`setLanguage`** and **`setTheme`** so you can switch locale or appearance without remounting.
+The chat handle (in TypeScript: `FusioniMountResult`) includes **`setLanguage`** and **`setTheme`** so you can switch locale or appearance without remounting. Get it with `sdk.getChatWidget()` after `sdk.chatWidget()`, or directly from standalone `Fusioni.mount(container, config)`.
 
 | Property / method | Description |
 |-------------------|-------------|
@@ -138,18 +293,18 @@ When including via `<script src="...">`, the SDK exposes a global `Fusioni` obje
 ```html
 <script src="path/to/fusioni-sdk.umd.js"></script>
 <script>
-  const chat = Fusioni.init({
+  const sdk = Fusioni.init({
     apiBaseUrl: 'https://your-fusioni-api.com',
     agencyId: 'your-agency-id',
     theme: 'light',
     language: 'en'
-  });
+  }).chatWidget();
 
   document.getElementById('locale-el').addEventListener('click', () => {
-    chat.setLanguage('el');
+    sdk.getChatWidget().setLanguage('el');
   });
   document.getElementById('theme-dark').addEventListener('click', () => {
-    chat.setTheme('dark');
+    sdk.getChatWidget().setTheme('dark');
   });
 </script>
 ```
@@ -491,6 +646,8 @@ npm test -- --runInBand
 ```
 
 Mini App tests cover rendering, asynchronous lifecycle cleanup, catalog queries, backend transport, and script-tag mounting.
+Search tests cover Fusion API transport, autocomplete interactions, result navigation, pagination, external element bindings, cancellation, and script-tag mounting.
+SDK initialization tests cover fluent chaining, shared defaults, per-feature overrides, explicit chat mounting, independent instances, and cleanup.
 
 ### Linting
 

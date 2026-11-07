@@ -1,4 +1,5 @@
 import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
+import {withAgencyQuery} from '../utils/agencyQuery';
 
 export interface FusioniSSEMessage {
   event: string;
@@ -62,10 +63,12 @@ export class ApiClient {
   private client: AxiosInstance;
   private baseUrl: string;
   private accessToken?: string;
+  private readonly agencyId?: string;
 
-  constructor(baseUrl: string, accessToken?: string) {
+  constructor(baseUrl: string, accessToken?: string, agencyId?: string) {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
     this.accessToken = accessToken;
+    this.agencyId = agencyId?.trim() || undefined;
     
     this.client = axios.create({
       baseURL: this.baseUrl,
@@ -75,9 +78,10 @@ export class ApiClient {
       },
     });
 
-    // Add request interceptor for authentication
+    // Scope every HTTP method, including direct Axios calls, before authentication.
     this.client.interceptors.request.use(
       (config: any) => {
+        withAgencyQuery(config, this.agencyId);
         console.log('Request interceptor - config:', config);
         if (this.accessToken) {
           config.headers.Authorization = `ApiKey ${this.accessToken}`;
@@ -110,6 +114,8 @@ export class ApiClient {
   getBaseUrl(): string { return this.baseUrl; }
 
   getAccessToken(): string | undefined { return this.accessToken; }
+
+  getAgencyId(): string | undefined { return this.agencyId; }
 
   // HTTP method wrappers to isolate axios client
   async request<T = unknown>(url: string, config: AxiosRequestConfig = {}): Promise<T> {
@@ -146,8 +152,10 @@ export class ApiClient {
   // Server-Sent Events for real-time updates
   connectToSSE(agencyId: string, onMessage: (data: FusioniSSEMessage) => void, conversationId?: string): EventSource {
     const token = this.accessToken || 'test';
+    const scopedAgencyId = agencyId?.trim() || this.agencyId;
+    if (!scopedAgencyId) throw new Error('Fusioni SDK: agencyId is required for backend requests.');
     const params = new URLSearchParams({
-      agency_id: agencyId,
+      agency_id: scopedAgencyId,
       token,
     });
     if (conversationId) {
@@ -197,10 +205,10 @@ export class ApiClient {
 // Singleton instance
 let apiClientInstance: ApiClient | null = null;
 
-export const getApiClient = (baseUrl?: string, accessToken?: string): ApiClient => {
+export const getApiClient = (baseUrl?: string, accessToken?: string, agencyId?: string): ApiClient => {
   if (!apiClientInstance) {
     if (baseUrl) {
-      apiClientInstance = new ApiClient(baseUrl, accessToken);
+      apiClientInstance = new ApiClient(baseUrl, accessToken, agencyId);
     } else {
       throw new Error('ApiClient not initialized. Call getApiClient with baseUrl first.');
     }
@@ -208,7 +216,7 @@ export const getApiClient = (baseUrl?: string, accessToken?: string): ApiClient 
   return apiClientInstance;
 };
 
-export const initializeApiClient = (baseUrl: string, accessToken?: string): ApiClient => {
-  apiClientInstance = new ApiClient(baseUrl, accessToken);
+export const initializeApiClient = (baseUrl: string, accessToken?: string, agencyId?: string): ApiClient => {
+  apiClientInstance = new ApiClient(baseUrl, accessToken, agencyId);
   return apiClientInstance;
 };

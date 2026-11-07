@@ -3,61 +3,32 @@
  * Use when including via <script src="path/to/fusioni-sdk.umd.js"></script>.
  * Built as IIFE (not UMD) so `Fusioni` is always set on the global object even when
  * outer scopes define CommonJS `module`/`exports` (e.g. some app bundlers).
- * Exposes window.Fusioni with init() and mount().
+ * Exposes window.Fusioni with chainable init() and standalone mount methods.
  */
 declare const __FUSIONI_SDK_VERSION__: string;
 
 import React from 'react';
+import {flushSync} from 'react-dom';
 import { createRoot, Root } from 'react-dom/client';
 import { ChatWidget } from './components/ChatWidget';
 import { MiniAppRenderer } from './components/MiniAppRenderer';
 import { ActionButtons } from './components/ActionButtons';
+import { Search } from './components/Search';
 import { ShadowDomRoot } from './components/ShadowDomRoot';
-import type { FusioniChatWidgetHandle, FusioniSDKConfig } from './types';
+import type { FusioniChatWidgetHandle } from './types';
 import type { MiniAppRendererHandle, MiniAppRendererProps } from './types/miniApp';
 import type {ActionButtonsHandle, ActionButtonsProps} from './types/actionButtons';
-
-const DEFAULT_ROOT_ID = 'fusioni-chat-root';
-
-export interface FusioniScriptConfig extends FusioniSDKConfig {}
-
-export interface FusioniMountResult {
-  unmount: () => void;
-  setLanguage: FusioniChatWidgetHandle['setLanguage'];
-  setTheme: FusioniChatWidgetHandle['setTheme'];
-}
-
-export interface FusioniMiniAppMountResult extends MiniAppRendererHandle {
-  unmount(): void;
-}
-
-export interface FusioniActionButtonsMountResult extends ActionButtonsHandle {
-  unmount(): void;
-}
-
-function getContainer(container: string | HTMLElement): HTMLElement {
-  if (typeof container === 'string') {
-    const el = document.querySelector(container);
-    if (!el || !(el instanceof HTMLElement)) {
-      throw new Error(`Fusioni SDK: container "${container}" not found or not an HTMLElement.`);
-    }
-    return el;
-  }
-  if (container && container instanceof HTMLElement) {
-    return container;
-  }
-  throw new Error('Fusioni SDK: container must be a CSS selector string or an HTMLElement.');
-}
-
-function createDefaultRoot(): HTMLElement {
-  let root = document.getElementById(DEFAULT_ROOT_ID);
-  if (!root) {
-    root = document.createElement('div');
-    root.id = DEFAULT_ROOT_ID;
-    document.body.appendChild(root);
-  }
-  return root;
-}
+import type {SearchHandle, SearchProps} from './types/search';
+import {resolveSearchElement} from './utils/searchElements';
+import {createSDKInstance, getContainer} from './utils/sdkInstance';
+import type {
+  FusioniScriptConfig, FusioniSDKInstance, FusioniMountResult, FusioniSearchMountResult,
+  FusioniMiniAppMountResult, FusioniActionButtonsMountResult,
+} from './types/browser';
+export type {
+  FusioniScriptConfig, FusioniContainer, FusioniSDKInstance, FusioniMountResult, FusioniSearchMountResult,
+  FusioniMiniAppMountResult, FusioniActionButtonsMountResult, FusioniSearchOptions, FusioniActionButtonsOptions,
+} from './types/browser';
 
 const mountedRoots = new Map<HTMLElement, Root>();
 
@@ -74,6 +45,7 @@ function mount(
   config: FusioniScriptConfig
 ): FusioniMountResult {
   const target = getContainer(container);
+  mountedRoots.get(target)?.unmount();
   const root = createRoot(target);
   mountedRoots.set(target, root);
   const widgetRef = React.createRef<FusioniChatWidgetHandle>();
@@ -81,6 +53,7 @@ function mount(
 
   return {
     unmount() {
+      if (mountedRoots.get(target) !== root) return;
       root.unmount();
       mountedRoots.delete(target);
     },
@@ -94,14 +67,11 @@ function mount(
 }
 
 /**
- * Initialize the chat widget with default placement (floating, bottom-right).
- * Creates a div#fusioni-chat-root and mounts the widget there.
- * @param config - Fusioni SDK configuration
- * @returns Object with unmount() to tear down the widget
+ * Initialize shared SDK settings without mounting UI. Each feature method returns
+ * this instance, allowing init(config).search(...).mountMiniApp(...).
  */
-function init(config: FusioniScriptConfig): FusioniMountResult {
-  const rootEl = createDefaultRoot();
-  return mount(rootEl, config);
+function init(config: FusioniScriptConfig): FusioniSDKInstance {
+  return createSDKInstance(config, {mount, mountSearch, mountMiniApp, mountActionButtons});
 }
 
 /** Mount one Mini App or a collection, with the same props as the React renderer. */
@@ -156,11 +126,43 @@ function mountActionButtons(container: string | HTMLElement, props: ActionButton
   };
 }
 
+/** Mount Search. Result portals preserve the contents of any supplied result element. */
+function mountSearch(container: string | HTMLElement, props: SearchProps): FusioniSearchMountResult {
+  const target = getContainer(container);
+  // Validate bindings before replacing a previous mount.
+  const inputElement = props.inputElement ? resolveSearchElement(props.inputElement, true) : undefined;
+  const resultElement = props.resultElement ? resolveSearchElement(props.resultElement) : undefined;
+  if (target === inputElement || (inputElement && target.contains(inputElement))) {
+    throw new Error('Fusioni Search: mount into a separate container so the bound input is preserved.');
+  }
+  if (resultElement && resultElement !== target && target.contains(resultElement)) {
+    throw new Error('Fusioni Search: resultElement must be outside the mounting container or be the container itself.');
+  }
+  mountedRoots.get(target)?.unmount();
+  const root = createRoot(target);
+  mountedRoots.set(target, root);
+  const searchRef = React.createRef<SearchHandle>();
+  flushSync(() => root.render(<Search {...props} inputElement={inputElement} resultElement={resultElement} ref={searchRef} />));
+  return {
+    get results() {return searchRef.current?.results ?? [];},
+    get pagination() {return searchRef.current?.pagination ?? null;},
+    search: (query, page) => searchRef.current?.search(query, page) ?? Promise.resolve(),
+    clear: () => searchRef.current?.clear(),
+    focus: () => searchRef.current?.focus(),
+    unmount() {
+      if (mountedRoots.get(target) !== root) return;
+      root.unmount();
+      mountedRoots.delete(target);
+    },
+  };
+}
+
 const Fusioni = {
   init,
   mount,
   mountMiniApp,
   mountActionButtons,
+  mountSearch,
   version: __FUSIONI_SDK_VERSION__,
 };
 

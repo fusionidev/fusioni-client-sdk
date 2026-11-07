@@ -15,8 +15,8 @@ export const MiniAppRenderer = forwardRef<MiniAppRendererHandle, MiniAppRenderer
     className, style, showStatus = true, currentLanguage = 'en',
   } = props;
   const apiClient = useMemo(
-    () => suppliedClient ?? (apiBaseUrl ? new ApiClient(apiBaseUrl, accessToken) : undefined),
-    [suppliedClient, apiBaseUrl, accessToken],
+    () => suppliedClient ?? (apiBaseUrl ? new ApiClient(apiBaseUrl, accessToken, props.agencyId ?? undefined) : undefined),
+    [suppliedClient, apiBaseUrl, accessToken, props.agencyId],
   );
   const {isCollection, apps, isLoading, loadFailed, loadMiniApps} = useMiniApps({...props, apiClient});
   const {t} = useTranslation(currentLanguage);

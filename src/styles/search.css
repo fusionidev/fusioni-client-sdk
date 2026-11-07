@@ -1,0 +1,66 @@
+/* Scoped styles are included by Search, including when results are portaled to a host element. */
+.fusioni-search {
+  --fusioni-search-bg: var(--fusioni-bg-primary, #fff);
+  --fusioni-search-text: var(--fusioni-text-primary, #0f172a);
+  --fusioni-search-muted: var(--fusioni-text-secondary, #475569);
+  --fusioni-search-border: var(--fusioni-border, #e2e8f0);
+  --fusioni-search-hover: var(--fusioni-bg-accent, #f0f9ff);
+  --fusioni-search-accent: var(--fusioni-primary, #2563eb);
+  min-width: 0;
+  color: var(--fusioni-search-text);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  text-align: start;
+}
+.fusioni-search[data-theme='dark'] {
+  --fusioni-search-bg: #0f172a;
+  --fusioni-search-text: #f8fafc;
+  --fusioni-search-muted: #cbd5e1;
+  --fusioni-search-border: #334155;
+  --fusioni-search-hover: #1e293b;
+  --fusioni-search-accent: #60a5fa;
+}
+@media (prefers-color-scheme: dark) {
+  .fusioni-search[data-theme='auto'] {
+    --fusioni-search-bg: #0f172a;
+    --fusioni-search-text: #f8fafc;
+    --fusioni-search-muted: #cbd5e1;
+    --fusioni-search-border: #334155;
+    --fusioni-search-hover: #1e293b;
+    --fusioni-search-accent: #60a5fa;
+  }
+}
+.fusioni-search *, .fusioni-search *::before, .fusioni-search *::after { box-sizing: border-box; }
+.fusioni-search .fusioni-search-form { margin: 0; }
+.fusioni-search .fusioni-search-label { display: block; margin-bottom: 8px; font-weight: 600; }
+.fusioni-search .fusioni-search-field { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 4px 4px 4px 12px; border: 1px solid var(--fusioni-search-border); border-radius: 8px; background: var(--fusioni-search-bg); }
+.fusioni-search .fusioni-search-field:focus-within { outline: 2px solid var(--fusioni-search-accent); outline-offset: 2px; }
+.fusioni-search .fusioni-search-icon { flex: 0 0 20px; width: 20px; height: 20px; color: var(--fusioni-search-muted); }
+.fusioni-search .fusioni-search-input { flex: 1; width: 100%; min-width: 0; padding: 8px 0; border: 0; outline: 0; border-radius: 0; background: transparent; box-shadow: none; color: inherit; font: inherit; }
+.fusioni-search .fusioni-search-input::placeholder { color: var(--fusioni-search-muted); opacity: 1; }
+.fusioni-search button { min-height: 36px; padding: 8px 12px; border: 1px solid var(--fusioni-search-border); border-radius: 6px; background: var(--fusioni-search-bg); color: inherit; font: inherit; cursor: pointer; }
+.fusioni-search button:hover:not(:disabled) { background: var(--fusioni-search-hover); }
+.fusioni-search button:disabled { cursor: default; opacity: .5; }
+.fusioni-search button:focus-visible, .fusioni-search .fusioni-search-item:focus-visible { outline: 2px solid var(--fusioni-search-accent); outline-offset: -2px; }
+.fusioni-search .fusioni-search-submit { border-color: var(--fusioni-primary, #2563eb); background: var(--fusioni-primary, #2563eb); color: #fff; }
+.fusioni-search .fusioni-search-submit:hover { background: var(--fusioni-primary-dark, #1d4ed8); }
+.fusioni-search .fusioni-search-results { margin-top: 12px; overflow: hidden; border: 1px solid var(--fusioni-search-border); border-radius: 8px; background: var(--fusioni-search-bg); }
+.fusioni-search-dropdown { z-index: 100000; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--fusioni-search-border); border-radius: 8px; background: var(--fusioni-search-bg); box-shadow: 0 8px 24px rgb(15 23 42 / .12); }
+.fusioni-search-dropdown .fusioni-search-results, .fusioni-search-custom-results .fusioni-search-results { margin-top: 0; }
+.fusioni-search-dropdown .fusioni-search-results { border: 0; border-radius: 0; }
+.fusioni-search .fusioni-search-summary { margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--fusioni-search-border); color: var(--fusioni-search-muted); font-size: 12px; }
+.fusioni-search .fusioni-search-item { display: flex; align-items: center; gap: 16px; min-height: 48px; padding: 12px 16px; color: inherit; text-decoration: none; border-bottom: 1px solid var(--fusioni-search-border); }
+.fusioni-search [role='list'] > :last-child .fusioni-search-item, .fusioni-search [role='listbox'] > :last-child .fusioni-search-item { border-bottom: 0; }
+.fusioni-search a.fusioni-search-item:hover, .fusioni-search .fusioni-search-item-active { background: var(--fusioni-search-hover); }
+.fusioni-search .fusioni-search-item-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; gap: 4px; }
+.fusioni-search .fusioni-search-item-title { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.fusioni-search .fusioni-search-item-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--fusioni-search-muted); font-size: 13px; overflow-wrap: anywhere; }
+.fusioni-search .fusioni-search-item-url { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fusioni-search-accent); font-size: 12px; }
+.fusioni-search .fusioni-search-item-arrow { flex-shrink: 0; color: var(--fusioni-search-muted); }
+.fusioni-search .fusioni-search-item-disabled { color: var(--fusioni-search-muted); }
+.fusioni-search .fusioni-search-status { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 0; padding: 16px; color: var(--fusioni-search-muted); }
+.fusioni-search .fusioni-search-error { color: var(--fusioni-error, #dc2626); }
+.fusioni-search .fusioni-search-skeleton { display: block; width: 75%; height: 12px; border-radius: 4px; background: var(--fusioni-search-border); animation: fusioni-search-pulse 1.5s ease-in-out infinite; }
+.fusioni-search .fusioni-search-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-top: 1px solid var(--fusioni-search-border); }
+.fusioni-search .fusioni-search-pagination > span { color: var(--fusioni-search-muted); font-size: 12px; }
+@keyframes fusioni-search-pulse { 50% { opacity: .4; } }
+@media (prefers-reduced-motion: reduce) { .fusioni-search .fusioni-search-skeleton { animation: none; } }

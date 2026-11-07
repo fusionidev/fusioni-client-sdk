@@ -21,6 +21,12 @@ export { Map } from './components/Map';
 export { ImageGallery } from './components/ImageGallery';
 export { MiniAppRenderer } from './components/MiniAppRenderer';
 export { ActionButtons } from './components/ActionButtons';
+export { Search } from './components/Search';
+export type { SearchProps, SearchHandle, SearchItem, SearchMode, SearchPagination, SearchResponse, SearchRequestOptions } from './types/search';
+export type {
+  FusioniScriptConfig, FusioniContainer, FusioniSDKInstance, FusioniMountResult, FusioniSearchMountResult,
+  FusioniMiniAppMountResult, FusioniActionButtonsMountResult, FusioniSearchOptions, FusioniActionButtonsOptions,
+} from './types/browser';
 export type { ActionButtonsProps, ActionButtonsHandle, ActionResult, ActionExecutionState, ActionInputFieldValues, ActionEnabledStates } from './types/actionButtons';
 export type { ConversationProfile, ConversationInputField, ConversationInputFieldType, ConversationInputFieldValue,
   ConversationInputFieldData, ConversationInputFieldDraftValue, ConversationInputFieldLabel,
@@ -47,6 +53,7 @@ export type {
 
 // Service exports
 export { ApiClient, getApiClient, initializeApiClient } from './services/ApiClient';
+export { SearchService, getSearchService } from './services/SearchService';
 export type { FusioniSSEMessage } from './services/ApiClient';
 export { getConversationService } from './services/ConversationService';
 export { PipelineService, getPipelineService } from './services/PipelineService';

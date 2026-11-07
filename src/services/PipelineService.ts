@@ -47,7 +47,7 @@ export class PipelineService {
     const response = await apiClient.post<PipelineResponse>(
       `/journey/${request.agency_id}/exec`,
       request,
-      {signal}
+      {params: {agency_id: request.agency_id}, signal}
     );
     
     console.log('✅ PipelineService.executePipeline - Response received:', {
@@ -73,7 +73,7 @@ export class PipelineService {
       throw new Error('agency_id is required for pipeline execution');
     }
 
-    return this.getApiClient().post<PipelineResponse>('/journey/exec_async', request, {signal});
+    return this.getApiClient().post<PipelineResponse>('/journey/exec_async', request, {params: {agency_id: request.agency_id}, signal});
   }
 }
 

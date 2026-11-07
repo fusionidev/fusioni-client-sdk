@@ -29,7 +29,7 @@ export class MessageService {
             message_id: messageId,
             agency_id: agencyId,
             like,
-        });
+        }, {params: {agency_id: agencyId}});
     }
 
     /**

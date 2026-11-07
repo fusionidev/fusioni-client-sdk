@@ -227,7 +227,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     const initializeAndFetchConfig = async () => {
       try {
         // Initialize API client first
-        initializeApiClient(config.apiBaseUrl, config.accessToken);
+        initializeApiClient(config.apiBaseUrl, config.accessToken, config.agencyId);
         
         // Fetch server configuration if agencyId is available
         if (config.agencyId) {

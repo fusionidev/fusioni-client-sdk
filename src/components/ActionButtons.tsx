@@ -67,9 +67,9 @@ ActionButtonsView.displayName = 'ActionButtonsView';
 export const ActionButtons = forwardRef<ActionButtonsHandle, ActionButtonsProps>((props, ref) => {
   const apiClient = useMemo(() => {
     if (props.apiClient) return props.apiClient;
-    if (props.apiBaseUrl) return new ApiClient(props.apiBaseUrl, props.accessToken);
+    if (props.apiBaseUrl) return new ApiClient(props.apiBaseUrl, props.accessToken, props.agencyId ?? undefined);
     try { return getApiClient(); } catch { return undefined; }
-  }, [props.apiClient, props.apiBaseUrl, props.accessToken]);
+  }, [props.apiClient, props.apiBaseUrl, props.accessToken, props.agencyId]);
   const tags = [...new Set((props.tags || []).map(tag => tag.trim()).filter(Boolean))];
   const queryKey = JSON.stringify([props.agencyId, [...tags].sort(), props.conversationStorageKey]);
   return <ActionButtonsView {...props} tags={tags} apiClient={apiClient} apiBaseUrl={props.apiBaseUrl ?? apiClient?.getBaseUrl?.()}

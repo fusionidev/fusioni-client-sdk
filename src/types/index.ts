@@ -116,6 +116,7 @@ export interface SDKClientLabel {
 
 export interface FusioniSDKConfig {
   apiBaseUrl: string;
+  /** Included as the agency_id query parameter on every backend API request. */
   agencyId: string;
   accessToken?: string;
   /** Current user's Fusion owner id. When omitted, the SDK reads `oid` from a JWT access token. */
@@ -229,7 +230,7 @@ export type MessageRole = 'user' | 'assistant' | 'system';
 export type Theme = 'light' | 'dark' | 'auto';
 export type Position = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
-/** Imperative API for `ChatWidget` ref and script-tag `Fusioni.init` / `Fusioni.mount` result */
+/** Imperative API for `ChatWidget` refs and script-tag chat mount handles. */
 export interface FusioniChatWidgetHandle {
   setLanguage: (language: 'en' | 'el') => void;
   setTheme: (theme: Theme) => void;

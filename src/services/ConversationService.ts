@@ -108,7 +108,7 @@ export class RemoteConversationService implements IConversationService {
             console.log('Creating conversation with data:', conversation);
 
             // ApiClient.post returns the data directly, not the full response
-            const responseData: any = await apiClient.post('/conversation', conversation, {signal});
+            const responseData: any = await apiClient.post('/conversation', conversation, {params: {agency_id: conversation.agency_id}, signal});
 
             // Handle different response formats
             let conversationId: string = responseData.trim();
