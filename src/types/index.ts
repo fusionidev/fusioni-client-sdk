@@ -83,6 +83,7 @@ export interface Pipeline {
 export interface PipelineRequest {
   conversation_id: string;
   agency_id: string;
+  execution_id?: string;
   inp?: string | null;
   image?: string | ArrayBuffer | null;
   images?: string[];
@@ -93,6 +94,7 @@ export interface PipelineRequest {
 }
 
 export interface PipelineResponse {
+  execution_id?: string;
   answer: string[];
   context_data: any;
   thoughts: string[];
@@ -105,6 +107,15 @@ export interface PipelineResponse {
   extra_data?: Record<string, any> | null;
   execution_time_ms?: number | null;
   output_variables?: Record<string, unknown>[] | null;
+}
+
+export interface PipelineExecutionStatus {
+  execution_id: string;
+  agency_id: string;
+  conversation_id?: string | null;
+  status: 'queued' | 'running' | 'cancellation_requested' | 'completed' | 'cancelled' | 'failed';
+  created_at?: string;
+  error_message?: string | null;
 }
 
 // SDK Configuration

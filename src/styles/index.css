@@ -1411,21 +1411,48 @@
   list-style-position: outside;
 }
 
+.fusioni-message-text pre,
 .fusioni-message-text code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-variant-ligatures: none;
+}
+
+.fusioni-message-text code:not(pre code) {
   background: var(--fusioni-bg-tertiary);
   padding: 0.125rem 0.25rem;
+  border: 1px solid var(--fusioni-border-light);
   border-radius: 0.25rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.875em;
+  overflow-wrap: anywhere;
 }
 
 .fusioni-message-text pre {
-  background: var(--fusioni-bg-dark);
-  color: var(--fusioni-text-light);
+  box-sizing: border-box;
+  max-width: 100%;
+  background: var(--fusioni-bg-tertiary);
+  color: var(--fusioni-text-primary);
   padding: 0.75rem;
+  border: 1px solid var(--fusioni-border);
   border-radius: var(--fusioni-radius);
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   margin: 0.5rem 0;
+  font-size: 0.875em;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  direction: ltr;
+  text-align: left;
+}
+
+.fusioni-chat-widget.dark .fusioni-message-text pre {
+  background: var(--fusioni-bg-dark);
+}
+
+.fusioni-message-text pre code {
+  display: block;
+  font: inherit;
 }
 
 .fusioni-message-text a {
@@ -5050,11 +5077,7 @@
   margin-bottom: 0;
 }
 
-.fusioni-message-text code {
-  border: 1px solid var(--fusioni-border-light);
-}
-
-.fusioni-message-user .fusioni-message-text code {
+.fusioni-message-user .fusioni-message-text code:not(pre code) {
   color: #fff;
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.18);
@@ -5676,11 +5699,11 @@
 
 .fusioni-message-user .fusioni-message-text,
 .fusioni-message-user .fusioni-message-text a,
-.fusioni-message-user .fusioni-message-text code {
+.fusioni-message-user .fusioni-message-text code:not(pre code) {
   color: inherit;
 }
 
-.fusioni-message-user .fusioni-message-text code {
+.fusioni-message-user .fusioni-message-text code:not(pre code) {
   background: color-mix(in srgb, var(--fusioni-bg-primary) 60%, transparent);
   border-color: color-mix(in srgb, var(--fusioni-primary) 18%, transparent);
 }

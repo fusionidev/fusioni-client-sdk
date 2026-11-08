@@ -1,4 +1,5 @@
 import {
+  PipelineExecutionStatus,
   PipelineRequest,
   PipelineResponse
 } from '../types';
@@ -74,6 +75,20 @@ export class PipelineService {
     }
 
     return this.getApiClient().post<PipelineResponse>('/journey/exec_async', request, {params: {agency_id: request.agency_id}, signal});
+  }
+
+  async getLatestExecutionStatus(agencyId: string, conversationId: string, signal?: AbortSignal): Promise<PipelineExecutionStatus> {
+    return this.getApiClient().get('/journey/executions/latest', {
+      params: {agency_id: agencyId, conversation_id: conversationId},
+      signal,
+    });
+  }
+
+  async getExecutionStatus(agencyId: string, executionId: string, signal?: AbortSignal): Promise<PipelineExecutionStatus> {
+    return this.getApiClient().get(`/journey/executions/${encodeURIComponent(executionId)}`, {
+      params: {agency_id: agencyId},
+      signal,
+    });
   }
 }
 

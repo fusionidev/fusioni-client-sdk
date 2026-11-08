@@ -197,22 +197,6 @@ const animatedMessageIds = new Set<string>();
 const TYPING_PREVIEW_CHARACTER_LIMIT = 200;
 const URL_PREVIEW_VISIBLE_LIMIT = 2;
 
-const enhanceMessageContent = (content: string): string => {
-    if (!content) return content;
-
-    return content.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, (_match, escapedHtml: string) =>
-        escapedHtml
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/&amp;/g, '&')
-    );
-};
-
-const renderMessageContent = (content: string): string =>
-    enhanceMessageContent(highlightAgentMentions(content));
-
 const extractUrlsFromContent = (content: string): string[] => {
     if (!content) return [];
 
@@ -423,7 +407,7 @@ export const Message: React.FC<MessageProps> = ({
         // This prevents re-animation when chat is closed and reopened
         // The animatedMessageIds Set persists across component unmounts/remounts
         if (!message.shouldAnimate || animatedMessageIds.has(messageId)) {
-            setDisplayedContent(renderMessageContent(message.content));
+            setDisplayedContent(highlightAgentMentions(message.content));
             return;
         }
 
@@ -431,7 +415,7 @@ export const Message: React.FC<MessageProps> = ({
         setDisplayedContent('');
         // Type the same HTML string that will be rendered (after any transformations),
         // otherwise we can end up animating an HTML-escaped variant.
-        const fullContent = renderMessageContent(message.content);
+        const fullContent = highlightAgentMentions(message.content);
 
         // Parse content into segments: text segments and HTML tag segments.
         // Important: this parser is quote-aware so it won't break on `>` inside quoted attributes.
@@ -596,7 +580,7 @@ export const Message: React.FC<MessageProps> = ({
     // If not animating, always use message.content directly
     const contentToDisplay = message.shouldAnimate
         ? displayedContent
-        : renderMessageContent(message.content);
+        : highlightAgentMentions(message.content);
     const extractedUrls = useMemo(() => propsUrlPreviews ?? extractUrlsFromContent(message.content), [message.content, propsUrlPreviews]);
     const visibleUrls = urlPreviewsExpanded
         ? extractedUrls

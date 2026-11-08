@@ -1,10 +1,12 @@
 import React, {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
+import {isAxiosError} from 'axios';
 import {
   ChatWidgetProps,
   Conversation,
   FusioniChatWidgetHandle,
   FusioniMemoryMessage,
   FusioniSDKConfig,
+  PipelineRequest,
   PipelineResponse
 } from '../types';
 import {Language, isValidLanguage} from '../i18n';
@@ -31,12 +33,35 @@ import {getOwnerIdFromAccessToken} from '../utils/messageBubble';
 const getStoredConversationIdKey = (agencyId: string) => `fusioni:selectedConversationId:${agencyId}`;
 const getStoredChatPanelOpenKey = (agencyId: string) => `fusioni:chatPanelOpen:${agencyId}`;
 const MESSAGE_RESPONSE_TIMEOUT_MS = 90_000;
+const EXECUTION_POLL_INTERVAL_MS = 2_000;
+const MAX_CONSECUTIVE_CHECK_FAILURES = 3;
 
-interface PendingSSERequest {
+interface PendingExecution {
+  agencyId: string;
   conversationId: string;
+  executionId: string;
   loadingMessageId: string;
   editedMessageId?: string | null;
-  timeoutId?: ReturnType<typeof setTimeout>;
+  controller: AbortController;
+  pollAfter: number;
+  timer?: ReturnType<typeof setTimeout>;
+  restored?: boolean;
+  checking?: boolean;
+  refreshTranscript?: boolean;
+}
+
+interface ConversationLoad {
+  controller: AbortController;
+  events: FusioniSSEMessage[];
+}
+
+const getExecutionId = (response: PipelineResponse): string | undefined => {
+  const id = response.execution_id || response.extra_data?.execution_id;
+  return typeof id === 'string' && id ? id : undefined;
+};
+
+const isActiveExecutionStatus = (status: string): boolean => {
+  return status === 'queued' || status === 'running' || status === 'cancellation_requested';
 }
 
 const parsePipelineStreamResponse = (event: FusioniSSEMessage): PipelineResponse | null => {
@@ -66,14 +91,14 @@ const parsePipelineStreamResponse = (event: FusioniSSEMessage): PipelineResponse
 
 const getResponseConversationId = (
   response: PipelineResponse,
-  pendingRequest: PendingSSERequest | null,
+  pendingExecution: PendingExecution | null,
 ): string | null => {
   if (response.conversation_id) {
     return response.conversation_id;
   }
 
   const responseMessage = Array.isArray(response.messages) ? response.messages[0] : undefined;
-  return responseMessage?.conversation_id || pendingRequest?.conversationId || null;
+  return responseMessage?.conversation_id || pendingExecution?.conversationId || null;
 };
 
 const readStoredConversationId = (agencyId: string): string | null => {
@@ -151,7 +176,10 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   // Refs
   const floatingButtonRef = useRef<HTMLButtonElement>(null);
   const restoredConversationIdRef = useRef<string | null>(null);
-  const pendingSSERequestRef = useRef<PendingSSERequest | null>(null);
+  const pendingExecutionRef = useRef<PendingExecution | null>(null);
+  const lastFailedExecutionIdRef = useRef<string>();
+  const conversationLoadRef = useRef<ConversationLoad | null>(null);
+  const seenMessageIdsRef = useRef(new Set<string>());
   
   const translationDefault: Language =
     languageOverride ?? mergedConfig?.language ?? config.language ?? 'en';
@@ -189,7 +217,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     updateConversation,
     removeConversation,
     loadConversations,
-    loadMessages,
+    replaceMessages,
     clearMessages
   } = useChatState(activeAgencyId);
   const currentConversationRef = useRef<Conversation | null>(currentConversation);
@@ -299,68 +327,200 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     setIsOpen(readStoredChatPanelOpen(activeAgencyId));
   }, [activeAgencyId]);
 
-  const clearPendingSSERequest = useCallback((loadingMessageId?: string) => {
-    const pendingRequest = pendingSSERequestRef.current;
-    if (!pendingRequest || (loadingMessageId && pendingRequest.loadingMessageId !== loadingMessageId)) {
-      return null;
-    }
-
-    if (pendingRequest.timeoutId) {
-      clearTimeout(pendingRequest.timeoutId);
-    }
-    pendingSSERequestRef.current = null;
-    return pendingRequest;
+  const clearPendingExecution = useCallback(() => {
+    const execution = pendingExecutionRef.current;
+    pendingExecutionRef.current = null;
+    clearTimeout(execution?.timer);
+    execution?.controller.abort();
   }, []);
 
-  const failPendingSSERequest = useCallback((loadingMessageId: string, details?: string) => {
-    const pendingRequest = clearPendingSSERequest(loadingMessageId);
-    if (!pendingRequest) {
+  const finishPendingExecution = useCallback((execution: PendingExecution, error?: Error) => {
+    if (pendingExecutionRef.current !== execution) {
       return;
     }
 
-    updateMessage(loadingMessageId, {
-      loading: false,
-      has_error: true,
-      content: t('chat.messages.error'),
-    });
+    clearPendingExecution();
     setStreamMessages([]);
-    setIsLoading(false);
     setIsAwaitingResponse(false);
-    onError?.(new Error(details || t('chat.errors.failedToSendMessage')));
-  }, [clearPendingSSERequest, onError, setStreamMessages, t, updateMessage]);
-
-  const startPendingSSERequest = useCallback((request: Omit<PendingSSERequest, 'timeoutId'>) => {
-    const previousRequest = clearPendingSSERequest();
-    if (previousRequest) {
-      updateMessage(previousRequest.loadingMessageId, {
+    if (error) {
+      lastFailedExecutionIdRef.current = execution.executionId;
+      updateMessage(execution.loadingMessageId, {
         loading: false,
         has_error: true,
         content: t('chat.messages.error'),
       });
+      onError?.(error);
+    } else {
+      removeMessage(execution.loadingMessageId);
+      void loadConversations();
     }
+  }, [clearPendingExecution, loadConversations, onError, removeMessage, setStreamMessages, t, updateMessage]);
 
-    const pendingRequest: PendingSSERequest = {...request};
-    pendingRequest.timeoutId = setTimeout(() => {
-      failPendingSSERequest(
-        pendingRequest.loadingMessageId,
-        'Timed out waiting for the streamed message response',
-      );
-    }, MESSAGE_RESPONSE_TIMEOUT_MS);
-    pendingSSERequestRef.current = pendingRequest;
+  const startPendingExecution = useCallback((
+    agencyId: string,
+    conversationId: string,
+    executionId: string,
+    options: Pick<PendingExecution, 'editedMessageId' | 'restored'> & {createdAt?: string} = {},
+  ) => {
+    const {createdAt, ...executionOptions} = options;
+    const now = Date.now();
+    const startedAt = Date.parse(createdAt ?? '');
+    const execution: PendingExecution = {
+      ...executionOptions,
+      agencyId,
+      conversationId,
+      executionId,
+      loadingMessageId: `loading-${executionId}`,
+      controller: new AbortController(),
+      pollAfter: (Number.isNaN(startedAt) ? now : Math.min(startedAt, now)) + MESSAGE_RESPONSE_TIMEOUT_MS,
+    };
+    pendingExecutionRef.current = execution;
+    addMessage({
+      id: execution.loadingMessageId,
+      agency_id: agencyId,
+      conversation_id: conversationId,
+      role: 'assistant',
+      content: '',
+      mem_type: 'short',
+      keywords: [],
+      thoughts: null,
+      created: new Date(),
+      loading: true,
+      shouldAnimate: false,
+    });
     setIsAwaitingResponse(true);
-  }, [clearPendingSSERequest, failPendingSSERequest, t, updateMessage]);
+    return execution;
+  }, [addMessage]);
+
+  const recordReceivedMessages = useCallback((messages: FusioniMemoryMessage[], notify: boolean) => {
+    const seenIds = seenMessageIdsRef.current;
+    for (const message of messages) {
+      if (message.id && seenIds.has(message.id)) {
+        continue;
+      }
+      if (message.id) {
+        seenIds.add(message.id);
+      }
+      if (notify && message.role !== 'user') {
+        onMessageReceived?.(message);
+      }
+    }
+  }, [onMessageReceived]);
+
+  const scheduleExecutionCheck = useCallback((execution: PendingExecution) => {
+    const {agencyId, conversationId, controller: {signal}} = execution;
+    if (signal.aborted || execution.checking) {
+      return;
+    }
+    clearTimeout(execution.timer);
+    let consecutiveFailures = 0;
+
+    const poll = async () => {
+      execution.checking = true;
+      try {
+        if (!execution.refreshTranscript) {
+          const status = await getPipelineService().getExecutionStatus(agencyId, execution.executionId, signal)
+            .catch((error: unknown) => {
+              if (isAxiosError(error) && error.response?.status === 404) {
+                return null;
+              }
+              throw error;
+            });
+          if (signal.aborted) {
+            return;
+          }
+          if (!execution.refreshTranscript) {
+            if (status && (status.execution_id !== execution.executionId ||
+              status.agency_id !== agencyId ||
+              (status.conversation_id && status.conversation_id !== conversationId))) {
+              finishPendingExecution(execution);
+              return;
+            }
+            if (status?.status === 'failed') {
+              finishPendingExecution(execution, new Error(status.error_message || t('chat.errors.failedToSendMessage')));
+              return;
+            }
+            if (status?.status === 'cancelled') {
+              finishPendingExecution(execution);
+              return;
+            }
+            execution.refreshTranscript = !status || !isActiveExecutionStatus(status.status);
+          }
+          consecutiveFailures = 0;
+        }
+        if (execution.refreshTranscript) {
+          const history = await getMessageService().getMessages(conversationId, agencyId, signal);
+          if (!signal.aborted) {
+            replaceMessages(history);
+            finishPendingExecution(execution);
+            recordReceivedMessages(history, true);
+          }
+          return;
+        }
+      } catch (error) {
+        if (signal.aborted) {
+          return;
+        }
+        const statusCode = isAxiosError(error) ? error.response?.status : undefined;
+        const canRetry = !statusCode || statusCode === 408 || statusCode === 429 || statusCode >= 500;
+        if (!canRetry || ++consecutiveFailures >= MAX_CONSECUTIVE_CHECK_FAILURES) {
+          finishPendingExecution(execution);
+          return;
+        }
+      } finally {
+        execution.checking = false;
+      }
+      if (!signal.aborted) {
+        execution.timer = setTimeout(poll, EXECUTION_POLL_INTERVAL_MS);
+      }
+    };
+
+    // Give the live stream the response window before checking status.
+    const delay = execution.refreshTranscript ? 0 : Math.max(0, execution.pollAfter - Date.now());
+    execution.timer = setTimeout(poll, delay);
+  }, [finishPendingExecution, recordReceivedMessages, replaceMessages, t]);
+
+  const submitExecution = useCallback(async (request: PipelineRequest) => {
+    const executionId = globalThis.crypto?.randomUUID?.()
+      ?? `execution-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const execution = currentConversationRef.current?.id === request.conversation_id
+      ? startPendingExecution(request.agency_id, request.conversation_id, executionId, {editedMessageId: request.message_id})
+      : null;
+
+    try {
+      const acknowledgement = await getPipelineService().executePipelineAsync({...request, execution_id: executionId});
+      if (acknowledgement.has_error) {
+        throw new Error(acknowledgement.error_message || t('chat.errors.failedToSendMessage'));
+      }
+      if (!execution || execution.controller.signal.aborted) {
+        return;
+      }
+
+      execution.executionId = getExecutionId(acknowledgement) ?? executionId;
+      scheduleExecutionCheck(execution);
+    } catch (error) {
+      const sendError = error instanceof Error ? error : new Error(t('chat.errors.failedToSendMessage'));
+      if (execution) {
+        finishPendingExecution(execution, sendError);
+      } else {
+        onError?.(sendError);
+      }
+    }
+  }, [finishPendingExecution, onError, scheduleExecutionCheck, startPendingExecution, t]);
 
   const handleSSEMessage = useCallback((event: FusioniSSEMessage) => {
     if (event.event === 'chat_stream' || event.event === 'process_info') {
       const payload = event.payload && typeof event.payload === 'object'
-        ? event.payload as {conversation_id?: string}
+        ? event.payload as {conversation_id?: string; execution_id?: string}
         : undefined;
       const eventConversationId = payload?.conversation_id;
       const visibleConversationId = currentConversationRef.current?.id;
+      const pendingExecution = pendingExecutionRef.current;
 
       if (
         event.data.trim() &&
-        (!eventConversationId || eventConversationId === visibleConversationId)
+        (!eventConversationId || eventConversationId === visibleConversationId) &&
+        (!payload?.execution_id || !pendingExecution || payload.execution_id === pendingExecution.executionId)
       ) {
         setStreamMessages([event.data]);
       }
@@ -377,25 +537,33 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       return;
     }
 
-    const pendingRequest = pendingSSERequestRef.current;
-    const responseConversationId = getResponseConversationId(response, pendingRequest);
-    const matchesPendingRequest = Boolean(
-      pendingRequest &&
-      responseConversationId === pendingRequest.conversationId,
-    );
-    const isVisibleConversation = Boolean(
-      responseConversationId &&
-      responseConversationId === currentConversationRef.current?.id,
-    );
+    const execution = pendingExecutionRef.current;
+    const responseConversationId = getResponseConversationId(response, execution);
+    if (!responseConversationId || responseConversationId !== currentConversationRef.current?.id) {
+      return;
+    }
 
-    if (response.has_error) {
-      if (matchesPendingRequest && pendingRequest) {
-        failPendingSSERequest(
-          pendingRequest.loadingMessageId,
-          response.error_message || t('chat.errors.failedToSendMessage'),
-        );
-      } else if (isVisibleConversation) {
-        onError?.(new Error(response.error_message || t('chat.errors.failedToSendMessage')));
+    const load = conversationLoadRef.current;
+    if (load) {
+      load.events.push(event);
+      return;
+    }
+
+    const pendingExecution = !response.extra_data?.background_notification && execution?.conversationId === responseConversationId
+      ? execution
+      : null;
+    const responseExecutionId = getExecutionId(response);
+    if (pendingExecution && responseExecutionId && responseExecutionId !== pendingExecution.executionId) {
+      return;
+    }
+
+    const executionStatus = response.extra_data?.execution_status;
+    if (response.has_error || executionStatus === 'failed') {
+      const error = new Error(response.error_message || t('chat.errors.failedToSendMessage'));
+      if (pendingExecution) {
+        finishPendingExecution(pendingExecution, error);
+      } else if (!responseExecutionId || responseExecutionId !== lastFailedExecutionIdRef.current) {
+        onError?.(error);
       }
       return;
     }
@@ -408,49 +576,51 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
         ? response.execution_time_ms ?? message.execution_time_ms
         : message.execution_time_ms,
       shouldAnimate: message.role === 'assistant' && !message.loading,
-    }));
-    const isPartialMultiAgentResponse =
-      response.extra_data?.multi_agent === true &&
-      response.extra_data?.multi_agent_complete !== true;
+    })).filter(message =>
+      (pendingExecution && !pendingExecution.restored) ||
+      !message.id ||
+      !seenMessageIdsRef.current.has(message.id),
+    );
     const hasAssistantResponse = incomingMessages.some(
       (message) => message.role === 'assistant' || message.role === 'system',
     );
+    const isCancelled = executionStatus === 'cancelled' || response.extra_data?.cancelled === true;
     const isCompleteResponse =
+      isCancelled ||
+      executionStatus === 'completed' ||
       response.extra_data?.multi_agent_complete === true ||
-      (!isPartialMultiAgentResponse && hasAssistantResponse);
+      response.extra_data?.multi_agent_superseded === true ||
+      (!executionStatus && response.extra_data?.multi_agent !== true && hasAssistantResponse);
+    const needsTranscript = !isCancelled && (pendingExecution?.restored || !hasAssistantResponse);
 
-    if (isVisibleConversation && incomingMessages.length > 0) {
+    if (incomingMessages.length > 0) {
       reconcileMessages(incomingMessages, {
-        loadingMessageId: matchesPendingRequest ? pendingRequest?.loadingMessageId : undefined,
-        keepLoading: matchesPendingRequest && !isCompleteResponse,
-        editedMessageId: matchesPendingRequest ? pendingRequest?.editedMessageId : undefined,
+        loadingMessageId: pendingExecution?.loadingMessageId,
+        keepLoading: Boolean(pendingExecution && (!isCompleteResponse || needsTranscript)),
+        editedMessageId: pendingExecution?.editedMessageId,
       });
-
-      incomingMessages
-        .filter((message) => message.role !== 'user')
-        .forEach((message) => onMessageReceived?.(message));
+      recordReceivedMessages(incomingMessages, true);
     }
 
-    if (isCompleteResponse && matchesPendingRequest && pendingRequest) {
-      clearPendingSSERequest(pendingRequest.loadingMessageId);
-      setStreamMessages([]);
-      setIsLoading(false);
-      setIsAwaitingResponse(false);
-      loadConversations();
+    if (isCompleteResponse && pendingExecution) {
+      if (!needsTranscript) {
+        finishPendingExecution(pendingExecution);
+      } else if (!pendingExecution.refreshTranscript) {
+        pendingExecution.refreshTranscript = true;
+        scheduleExecutionCheck(pendingExecution);
+      }
     }
   }, [
-    clearPendingSSERequest,
-    failPendingSSERequest,
-    loadConversations,
+    finishPendingExecution,
     onError,
-    onMessageReceived,
     reconcileMessages,
+    recordReceivedMessages,
+    scheduleExecutionCheck,
     setStreamMessages,
     t,
   ]);
 
-  // Match fusion-web by connecting as soon as the SDK is mounted. This ensures the
-  // stream is ready before a fast async execution can publish its response.
+  // Connect on mount so live events can arrive during conversation restoration.
   useSSE(
     activeAgencyId,
     handleSSEMessage,
@@ -458,12 +628,25 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     mergedConfig?.accessToken || config.accessToken,
   );
 
-  // Cleanup: Close a chat panel when component unmounts
   useEffect(() => {
     return () => {
-      clearPendingSSERequest();
+      currentConversationRef.current = null;
+      conversationLoadRef.current?.controller.abort();
+      clearPendingExecution();
     };
-  }, [clearPendingSSERequest]);
+  }, [clearPendingExecution]);
+
+  const resetConversationActivity = useCallback(() => {
+    conversationLoadRef.current?.controller.abort();
+    conversationLoadRef.current = null;
+    clearPendingExecution();
+    lastFailedExecutionIdRef.current = undefined;
+    seenMessageIdsRef.current.clear();
+    clearMessages();
+    setStreamMessages([]);
+    setIsAwaitingResponse(false);
+    setIsLoading(false);
+  }, [clearMessages, clearPendingExecution, setStreamMessages]);
 
   const handleToggleChat = useCallback(() => {
     setIsOpen(prev => {
@@ -488,6 +671,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
 
   const handleCreateConversation = useCallback(() => {
     if (!mergedConfig) return;
+    resetConversationActivity();
     writeStoredConversationId(activeAgencyId, null);
     
     // Create a new conversation with null ID - will be created on server when first message is sent
@@ -503,44 +687,87 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     setCurrentConversation(newConversation);
     currentConversationRef.current = newConversation;
     
-    // Clear messages when switching to new conversation
-    clearMessages();
-    setStreamMessages([]);
-    
     // Auto-hide conversation list when a new conversation is created
     setIsConversationListOpen(false);
     
     onConversationCreated?.(newConversation);
-  }, [activeAgencyId, mergedConfig, addConversation, setCurrentConversation, clearMessages, setStreamMessages, onConversationCreated, t]);
+  }, [activeAgencyId, mergedConfig, addConversation, setCurrentConversation, resetConversationActivity, onConversationCreated, t]);
 
   const handleSelectConversation = useCallback(async (conversation: Conversation) => {
-    try {
-      setIsLoading(true);
-      
-      // Clear messages immediately when switching conversations
-      clearMessages();
-      setStreamMessages([]);
-      
-      setCurrentConversation(conversation);
-      currentConversationRef.current = conversation;
-      if (conversation.id) {
-        writeStoredConversationId(activeAgencyId, conversation.id);
-      }
-      
-      // Auto-hide conversation list when a conversation is selected
-      setIsConversationListOpen(false);
-      
-      if (conversation.id) {
-        await loadMessages(conversation.id);
-      }
-    } catch (err) {
-      const error = new Error(t('chat.errors.failedToLoadConversation'));
-      onError?.(error);
-      setError(t('chat.errors.failedToLoadConversation'));
-    } finally {
-      setIsLoading(false);
+    setIsConversationListOpen(false);
+    const conversationId = conversation.id;
+    if (conversationId && pendingExecutionRef.current?.conversationId === conversationId) {
+      return;
     }
-  }, [activeAgencyId, setCurrentConversation, loadMessages, clearMessages, setStreamMessages, onError, t]);
+
+    resetConversationActivity();
+    setCurrentConversation(conversation);
+    currentConversationRef.current = conversation;
+    writeStoredConversationId(activeAgencyId, conversationId ?? null);
+    if (!conversationId) {
+      return;
+    }
+
+    setIsLoading(true);
+    const load: ConversationLoad = {controller: new AbortController(), events: []};
+    conversationLoadRef.current = load;
+    const {signal} = load.controller;
+    const readTranscript = async (notify: boolean) => {
+      try {
+        const history = await getMessageService().getMessages(conversationId, activeAgencyId, signal);
+        if (!signal.aborted) {
+          replaceMessages(history);
+          recordReceivedMessages(history, notify);
+        }
+      } catch (error) {
+        if (!signal.aborted) {
+          console.error('Failed to load messages:', error);
+        }
+      }
+    };
+
+    try {
+      await readTranscript(false);
+      if (signal.aborted) {
+        return;
+      }
+
+      const status = await getPipelineService().getLatestExecutionStatus(activeAgencyId, conversationId, signal);
+      if (signal.aborted || !status?.execution_id || status.agency_id !== activeAgencyId ||
+        status.conversation_id !== conversationId) {
+        return;
+      }
+
+      if (isActiveExecutionStatus(status.status)) {
+        const execution = startPendingExecution(activeAgencyId, conversationId, status.execution_id, {
+          restored: true,
+          createdAt: status.created_at,
+        });
+        scheduleExecutionCheck(execution);
+      } else if (status.status === 'completed') {
+        // Completion may have happened after the first transcript read.
+        await readTranscript(true);
+      }
+    } catch {
+      // Conversations without a recent execution still have a usable transcript.
+    } finally {
+      if (!signal.aborted) {
+        conversationLoadRef.current = null;
+        setIsLoading(false);
+        // Apply live events after the history snapshot so it cannot overwrite them.
+        load.events.forEach(handleSSEMessage);
+      }
+    }
+  }, [
+    activeAgencyId,
+    handleSSEMessage,
+    recordReceivedMessages,
+    replaceMessages,
+    resetConversationActivity,
+    scheduleExecutionCheck,
+    setCurrentConversation,
+    startPendingExecution,
+  ]);
 
   useEffect(() => {
     if (!hasLoadedConversations || !activeAgencyId || currentConversation) {
@@ -613,10 +840,10 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       if (readStoredConversationId(activeAgencyId) === conversationToDelete) {
         writeStoredConversationId(activeAgencyId, null);
       }
-      if (currentConversation?.id === conversationToDelete) {
+      if (currentConversationRef.current?.id === conversationToDelete) {
         setCurrentConversation(null);
-        clearMessages();
-        setStreamMessages([]);
+        currentConversationRef.current = null;
+        resetConversationActivity();
       }
       onConversationDeleted?.(conversationToDelete);
       
@@ -633,7 +860,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     } finally {
       setIsLoading(false);
     }
-  }, [activeAgencyId, conversationToDelete, removeConversation, currentConversation, setCurrentConversation, clearMessages, setStreamMessages, onConversationDeleted, onError, t]);
+  }, [activeAgencyId, conversationToDelete, removeConversation, setCurrentConversation, resetConversationActivity, onConversationDeleted, onError, t]);
 
   const cancelDeleteConversation = useCallback(() => {
     setIsDeleteDialogOpen(false);
@@ -646,21 +873,17 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     audio?: string,
     messageId?: string | null
   ) => {
-    if (!mergedConfig) return;
-    
-    if (!currentConversation || (!content.trim() && !audio)) {
+    if (!mergedConfig || !currentConversation || isBusy || pendingExecutionRef.current ||
+      conversationLoadRef.current || (!content.trim() && !audio)) {
       return;
     }
 
-    let pendingLoadingMessageId: string | null = null;
+    let conversationId = currentConversation.id;
 
     try {
-      setIsLoading(true);
-
-      let conversationId = currentConversation.id;
-      
       // If this is a new conversation (null ID), create it on the server first
       if (!conversationId) {
+        setIsLoading(true);
         const conversationService = getConversationService();
         const conversationProfileId = currentConversation.conversation_profile_id || mergedConfig.conversationProfileId;
         conversationId = await conversationService.createConversation({
@@ -678,14 +901,18 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
         
         // Update the conversation in the list and set as current
         updateConversation(updatedConversation.id, updatedConversation);
-        setCurrentConversation(updatedConversation);
-        currentConversationRef.current = updatedConversation;
-        writeStoredConversationId(activeAgencyId, conversationId);
-        
+        if (currentConversationRef.current === currentConversation) {
+          setCurrentConversation(updatedConversation);
+          currentConversationRef.current = updatedConversation;
+          writeStoredConversationId(activeAgencyId, conversationId);
+          setIsLoading(false);
+        }
       }
 
-      // Clear stream messages for new conversation
-      setStreamMessages([]);
+      const isVisibleConversation = currentConversationRef.current?.id === conversationId;
+      if (isVisibleConversation) {
+        setStreamMessages([]);
+      }
       
       let userMessage: FusioniMemoryMessage | null = null;
       if (!messageId) {
@@ -713,75 +940,44 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
           extra_data: userExtra as FusioniMemoryMessage['extra_data']
         };
 
-        addMessage(userMessage);
-      } else {
+        if (isVisibleConversation) {
+          addMessage(userMessage);
+        }
+      } else if (isVisibleConversation) {
         // Match Angular behavior: keep messages only up to edited user turn.
         truncateMessagesAt(messageId);
       }
 
-      // Add a loading message (UI: logo + Spotlight in Message; no plain-text bubble like Angular)
-      const loadingMessage: FusioniMemoryMessage = {
-        id: `loading-${Date.now()}`,
-        agency_id: mergedConfig.agencyId,
-        shouldAnimate: false,
-        conversation_id: conversationId,
-        role: 'assistant',
-        content: '',
-        mem_type: 'short',
-        keywords: [],
-        thoughts: null,
-        created: new Date(),
-        loading: true,
-        has_error: false
-      };
-
-      addMessage(loadingMessage);
-      pendingLoadingMessageId = loadingMessage.id!;
-      startPendingSSERequest({
-        conversationId,
-        loadingMessageId: loadingMessage.id!,
-        editedMessageId: messageId,
-      });
       if (userMessage) {
         onMessageSent?.(userMessage);
       }
 
-      const pipelineRequest = {
+      await submitExecution({
         conversation_id: conversationId,
         agency_id: mergedConfig.agencyId,
         inp: content || (audio ? `Audio message` : ''),
         image,
         audio,
         message_id: messageId
-      };
-
-      // Queue execution. Persisted user/assistant messages arrive on `message_stream`.
-      const pipelineService = getPipelineService();
-      const acknowledgement = await pipelineService.executePipelineAsync(pipelineRequest);
-      if (acknowledgement.has_error) {
-        throw new Error(acknowledgement.error_message || t('chat.errors.failedToSendMessage'));
-      }
+      });
     } catch (err) {
-      const details = err instanceof Error ? err.message : t('chat.errors.failedToSendMessage');
-      if (pendingLoadingMessageId) {
-        failPendingSSERequest(pendingLoadingMessageId, details);
-      } else {
+      if (currentConversationRef.current === currentConversation ||
+        (conversationId && currentConversationRef.current?.id === conversationId)) {
         setIsLoading(false);
-        const sendError = new Error(details);
-        onError?.(sendError);
         setError(t('chat.errors.failedToSendMessage'));
       }
+      onError?.(err instanceof Error ? err : new Error(t('chat.errors.failedToSendMessage')));
     }
   }, [
     currentConversation,
     activeAgencyId,
     mergedConfig,
+    isBusy,
     addMessage,
     truncateMessagesAt,
     updateConversation,
     setCurrentConversation,
-    startPendingSSERequest,
-    failPendingSSERequest,
+    submitExecution,
     onMessageSent,
     onError,
     setStreamMessages,
@@ -794,9 +990,10 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   }, []);
 
   const handleEditMessage = useCallback((payload: { messageId: string; content: string }) => {
+    if (isBusy || pendingExecutionRef.current || conversationLoadRef.current) return;
     updateMessage(payload.messageId, { content: payload.content });
     handleSendMessage(payload.content, undefined, undefined, payload.messageId);
-  }, [updateMessage, handleSendMessage]);
+  }, [isBusy, updateMessage, handleSendMessage]);
 
   const confirmDeleteMessage = useCallback(async () => {
     if (!messageToDelete || !mergedConfig) return;
@@ -841,85 +1038,19 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   }, [mergedConfig, messages, onError, t, updateMessage]);
 
   const handleConfirmation = useCallback(async (result: { confirmed: 'Confirmed' | 'NotConfirmed'; key?: string }) => {
-    if (!mergedConfig || !currentConversation) return;
-
-    let pendingLoadingMessageId: string | null = null;
-
-    try {
-      setIsLoading(true);
-
-      const conversationId = currentConversation.id;
-      if (!conversationId) {
-        console.warn('Cannot handle confirmation: conversation has no ID');
-        setIsLoading(false);
-        return;
-      }
-
-      // Create a working message
-      const workingMessage: FusioniMemoryMessage = {
-        id: `loading-${Date.now()}`,
-        shouldAnimate: false,
-        agency_id: mergedConfig.agencyId,
-        conversation_id: conversationId,
-        role: 'assistant',
-        content: '',
-        mem_type: 'short',
-        keywords: [],
-        thoughts: null,
-        created: new Date(),
-        loading: true,
-        has_error: false
-      };
-
-      addMessage(workingMessage);
-      pendingLoadingMessageId = workingMessage.id!;
-      startPendingSSERequest({
-        conversationId,
-        loadingMessageId: workingMessage.id!,
-      });
-
-      const confirmed = 'Confirmed';
-      const notConfirmingMessage = t('common.no');
-
-      // Set up context
-      const ctx: Record<string, string> = {};
-      if (result.key && result.confirmed === confirmed) {
-        ctx[result.key] = confirmed;
-      }
-
-      // Queue execution; the confirmation response arrives on `message_stream`.
-      const pipelineService = getPipelineService();
-      const pipelineRequest = {
-        conversation_id: conversationId,
-        agency_id: mergedConfig.agencyId,
-        context: Object.keys(ctx).length > 0 ? ctx : null,
-        inp: result.confirmed !== confirmed ? notConfirmingMessage : null
-      };
-
-      const acknowledgement = await pipelineService.executePipelineAsync(pipelineRequest);
-      if (acknowledgement.has_error) {
-        throw new Error(acknowledgement.error_message || t('chat.errors.failedToSendMessage'));
-      }
-    } catch (err) {
-      const details = err instanceof Error ? err.message : t('chat.errors.failedToSendMessage');
-      if (pendingLoadingMessageId) {
-        failPendingSSERequest(pendingLoadingMessageId, details);
-      } else {
-        setIsLoading(false);
-        const sendError = new Error(details);
-        onError?.(sendError);
-        setError(t('chat.errors.failedToSendMessage'));
-      }
+    if (!mergedConfig || !currentConversation?.id || isBusy || pendingExecutionRef.current ||
+      conversationLoadRef.current) {
+      return;
     }
-  }, [
-    mergedConfig,
-    currentConversation,
-    addMessage,
-    startPendingSSERequest,
-    failPendingSSERequest,
-    onError,
-    t
-  ]);
+
+    const isConfirmed = result.confirmed === 'Confirmed';
+    await submitExecution({
+      conversation_id: currentConversation.id,
+      agency_id: mergedConfig.agencyId,
+      context: isConfirmed && result.key ? {[result.key]: result.confirmed} : null,
+      inp: isConfirmed ? null : t('common.no'),
+    });
+  }, [currentConversation, isBusy, mergedConfig, submitExecution, t]);
 
   const handleFileUpload = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {

@@ -92,6 +92,7 @@ export type {
   Pipeline,
   PipelineRequest,
   PipelineResponse,
+  PipelineExecutionStatus,
   Pagination,
   FusioniPayload,
   

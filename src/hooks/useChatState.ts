@@ -35,28 +35,24 @@ export const useChatState = (agencyId: string) => {
     }
   }, [agencyId]);
 
+  const replaceMessages = useCallback((messages: FusioniMemoryMessage[]) => {
+    setMessages(messages.map(message => ({...message, shouldAnimate: false})));
+  }, []);
+
   const loadMessages = useCallback(async (conversationId: string) => {
     if (!agencyId) return;
 
     try {
       setIsLoading(true);
       const messageService = getMessageService();
-      const messages = await messageService.getMessages(conversationId, agencyId);
-      
-      // Ensure loaded messages don't have shouldAnimate flag (only new pipeline exec responses should animate)
-      const messagesWithoutAnimation = messages.map(msg => ({
-        ...msg,
-        shouldAnimate: false
-      }));
-      
-      setMessages(messagesWithoutAnimation);
+      replaceMessages(await messageService.getMessages(conversationId, agencyId));
 
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [agencyId]);
+  }, [agencyId, replaceMessages]);
 
   const addMessage = useCallback((message: FusioniMemoryMessage) => {
     setMessages(prev => [...prev, message]);
@@ -190,6 +186,7 @@ export const useChatState = (agencyId: string) => {
     removeConversation,
     loadConversations,
     loadMessages,
+    replaceMessages,
     clearStreamMessages,
     clearMessages
   };
