@@ -3044,6 +3044,7 @@
 .fusioni-spotlight-title {
   position: relative;
   display: inline-block;
+  max-width: 100%;
   font-size: 16px;
   line-height: 1.2;
   font-weight: inherit;
@@ -3059,7 +3060,8 @@
   font-weight: inherit;
   font-family: inherit;
   letter-spacing: inherit;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .fusioni-spotlight-text-base {
@@ -3072,8 +3074,7 @@
 
 .fusioni-spotlight-text-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   background: currentColor;
   -webkit-background-clip: text;
   background-clip: text;
@@ -3090,6 +3091,15 @@
     transparent 70%
   );
   pointer-events: none;
+}
+
+.fusioni-stream-message-spotlight .fusioni-spotlight-text-base,
+.fusioni-stream-message-spotlight .fusioni-spotlight-text-overlay {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 /* Stream Message Animations */
