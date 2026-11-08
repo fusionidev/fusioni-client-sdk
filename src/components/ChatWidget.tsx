@@ -274,7 +274,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
               setHasConfigError(false);
             }
           } catch (configError) {
-            // If fetching config fails, mark as error and hide FloatingButton
+            // Hide the chat while its backend configuration is unavailable.
             console.warn('Failed to fetch server configuration, using user config:', configError);
             setHasConfigError(true);
             setMergedConfig(config);
@@ -1072,8 +1072,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     });
   }, [onError, t]);
 
-  // Don't render until config is ready
-  if (!isConfigReady || !mergedConfig) {
+  // Keep the saved open preference while the backend is unavailable.
+  if (!isConfigReady || !mergedConfig || hasConfigError) {
     return null;
   }
 
@@ -1112,7 +1112,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
         iconColor={mergedConfig.iconColor}
         buttonRef={floatingButtonRef}
         variant={mergedConfig.buttonVariant || 'glass'}
-        shouldDisplay={!hasConfigError && (!isMobileLayout || !isOpen)}
+        shouldDisplay={!isMobileLayout || !isOpen}
       />
       
       {isOpen && (

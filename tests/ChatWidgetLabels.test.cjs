@@ -4,7 +4,6 @@ const act = React.act ?? require('react-dom/test-utils').act;
 jest.mock('../src/hooks/useSSE', () => ({useSSE: () => {}}));
 jest.mock('../src/hooks/useIsMobileLayout', () => ({useIsMobileLayout: () => false}));
 jest.mock('../src/components/ShadowDomRoot', () => ({ShadowDomRoot: ({children}) => children}));
-jest.mock('../src/components/ChatPanel', () => ({ChatPanel: ({children}) => children}));
 const {ChatWidget} = require('../src/components/ChatWidget');
 const {SDKClientService} = require('../src/services/SDKClientService');
 const api = require('../src/services/ApiClient');
@@ -15,7 +14,7 @@ global.IS_REACT_ACT_ENVIRONMENT = true;
 const english = {language: 'en', welcome_message: 'Welcome to our team', description: 'How can we help?'};
 const greek = {language: 'el', welcome_message: 'Καλώς ήρθατε στην ομάδα μας', description: 'Πώς μπορούμε να βοηθήσουμε;'};
 
-describe('chat widget welcome labels', () => {
+describe('chat widget initialization', () => {
   let root, container, getConfig, ref;
   beforeEach(() => {
     sessionStorage.clear();
@@ -46,6 +45,29 @@ describe('chat widget welcome labels', () => {
     expect(container.querySelector('.fusioni-chat-welcome h3').textContent).toBe(title);
     expect(container.querySelector('.fusioni-chat-welcome p').textContent).toBe(description);
   }
+
+  it.each([false, true])('hides the panel during a backend failure and restores it on a healthy remount (already open: %s)', async alreadyOpen => {
+    const panel = () => container.querySelector('.fusioni-chat-panel');
+    const launcher = () => container.querySelector('.fusioni-floating-button');
+    if (alreadyOpen) {
+      await render(null);
+      expect(panel()).not.toBeNull();
+    }
+
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    getConfig.mockRejectedValueOnce(new Error('Backend unreachable'));
+    await render(null);
+
+    expect(panel()).toBeNull();
+    expect(launcher()).toBeNull();
+    expect(sessionStorage.getItem('fusioni:chatPanelOpen:agency')).toBe('true');
+
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await render(null);
+    expect(panel()).not.toBeNull();
+    expect(launcher()).not.toBeNull();
+  });
 
   it('selects the server language and updates labels when the language changes', async () => {
     await render({language: 'el', labels: [english, greek]});
