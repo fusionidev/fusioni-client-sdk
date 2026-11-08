@@ -1,6 +1,6 @@
 {
   "name": "@fusioni/client-sdk",
-  "version": "1.1.36",
+  "version": "1.1.37",
   "description": "Fusioni SDK for web applications",
   "type": "module",
   "main": "dist/index.js",
