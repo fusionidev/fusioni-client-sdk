@@ -556,6 +556,8 @@ const actions = Fusioni.mountActionButtons('#actions', {
 | `showFullscreenToggle` | `boolean` | `true` | Show/hide the fullscreen toggle button in the chat header |
 | `showLanguageSwitcher` | `boolean` | `true` | Show/hide the language switcher in the chat header |
 | `showThoughts` | `boolean` | `false` | Show each message's `thoughts` field in a collapsible panel |
+| `showContextUsage` | `boolean` | `true` | Show the context window meter above the chat composer when replies include usage data. |
+| `showContextUsageDetails` | `boolean` | `false` | Let users open the context window meter to see per-agent token counts, window sizes, and model names. Requires `showContextUsage`. |
 | `position` | `'bottom-right' \| 'bottom-left' \| 'top-right' \| 'top-left'` | `'bottom-right'` | Position of the floating button |
 | `primaryColor` | `string` | `'#6366f1'` | Primary color for the UI |
 | `showConversationList` | `boolean` | `true` | Whether to show the conversation sidebar |

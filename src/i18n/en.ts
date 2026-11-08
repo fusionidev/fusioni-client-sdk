@@ -47,6 +47,15 @@ export const en = {
       upload: 'Upload',
       record: 'Record'
     },
+    contextUsage: {
+      title: 'Context window',
+      tokens: 'tokens',
+      windowUnavailable: 'Context window size is unavailable.',
+      estimated: 'Estimated usage. The provider did not report a token count.',
+      droppedOne: '1 older message is no longer sent to the model.',
+      droppedMany: '{count} older messages are no longer sent to the model.',
+      footnote: 'Measured on each agent’s latest reply, including instructions, history, and context data.'
+    },
     conversations: {
       title: 'Conversations',
       search: 'Search conversations...',

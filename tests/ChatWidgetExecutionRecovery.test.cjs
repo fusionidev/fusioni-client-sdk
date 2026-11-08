@@ -42,6 +42,11 @@ const otherConversation = {id: otherConversationId, agency_id: agencyId, title: 
 const userMessage = {id: 'user-1', conversation_id: conversationId, role: 'user', content: 'Hello'};
 const assistantMessage = {id: 'assistant-1', conversation_id: conversationId, role: 'assistant', content: 'Done'};
 const config = {apiBaseUrl: '/api', agencyId};
+const usageReply = (id, usage, owner) => ({
+  ...assistantMessage,
+  id,
+  extra_data: {context_usage: usage, owner},
+});
 const status = (executionId, state, extra = {}) => ({
   execution_id: executionId,
   agency_id: agencyId,
@@ -58,9 +63,11 @@ const stream = (executionId, incoming, extra = {}) => receiveSSE({
 
 describe('chat widget execution recovery', () => {
   let root, container, getMessages, pipeline, onError, onMessageReceived;
-  const mount = async () => {
+  const mount = async (options = {}) => {
     root = createRoot(container);
-    await act(async () => root.render(React.createElement(ChatWidget, {config, onError, onMessageReceived})));
+    await act(async () => root.render(React.createElement(ChatWidget, {
+      config: {...config, ...options}, onError, onMessageReceived,
+    })));
   };
   const unmount = async () => {
     await act(async () => root.unmount());
@@ -421,5 +428,83 @@ describe('chat widget execution recovery', () => {
     expect(transcript()).toEqual(['Other chat']);
     expect(input().disabled).toBe(false);
     expect(onMessageReceived).not.toHaveBeenCalled();
+  });
+
+  it('shows the fullest context from the latest usable reply per agent and updates on live replies', async () => {
+    getMessages.mockResolvedValue([
+      usageReply('old-alpha', {agent_id: 'a', used_tokens: 9_900, context_window: 10_000}),
+      usageReply('beta', {
+        agent_id: 'b', model: 'beta-model', used_tokens: 55_000, context_window: 100_000,
+        estimated: true, dropped_history_messages: 2,
+      }, {name: 'Beta', persona_name: 'Bea'}),
+      usageReply('new-alpha', {agent_id: 'a', used_tokens: 4_500, context_window: 10_000}, {name: 'Alpha'}),
+      usageReply('malformed-alpha', {agent_id: 'a', used_tokens: '9900', context_window: 10_000}),
+      usageReply('unknown', {agent_id: 'c', used_tokens: 500_000}, {name: 'Unknown'}),
+      {...userMessage, extra_data: {context_usage: {agent_id: 'b', used_tokens: 99_000, context_window: 100_000}}},
+    ]);
+    await mount({showContextUsageDetails: true});
+
+    const meter = container.querySelector('.fusioni-context-usage');
+    const summary = meter.querySelector('summary');
+    expect(summary.getAttribute('aria-label')).toContain('55,000 / 100,000 tokens, 55%');
+    const entries = [...meter.querySelectorAll('.fusioni-context-usage-entry')];
+    expect(entries).toHaveLength(3);
+    expect(entries[0].textContent).toContain('500,000 tokens');
+    expect(entries[0].textContent).toContain('Context window size is unavailable');
+    expect(entries[1].textContent).toContain('4,500 / 10,000 tokens');
+    expect(entries[2].textContent).toContain('Bea');
+    expect(entries[2].textContent).toContain('beta-model');
+    expect(entries[2].textContent).toContain('Estimated usage');
+    expect(entries[2].textContent).toContain('2 older messages');
+
+    await act(async () => stream('live-execution', [
+      usageReply('live-alpha', {agent_id: 'a', used_tokens: 11_000, context_window: 10_000}, {name: 'Alpha'}),
+    ]));
+    expect(summary.getAttribute('aria-label')).toContain('11,000 / 10,000 tokens, 110%');
+    expect(summary.dataset.level).toBe('critical');
+    expect(meter.querySelector('.fusioni-context-usage-track > div').style.width).toBe('100%');
+  });
+
+  it('shows usage without a percentage when none of the replies include a window size', async () => {
+    getMessages.mockResolvedValue([
+      usageReply('alpha', {agent_id: 'a', used_tokens: 2_100}),
+      usageReply('beta', {agent_id: 'b', used_tokens: 1_200, context_window: 0}),
+    ]);
+    await mount({showContextUsage: true});
+
+    const summary = container.querySelector('.fusioni-context-usage-summary');
+    expect(summary.textContent).toContain('2,100 tokens');
+    expect(summary.textContent).not.toContain('%');
+    expect(container.querySelector('.fusioni-context-usage-track')).toBeNull();
+  });
+
+  it.each([undefined, false])('shows a static usage summary when details are %p', async showContextUsageDetails => {
+    getMessages.mockResolvedValue([
+      usageReply('alpha', {model: 'alpha-model', used_tokens: 2_500, context_window: 10_000}),
+    ]);
+    await mount({showContextUsageDetails});
+
+    const meter = container.querySelector('.fusioni-context-usage');
+    expect(meter.querySelector('.fusioni-context-usage-summary strong').textContent).toBe('25%');
+    expect(meter.querySelector('summary, .fusioni-context-usage-panel, .fusioni-context-usage-chevron, [title]')).toBeNull();
+    expect(meter.textContent).not.toContain('alpha-model');
+  });
+
+  it('hides context usage when disabled in the SDK configuration', async () => {
+    SDKClientService.prototype.getClientConfig.mockResolvedValue({theme: 'light'});
+    getMessages.mockResolvedValue([usageReply('alpha', {used_tokens: 250, context_window: 10_000})]);
+    await mount({showContextUsage: false, showContextUsageDetails: true});
+    expect(container.querySelector('.fusioni-context-usage')).toBeNull();
+  });
+
+  it('clears context usage when switching to a conversation without snapshots', async () => {
+    getMessages
+      .mockResolvedValueOnce([usageReply('alpha', {used_tokens: 40, context_window: 10_000})])
+      .mockResolvedValueOnce([{...assistantMessage, id: 'other-assistant', conversation_id: otherConversationId}]);
+    await mount();
+    expect(container.querySelector('.fusioni-context-usage-summary').textContent).toContain('< 1%');
+
+    await act(async () => container.querySelectorAll('.fusioni-conversation-item')[1].click());
+    expect(container.querySelector('.fusioni-context-usage')).toBeNull();
   });
 });

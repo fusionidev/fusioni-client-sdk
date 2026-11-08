@@ -19,6 +19,7 @@ import {getSDKClientService} from '../services/SDKClientService';
 import {ConversationList} from './ConversationList';
 import {MessageList} from './MessageList';
 import {ChatInput} from './ChatInput';
+import {ContextUsageMeter} from './ContextUsageMeter';
 import {FloatingButton} from './FloatingButton';
 import {ChatPanel} from './ChatPanel';
 import {LanguageSwitcher} from './LanguageSwitcher';
@@ -1338,6 +1339,14 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                   />
                   {stopError && (
                     <div className="fusioni-chat-stop-error" role="alert">{t('chat.errors.failedToStopResponse')}</div>
+                  )}
+                  {mergedConfig.showContextUsage !== false && (
+                    <ContextUsageMeter
+                      key={currentConversation.id}
+                      messages={messages}
+                      language={currentLanguage}
+                      showDetails={mergedConfig.showContextUsageDetails === true}
+                    />
                   )}
                   <ChatInput
                     onSendMessage={handleSendMessage}

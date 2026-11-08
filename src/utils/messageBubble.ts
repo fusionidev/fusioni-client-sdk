@@ -4,6 +4,7 @@ export const FUSIONI_SDK_OPTIMISTIC_USER = 'fusion_sdk_optimistic_user' as const
 
 export interface MessageOwner {
   name?: string;
+  persona_name?: string;
   first_name?: string;
   last_name?: string;
   owner_id?: string;

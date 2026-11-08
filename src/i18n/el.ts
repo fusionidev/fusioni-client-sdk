@@ -47,6 +47,15 @@ export const el = {
       upload: 'Ανέβασμα',
       record: 'Εγγραφή'
     },
+    contextUsage: {
+      title: 'Παράθυρο context',
+      tokens: 'tokens',
+      windowUnavailable: 'Το μέγεθος του παραθύρου context δεν είναι διαθέσιμο.',
+      estimated: 'Εκτίμηση χρήσης. Ο πάροχος δεν ανέφερε αριθμό tokens.',
+      droppedOne: '1 παλαιότερο μήνυμα δεν αποστέλλεται πλέον στο μοντέλο.',
+      droppedMany: '{count} παλαιότερα μηνύματα δεν αποστέλλονται πλέον στο μοντέλο.',
+      footnote: 'Η μέτρηση αφορά την τελευταία απάντηση κάθε agent και περιλαμβάνει οδηγίες, ιστορικό και δεδομένα context.'
+    },
     conversations: {
       title: 'Συνομιλίες',
       search: 'Αναζήτηση συνομιλιών...',

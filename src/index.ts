@@ -89,6 +89,7 @@ export type {
   // Core types
   Conversation,
   FusioniMemoryMessage,
+  ContextUsage,
   Pipeline,
   PipelineRequest,
   PipelineResponse,

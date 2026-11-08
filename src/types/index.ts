@@ -24,6 +24,17 @@ export interface Conversation {
   conversation_profile_id?: string | null;
 }
 
+/** The answering agent's input-token usage on a reply. */
+export interface ContextUsage {
+  agent_id?: string | null;
+  provider?: string | null;
+  model?: string | null;
+  used_tokens: number;
+  context_window?: number | null;
+  estimated?: boolean;
+  dropped_history_messages?: number;
+}
+
 export interface FusioniMemoryMessage {
   id?: string;
   agency_id: string;
@@ -40,6 +51,7 @@ export interface FusioniMemoryMessage {
   like?: number;
   execution_time_ms?: number | null;
   extra_data?: {
+    context_usage?: ContextUsage | null;
     image?: string;
     image_ref?: string;
     image_base64?: boolean;
@@ -139,6 +151,10 @@ export interface FusioniSDKConfig {
   showFullscreenToggle?: boolean;
   showLanguageSwitcher?: boolean;
   showThoughts?: boolean;
+  /** Show the context window meter when replies contain usage data. Defaults to true. */
+  showContextUsage?: boolean;
+  /** Enable the context usage popup with per-agent details. Defaults to false. */
+  showContextUsageDetails?: boolean;
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   primaryColor?: string;
   showConversationList?: boolean;

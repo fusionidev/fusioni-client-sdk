@@ -1864,6 +1864,125 @@
   font-size: 0.875rem;
 }
 
+.fusioni-context-usage {
+  --fusioni-context-usage-color: var(--fusioni-primary);
+  position: relative;
+  flex: none;
+  margin: 0 1rem;
+  color: var(--fusioni-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.fusioni-context-usage [data-level="warning"] {
+  --fusioni-context-usage-color: var(--fusioni-warning);
+}
+
+.fusioni-context-usage [data-level="critical"] {
+  --fusioni-context-usage-color: var(--fusioni-error);
+}
+
+.fusioni-context-usage-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 2rem;
+  margin-inline-start: auto;
+  padding: 0.25rem 0.5rem;
+  box-sizing: border-box;
+  border-radius: var(--fusioni-radius);
+}
+
+.fusioni-context-usage summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.fusioni-context-usage summary::-webkit-details-marker {
+  display: none;
+}
+
+.fusioni-context-usage summary:hover,
+.fusioni-context-usage[open] summary {
+  background: var(--fusioni-bg-tertiary);
+}
+
+.fusioni-context-usage summary:focus-visible,
+.fusioni-context-usage-panel:focus-visible {
+  outline: 2px solid var(--fusioni-primary);
+  outline-offset: 2px;
+}
+
+.fusioni-context-usage-ring {
+  flex: none;
+  color: var(--fusioni-context-usage-color);
+}
+
+.fusioni-context-usage-chevron {
+  flex: none;
+  transform: rotate(180deg);
+}
+
+.fusioni-context-usage[open] .fusioni-context-usage-chevron {
+  transform: none;
+}
+
+.fusioni-context-usage-panel {
+  position: absolute;
+  bottom: calc(100% + 0.375rem);
+  inset-inline-end: 0;
+  z-index: 7;
+  display: grid;
+  gap: 0.5rem;
+  width: min(20rem, 100%);
+  max-height: min(18rem, 45vh);
+  max-height: min(18rem, 45dvh);
+  box-sizing: border-box;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem;
+  border: 1px solid var(--fusioni-border);
+  border-radius: var(--fusioni-radius-lg);
+  background: var(--fusioni-bg-primary);
+  box-shadow: var(--fusioni-shadow-lg);
+}
+
+.fusioni-context-usage-title,
+.fusioni-context-usage-entry-heading {
+  color: var(--fusioni-text-primary);
+}
+
+.fusioni-context-usage-entry {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: var(--fusioni-radius-md);
+  background: var(--fusioni-bg-tertiary);
+}
+
+.fusioni-context-usage-entry-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fusioni-context-usage-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--fusioni-border);
+}
+
+.fusioni-context-usage-track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--fusioni-context-usage-color);
+}
+
 .fusioni-input-wrapper {
   display: flex;
   align-items: center;
