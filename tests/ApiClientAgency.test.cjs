@@ -100,7 +100,8 @@ describe('Agency query parameters on SDK backend requests', () => {
     await pipeline.executePipelineAsync({agency_id: 'default-agency', conversation_id: 'conversation-id', inp: 'Hello'});
     await pipeline.getLatestExecutionStatus('default-agency', 'conversation-id');
     await pipeline.getExecutionStatus('default-agency', 'execution-id');
-    expect(requests).toHaveLength(10);
+    await pipeline.cancelExecution('default-agency', 'execution/id');
+    expect(requests).toHaveLength(11);
     requests.forEach(request => expect(uri(request).searchParams.getAll('agency_id')).toEqual(['default-agency']));
     expect(uri(requests[0]).searchParams.get('item_id')).toBe('conversation-id');
     expect(JSON.parse(requests[2].data).agency_id).toBe('default-agency');
@@ -108,6 +109,9 @@ describe('Agency query parameters on SDK backend requests', () => {
     expect(uri(requests[8]).pathname).toBe('/api/journey/executions/latest');
     expect(uri(requests[8]).searchParams.get('conversation_id')).toBe('conversation-id');
     expect(uri(requests[9]).pathname).toBe('/api/journey/executions/execution-id');
+    expect(uri(requests[10]).pathname).toBe('/api/journey/executions/execution%2Fid/cancel');
+    expect(requests[10].method).toBe('post');
+    expect(JSON.parse(requests[10].data)).toEqual({});
   });
 
   it('keeps agencies independent across initialized clients', async () => {

@@ -6,6 +6,7 @@ import {
   FusioniChatWidgetHandle,
   FusioniMemoryMessage,
   FusioniSDKConfig,
+  PipelineExecutionStatus,
   PipelineRequest,
   PipelineResponse
 } from '../types';
@@ -35,6 +36,7 @@ const getStoredChatPanelOpenKey = (agencyId: string) => `fusioni:chatPanelOpen:$
 const MESSAGE_RESPONSE_TIMEOUT_MS = 90_000;
 const EXECUTION_POLL_INTERVAL_MS = 2_000;
 const MAX_CONSECUTIVE_CHECK_FAILURES = 3;
+const MAX_REMEMBERED_CANCELLED_EXECUTIONS = 100;
 
 interface PendingExecution {
   agencyId: string;
@@ -48,6 +50,8 @@ interface PendingExecution {
   restored?: boolean;
   checking?: boolean;
   refreshTranscript?: boolean;
+  submission?: Promise<PipelineResponse>;
+  stopping?: boolean;
 }
 
 interface ConversationLoad {
@@ -160,7 +164,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   const [languageOverride, setLanguageOverride] = useState<Language | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
+  const [responsePhase, setResponsePhase] = useState<'idle' | 'responding' | 'stopping'>('idle');
+  const [stopError, setStopError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isConversationListOpen, setIsConversationListOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -177,6 +182,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   const floatingButtonRef = useRef<HTMLButtonElement>(null);
   const restoredConversationIdRef = useRef<string | null>(null);
   const pendingExecutionRef = useRef<PendingExecution | null>(null);
+  const cancelledExecutionIdsRef = useRef(new Set<string>());
   const lastFailedExecutionIdRef = useRef<string>();
   const conversationLoadRef = useRef<ConversationLoad | null>(null);
   const seenMessageIdsRef = useRef(new Set<string>());
@@ -225,7 +231,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
 
   const { theme, toggleTheme, setTheme } = useTheme(mergedConfig?.theme || config.theme);
   const isMobileLayout = useIsMobileLayout();
-  const isBusy = isLoading || isAwaitingResponse;
+  const isBusy = isLoading || responsePhase !== 'idle';
+  const isStoppingResponse = responsePhase === 'stopping';
 
   const handleLanguageChange = useCallback(
     (language: Language) => {
@@ -341,7 +348,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
 
     clearPendingExecution();
     setStreamMessages([]);
-    setIsAwaitingResponse(false);
+    setResponsePhase('idle');
+    setStopError(false);
     if (error) {
       lastFailedExecutionIdRef.current = execution.executionId;
       updateMessage(execution.loadingMessageId, {
@@ -356,11 +364,42 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     }
   }, [clearPendingExecution, loadConversations, onError, removeMessage, setStreamMessages, t, updateMessage]);
 
+  const markExecutionStopping = useCallback((execution: PendingExecution, cancelled = false) => {
+    execution.stopping = true;
+    setResponsePhase('stopping');
+    setStopError(false);
+    if (cancelled) {
+      const ids = cancelledExecutionIdsRef.current;
+      ids.add(execution.executionId);
+      if (ids.size > MAX_REMEMBERED_CANCELLED_EXECUTIONS) {
+        const oldestId = ids.values().next().value;
+        if (oldestId !== undefined) ids.delete(oldestId);
+      }
+    }
+  }, []);
+
+  const applyExecutionStatus = useCallback((execution: PendingExecution, status: PipelineExecutionStatus | null) => {
+    if (status && (status.execution_id !== execution.executionId ||
+      status.agency_id !== execution.agencyId ||
+      (status.conversation_id && status.conversation_id !== execution.conversationId))) {
+      finishPendingExecution(execution);
+      return;
+    }
+    if (status?.status === 'failed') {
+      finishPendingExecution(execution, new Error(status.error_message || t('chat.errors.failedToSendMessage')));
+      return;
+    }
+    if (status?.status === 'cancelled' || status?.status === 'cancellation_requested') {
+      markExecutionStopping(execution, status.status === 'cancelled');
+    }
+    execution.refreshTranscript = !status || !isActiveExecutionStatus(status.status);
+  }, [finishPendingExecution, markExecutionStopping, t]);
+
   const startPendingExecution = useCallback((
     agencyId: string,
     conversationId: string,
     executionId: string,
-    options: Pick<PendingExecution, 'editedMessageId' | 'restored'> & {createdAt?: string} = {},
+    options: Pick<PendingExecution, 'editedMessageId' | 'restored' | 'stopping'> & {createdAt?: string} = {},
   ) => {
     const {createdAt, ...executionOptions} = options;
     const now = Date.now();
@@ -372,7 +411,9 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       executionId,
       loadingMessageId: `loading-${executionId}`,
       controller: new AbortController(),
-      pollAfter: (Number.isNaN(startedAt) ? now : Math.min(startedAt, now)) + MESSAGE_RESPONSE_TIMEOUT_MS,
+      pollAfter: options.stopping
+        ? now
+        : (Number.isNaN(startedAt) ? now : Math.min(startedAt, now)) + MESSAGE_RESPONSE_TIMEOUT_MS,
     };
     pendingExecutionRef.current = execution;
     addMessage({
@@ -388,7 +429,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       loading: true,
       shouldAnimate: false,
     });
-    setIsAwaitingResponse(true);
+    setResponsePhase(execution.stopping ? 'stopping' : 'responding');
     return execution;
   }, [addMessage]);
 
@@ -430,21 +471,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
             return;
           }
           if (!execution.refreshTranscript) {
-            if (status && (status.execution_id !== execution.executionId ||
-              status.agency_id !== agencyId ||
-              (status.conversation_id && status.conversation_id !== conversationId))) {
-              finishPendingExecution(execution);
-              return;
-            }
-            if (status?.status === 'failed') {
-              finishPendingExecution(execution, new Error(status.error_message || t('chat.errors.failedToSendMessage')));
-              return;
-            }
-            if (status?.status === 'cancelled') {
-              finishPendingExecution(execution);
-              return;
-            }
-            execution.refreshTranscript = !status || !isActiveExecutionStatus(status.status);
+            applyExecutionStatus(execution, status);
           }
           consecutiveFailures = 0;
         }
@@ -475,10 +502,10 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       }
     };
 
-    // Give the live stream the response window before checking status.
+    // Use the response window for normal turns and check sooner after a stop.
     const delay = execution.refreshTranscript ? 0 : Math.max(0, execution.pollAfter - Date.now());
     execution.timer = setTimeout(poll, delay);
-  }, [finishPendingExecution, recordReceivedMessages, replaceMessages, t]);
+  }, [applyExecutionStatus, finishPendingExecution, recordReceivedMessages, replaceMessages]);
 
   const submitExecution = useCallback(async (request: PipelineRequest) => {
     const executionId = globalThis.crypto?.randomUUID?.()
@@ -488,7 +515,9 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       : null;
 
     try {
-      const acknowledgement = await getPipelineService().executePipelineAsync({...request, execution_id: executionId});
+      const submission = getPipelineService().executePipelineAsync({...request, execution_id: executionId});
+      if (execution) execution.submission = submission;
+      const acknowledgement = await submission;
       if (acknowledgement.has_error) {
         throw new Error(acknowledgement.error_message || t('chat.errors.failedToSendMessage'));
       }
@@ -508,19 +537,50 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     }
   }, [finishPendingExecution, onError, scheduleExecutionCheck, startPendingExecution, t]);
 
+  const handleStopResponse = useCallback(async () => {
+    const execution = pendingExecutionRef.current;
+    if (!execution || execution.stopping || execution.refreshTranscript) return;
+
+    markExecutionStopping(execution);
+    const {signal} = execution.controller;
+    try {
+      // The server registers the execution before acknowledging the submission.
+      await execution.submission;
+      if (signal.aborted || execution.refreshTranscript) return;
+
+      const status = await getPipelineService().cancelExecution(execution.agencyId, execution.executionId);
+      if (signal.aborted || execution.refreshTranscript) return;
+      if (status.status === 'queued' || status.status === 'running') {
+        throw new Error(t('chat.errors.failedToStopResponse'));
+      }
+
+      applyExecutionStatus(execution, status);
+      execution.pollAfter = Date.now();
+      scheduleExecutionCheck(execution);
+    } catch {
+      if (signal.aborted || execution.refreshTranscript) return;
+      execution.stopping = false;
+      setResponsePhase('responding');
+      setStopError(true);
+      onError?.(new Error(t('chat.errors.failedToStopResponse')));
+    }
+  }, [applyExecutionStatus, markExecutionStopping, onError, scheduleExecutionCheck, t]);
+
   const handleSSEMessage = useCallback((event: FusioniSSEMessage) => {
     if (event.event === 'chat_stream' || event.event === 'process_info') {
       const payload = event.payload && typeof event.payload === 'object'
         ? event.payload as {conversation_id?: string; execution_id?: string}
         : undefined;
       const eventConversationId = payload?.conversation_id;
+      const eventExecutionId = payload?.execution_id;
       const visibleConversationId = currentConversationRef.current?.id;
       const pendingExecution = pendingExecutionRef.current;
 
       if (
         event.data.trim() &&
         (!eventConversationId || eventConversationId === visibleConversationId) &&
-        (!payload?.execution_id || !pendingExecution || payload.execution_id === pendingExecution.executionId)
+        (!eventExecutionId || (!cancelledExecutionIdsRef.current.has(eventExecutionId) &&
+          (!pendingExecution || eventExecutionId === pendingExecution.executionId)))
       ) {
         setStreamMessages([event.data]);
       }
@@ -534,6 +594,11 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     const response = parsePipelineStreamResponse(event);
     if (!response) {
       console.warn('Ignoring invalid message_stream payload:', event.data);
+      return;
+    }
+
+    const responseExecutionId = getExecutionId(response);
+    if (responseExecutionId && cancelledExecutionIdsRef.current.has(responseExecutionId)) {
       return;
     }
 
@@ -552,7 +617,6 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     const pendingExecution = !response.extra_data?.background_notification && execution?.conversationId === responseConversationId
       ? execution
       : null;
-    const responseExecutionId = getExecutionId(response);
     if (pendingExecution && responseExecutionId && responseExecutionId !== pendingExecution.executionId) {
       return;
     }
@@ -585,13 +649,16 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       (message) => message.role === 'assistant' || message.role === 'system',
     );
     const isCancelled = executionStatus === 'cancelled' || response.extra_data?.cancelled === true;
+    if (isCancelled && pendingExecution) {
+      markExecutionStopping(pendingExecution, true);
+    }
     const isCompleteResponse =
       isCancelled ||
       executionStatus === 'completed' ||
       response.extra_data?.multi_agent_complete === true ||
       response.extra_data?.multi_agent_superseded === true ||
       (!executionStatus && response.extra_data?.multi_agent !== true && hasAssistantResponse);
-    const needsTranscript = !isCancelled && (pendingExecution?.restored || !hasAssistantResponse);
+    const needsTranscript = isCancelled || pendingExecution?.restored || !hasAssistantResponse;
 
     if (incomingMessages.length > 0) {
       reconcileMessages(incomingMessages, {
@@ -612,6 +679,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     }
   }, [
     finishPendingExecution,
+    markExecutionStopping,
     onError,
     reconcileMessages,
     recordReceivedMessages,
@@ -644,7 +712,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     seenMessageIdsRef.current.clear();
     clearMessages();
     setStreamMessages([]);
-    setIsAwaitingResponse(false);
+    setResponsePhase('idle');
+    setStopError(false);
     setIsLoading(false);
   }, [clearMessages, clearPendingExecution, setStreamMessages]);
 
@@ -741,6 +810,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
       if (isActiveExecutionStatus(status.status)) {
         const execution = startPendingExecution(activeAgencyId, conversationId, status.execution_id, {
           restored: true,
+          stopping: status.status === 'cancellation_requested',
           createdAt: status.created_at,
         });
         scheduleExecutionCheck(execution);
@@ -1247,7 +1317,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                 <>
                   <MessageList
                     messages={messages}
-                    streamMessages={streamMessages}
+                    streamMessages={isStoppingResponse ? [t('chat.input.stoppingResponse')] : streamMessages}
                     conversationId={currentConversation.id}
                     showThoughts={mergedConfig.showThoughts === true}
                     onDeleteMessage={handleDeleteMessage}
@@ -1266,8 +1336,13 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                     botIcon={mergedConfig.icon}
                     botIconColor={mergedConfig.iconColor}
                   />
+                  {stopError && (
+                    <div className="fusioni-chat-stop-error" role="alert">{t('chat.errors.failedToStopResponse')}</div>
+                  )}
                   <ChatInput
                     onSendMessage={handleSendMessage}
+                    onStopResponse={responsePhase !== 'idle' ? handleStopResponse : undefined}
+                    isStoppingResponse={isStoppingResponse}
                     onFileUpload={handleFileUpload}
                     disabled={isBusy}
                     placeholder={t('chat.input.placeholder')}

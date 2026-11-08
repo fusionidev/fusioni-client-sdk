@@ -42,6 +42,8 @@ export const en = {
     input: {
       placeholder: 'Type your message...',
       send: 'Send',
+      stopResponse: 'Stop response',
+      stoppingResponse: 'Stopping…',
       upload: 'Upload',
       record: 'Record'
     },
@@ -112,6 +114,7 @@ export const en = {
       failedToLoadConversation: 'Failed to load conversation',
       failedToDeleteConversation: 'Failed to delete conversation',
       failedToSendMessage: 'Failed to send message',
+      failedToStopResponse: 'Couldn’t stop the response. Try again.',
       failedToDeleteMessage: 'Failed to delete message',
       failedToRateMessage: 'Failed to save message feedback',
       failedToUploadFile: 'Failed to upload file',

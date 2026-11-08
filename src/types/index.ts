@@ -208,6 +208,9 @@ export interface ConversationListProps {
 
 export interface ChatInputProps {
   onSendMessage: (content: string, image?: string, audio?: string) => void;
+  /** Replaces Send with a Stop control for the active reply. */
+  onStopResponse?: () => void;
+  isStoppingResponse?: boolean;
   onFileUpload: (file: File) => Promise<string>;
   disabled?: boolean;
   placeholder?: string;

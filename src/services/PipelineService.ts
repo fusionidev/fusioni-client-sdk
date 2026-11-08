@@ -90,6 +90,12 @@ export class PipelineService {
       signal,
     });
   }
+
+  async cancelExecution(agencyId: string, executionId: string): Promise<PipelineExecutionStatus> {
+    return this.getApiClient().post(`/journey/executions/${encodeURIComponent(executionId)}/cancel`, {}, {
+      params: {agency_id: agencyId},
+    });
+  }
 }
 
 // Singleton instance

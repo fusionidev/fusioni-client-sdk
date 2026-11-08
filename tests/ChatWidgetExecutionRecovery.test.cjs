@@ -16,8 +16,13 @@ jest.mock('../src/components/MessageList', () => ({
       message.loading ? 'Working' : message.has_error ? 'Failed' : message.content))),
 }));
 jest.mock('../src/components/ChatInput', () => ({
-  ChatInput: ({onSendMessage, disabled}) =>
-    React.createElement('button', {disabled, 'data-send': true, onClick: () => onSendMessage('Hello')}, 'Send'),
+  ChatInput: ({onSendMessage, onStopResponse, isStoppingResponse, disabled}) =>
+    React.createElement(React.Fragment, null,
+      React.createElement('button', {disabled, 'data-send': true, onClick: () => onSendMessage('Hello')}, 'Send'),
+      onStopResponse && React.createElement('button', {
+        disabled: isStoppingResponse, 'data-stop': true, onClick: onStopResponse,
+      }, 'Stop response'),
+    ),
 }));
 
 const {ChatWidget} = require('../src/components/ChatWidget');
@@ -62,6 +67,7 @@ describe('chat widget execution recovery', () => {
     root = undefined;
   };
   const input = () => container.querySelector('[data-send]');
+  const stop = () => container.querySelector('[data-stop]');
   const transcript = () => [...container.querySelectorAll('ol li')].map(row => row.textContent);
   const advance = ms => act(async () => { await jest.advanceTimersByTimeAsync(ms); });
 
@@ -79,6 +85,7 @@ describe('chat widget execution recovery', () => {
       executePipelineAsync: jest.fn(async request => ({execution_id: request.execution_id})),
       getLatestExecutionStatus: jest.fn().mockResolvedValue(undefined),
       getExecutionStatus: jest.fn(async (_agencyId, executionId) => status(executionId, 'running')),
+      cancelExecution: jest.fn(async (_agencyId, executionId) => status(executionId, 'cancellation_requested')),
     };
     jest.spyOn(api, 'initializeApiClient').mockImplementation(() => {});
     jest.spyOn(SDKClientService.prototype, 'getClientConfig').mockResolvedValue(null);
@@ -138,6 +145,124 @@ describe('chat widget execution recovery', () => {
     expect(pipeline.getExecutionStatus).not.toHaveBeenCalled();
     expect(transcript()).toEqual(['Hello', 'Done']);
     expect(input().disabled).toBe(false);
+  });
+
+  it('waits for submission to be acknowledged before sending an early stop', async () => {
+    const executionId = 'acknowledged-execution';
+    let acknowledge;
+    pipeline.executePipelineAsync.mockReturnValueOnce(new Promise(resolve => { acknowledge = resolve; }));
+    await mount();
+    expect(stop()).toBeNull();
+
+    await act(async () => input().click());
+    expect(input().disabled).toBe(true);
+    expect(stop().disabled).toBe(false);
+    await act(async () => stop().click());
+    expect(stop().disabled).toBe(true);
+    await act(async () => stop().click());
+    expect(pipeline.cancelExecution).not.toHaveBeenCalled();
+
+    await act(async () => acknowledge({execution_id: executionId}));
+    expect(pipeline.cancelExecution).toHaveBeenCalledTimes(1);
+    expect(pipeline.cancelExecution).toHaveBeenCalledWith(agencyId, executionId);
+    expect(input().disabled).toBe(true);
+
+    getMessages.mockResolvedValue([userMessage]);
+    await act(async () => stream(executionId, [], {extra_data: {execution_status: 'cancelled'}}));
+    await advance(1);
+    expect(pipeline.getExecutionStatus).not.toHaveBeenCalled();
+    expect(stop()).toBeNull();
+    expect(input().disabled).toBe(false);
+    expect(transcript()).toEqual(['Hello']);
+
+    await act(async () => stream(executionId, [assistantMessage]));
+    expect(transcript()).toEqual(['Hello']);
+    expect(onMessageReceived).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('checks cancellation promptly when the terminal live event is missed', async () => {
+    await mount();
+    await act(async () => input().click());
+    const {execution_id: executionId} = pipeline.executePipelineAsync.mock.calls[0][0];
+    pipeline.getExecutionStatus
+      .mockResolvedValueOnce(status(executionId, 'cancellation_requested'))
+      .mockResolvedValueOnce(status(executionId, 'cancelled'));
+    getMessages.mockResolvedValue([userMessage]);
+
+    await act(async () => stop().click());
+    await advance(1);
+    expect(pipeline.getExecutionStatus).toHaveBeenCalledTimes(1);
+    expect(stop().disabled).toBe(true);
+    expect(transcript()).toEqual(['Hello', 'Working']);
+    await advance(2_000);
+    expect(pipeline.getExecutionStatus).toHaveBeenCalledTimes(2);
+    expect(stop()).toBeNull();
+    expect(input().disabled).toBe(false);
+    expect(transcript()).toEqual(['Hello']);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('lets the user retry a failed stop without discarding the pending turn', async () => {
+    await mount();
+    await act(async () => input().click());
+    const {execution_id: executionId} = pipeline.executePipelineAsync.mock.calls[0][0];
+    pipeline.cancelExecution
+      .mockRejectedValueOnce(new Error('Request failed'))
+      .mockResolvedValueOnce(status(executionId, 'cancelled'));
+
+    await act(async () => stop().click());
+    expect(stop().disabled).toBe(false);
+    expect(input().disabled).toBe(true);
+    expect(transcript()).toEqual(['Hello', 'Working']);
+    expect(container.querySelector('.fusioni-chat-stop-error[role="alert"]')).not.toBeNull();
+    expect(onError).toHaveBeenCalledTimes(1);
+
+    getMessages.mockResolvedValue([userMessage]);
+    await act(async () => stop().click());
+    await advance(1);
+    expect(pipeline.cancelExecution).toHaveBeenCalledTimes(2);
+    expect(pipeline.getExecutionStatus).not.toHaveBeenCalled();
+    expect(container.querySelector('.fusioni-chat-stop-error')).toBeNull();
+    expect(stop()).toBeNull();
+    expect(input().disabled).toBe(false);
+    expect(transcript()).toEqual(['Hello']);
+  });
+
+  it('keeps a completed reply and a subsequent turn when an old stop request resolves', async () => {
+    let resolveStop;
+    pipeline.cancelExecution.mockReturnValueOnce(new Promise(resolve => { resolveStop = resolve; }));
+    await mount();
+    await act(async () => input().click());
+    const {execution_id: executionId} = pipeline.executePipelineAsync.mock.calls[0][0];
+    await act(async () => stop().click());
+    await act(async () => stream(executionId, [userMessage, assistantMessage]));
+    expect(transcript()).toEqual(['Hello', 'Done']);
+    expect(stop()).toBeNull();
+
+    await act(async () => input().click());
+    await act(async () => resolveStop(status(executionId, 'completed')));
+    expect(stop().disabled).toBe(false);
+    expect(input().disabled).toBe(true);
+    expect(transcript()).toEqual(['Hello', 'Done', 'Hello', 'Working']);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('restores a stopping turn without waiting for the normal response timeout', async () => {
+    const executionId = 'execution-1';
+    getMessages.mockResolvedValue([userMessage]);
+    pipeline.getLatestExecutionStatus.mockResolvedValue(status(executionId, 'cancellation_requested', {
+      created_at: new Date().toISOString(),
+    }));
+    pipeline.getExecutionStatus.mockResolvedValue(status(executionId, 'cancelled'));
+    await mount();
+
+    expect(stop().disabled).toBe(true);
+    await advance(1);
+    expect(pipeline.getExecutionStatus).toHaveBeenCalledTimes(1);
+    expect(pipeline.cancelExecution).not.toHaveBeenCalled();
+    expect(input().disabled).toBe(false);
+    expect(transcript()).toEqual(['Hello']);
   });
 
   it('checks an idle conversation once without starting a polling loop', async () => {

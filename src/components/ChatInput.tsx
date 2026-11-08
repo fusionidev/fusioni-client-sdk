@@ -5,6 +5,8 @@ import {useTranslation} from '../hooks/useTranslation';
 
 const ChatInput: React.FC<ChatInputProps> = ({
                                                  onSendMessage,
+                                                 onStopResponse,
+                                                 isStoppingResponse = false,
                                                  onFileUpload,
                                                  disabled = false,
                                                  placeholder,
@@ -28,6 +30,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
     const uploadIdRef = useRef(0);
     const attachmentLimit = Number.isFinite(maxAttachments) ? Math.max(1, Math.floor(maxAttachments)) : 1;
     const [isUploading, setIsUploading] = useState(false);
+    const actionLabel = onStopResponse
+        ? t(isStoppingResponse ? 'chat.input.stoppingResponse' : 'chat.input.stopResponse')
+        : (audioPreview ? 'Send audio message' : 'Send message');
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +71,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     };
 
     const handleSendMessage = useCallback(() => {
-        if (disabled || isUploading || (!message.trim() && !audioPreview)) return;
+        if (disabled || onStopResponse || isUploading || (!message.trim() && !audioPreview)) return;
 
         const content = message.trim();
         onSendMessage(content, imagePreviews[0] || undefined, audioPreview || undefined);
@@ -83,7 +88,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
         }
-    }, [message, audioPreview, imagePreviews, disabled, isUploading, onSendMessage, clearOnSend, setMessage, setImages]);
+    }, [message, audioPreview, imagePreviews, disabled, isUploading, onSendMessage, onStopResponse, clearOnSend, setMessage, setImages]);
 
     const handleFileSelect = useCallback(async (files: File[]) => {
         if (!enableFileUpload || disabled || isUploading) return;
@@ -169,6 +174,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
     return (
         <div className="fusioni-chat-input">
+            <span className="fusioni-sr-only" role="status">
+                {onStopResponse && isStoppingResponse ? actionLabel : ''}
+            </span>
             {/* Image Preview */}
             {imagePreviews.map((imagePreview, index) => (
                 <div className="fusioni-image-preview" key={`${index}:${imagePreview}`}>
@@ -310,24 +318,31 @@ const ChatInput: React.FC<ChatInputProps> = ({
                             />
                         )}
 
-                        {/* Send Button */}
+                        {/* Send or stop the active response */}
                         <button
                             type="button"
-                            onClick={handleSendMessage}
-                            disabled={disabled || isUploading || (!message.trim() && !audioPreview)}
+                            onClick={onStopResponse ?? handleSendMessage}
+                            disabled={onStopResponse
+                                ? isStoppingResponse
+                                : disabled || isUploading || (!message.trim() && !audioPreview)}
                             className={`fusioni-btn fusioni-btn-icon fusioni-btn-send ${
-                                audioPreview ? 'fusioni-btn-send-audio' : ''
+                                !onStopResponse && audioPreview ? 'fusioni-btn-send-audio' : ''
                             }`}
-                            title={audioPreview ? 'Send audio message' : 'Send message'}
+                            aria-label={actionLabel}
+                            title={actionLabel}
                         >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path
-                                    d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                {onStopResponse ? (
+                                    <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+                                ) : (
+                                    <path
+                                        d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                )}
                             </svg>
                         </button>
                     </div>

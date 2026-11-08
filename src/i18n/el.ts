@@ -42,6 +42,8 @@ export const el = {
     input: {
       placeholder: 'Πληκτρολογήστε το μήνυμά σας...',
       send: 'Αποστολή',
+      stopResponse: 'Διακοπή απάντησης',
+      stoppingResponse: 'Γίνεται διακοπή…',
       upload: 'Ανέβασμα',
       record: 'Εγγραφή'
     },
@@ -112,6 +114,7 @@ export const el = {
       failedToLoadConversation: 'Αποτυχία φόρτωσης συνομιλίας',
       failedToDeleteConversation: 'Αποτυχία διαγραφής συνομιλίας',
       failedToSendMessage: 'Αποτυχία αποστολής μηνύματος',
+      failedToStopResponse: 'Δεν ήταν δυνατή η διακοπή της απάντησης. Δοκιμάστε ξανά.',
       failedToDeleteMessage: 'Αποτυχία διαγραφής μηνύματος',
       failedToRateMessage: 'Αποτυχία αποθήκευσης αξιολόγησης μηνύματος',
       failedToUploadFile: 'Αποτυχία ανεβάσματος αρχείου',
