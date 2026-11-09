@@ -77,6 +77,8 @@ export const en = {
       newMessageReceived: 'New message received',
       error: 'Oops! Something went wrong. Please try again later.',
       delete: 'Delete message',
+      forkConversation: 'Fork conversation',
+      forkingConversation: 'Forking conversation…',
       agent: 'Agent',
       executionTime: 'Execution time',
       like: 'Like message',
@@ -120,6 +122,7 @@ export const en = {
     },
     errors: {
       failedToCreateConversation: 'Failed to create conversation',
+      failedToForkConversation: 'Couldn’t fork the conversation. Try again.',
       failedToLoadConversation: 'Failed to load conversation',
       failedToDeleteConversation: 'Failed to delete conversation',
       failedToSendMessage: 'Failed to send message',

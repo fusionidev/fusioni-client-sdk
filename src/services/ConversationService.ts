@@ -2,7 +2,7 @@ import {Conversation, FusioniPayload} from '../types';
 import {ApiClient, getApiClient} from './ApiClient';
 
 export interface IConversationService {
-    getConversation(conversationId: string): Promise<Conversation | undefined>;
+    getConversation(conversationId: string, agencyId?: string): Promise<Conversation | undefined>;
 
     getConversationsByAgency(agencyId: string, page: number, size: number): Promise<Conversation[]>;
 
@@ -11,6 +11,8 @@ export interface IConversationService {
     deleteConversation(conversationId: string): Promise<void>;
 
     createConversation(conversation: Omit<Conversation, 'id'>): Promise<string>;
+
+    forkConversation(agencyId: string, conversationId: string, messageId: string): Promise<string>;
 }
 
 export class LocalConversationService implements IConversationService {
@@ -30,6 +32,12 @@ export class LocalConversationService implements IConversationService {
         let conversationId = this.conversationService.createConversation(conversation);
         conversationId.then(value => this.saveToLocalStorage(value))
         return Promise.resolve(conversationId)
+    }
+
+    async forkConversation(agencyId: string, conversationId: string, messageId: string): Promise<string> {
+        const forkId = await this.conversationService.forkConversation(agencyId, conversationId, messageId);
+        this.saveToLocalStorage(forkId);
+        return forkId;
     }
 
     async deleteConversation(conversationId: string): Promise<void> {
@@ -77,8 +85,8 @@ export class LocalConversationService implements IConversationService {
         return conversations;
     }
 
-    async getConversation(conversationId: string): Promise<Conversation | undefined> {
-        return this.conversationService.getConversation(conversationId);
+    async getConversation(conversationId: string, agencyId?: string): Promise<Conversation | undefined> {
+        return this.conversationService.getConversation(conversationId, agencyId);
     }
 
     async getConversationsByAgency(agencyId: string, page: number, size: number): Promise<Conversation[]> {
@@ -97,6 +105,17 @@ export class RemoteConversationService implements IConversationService {
 
     private getApiClient() {
         return this.apiClient ?? getApiClient();
+    }
+
+    async forkConversation(agencyId: string, conversationId: string, messageId: string): Promise<string> {
+        const response = await this.getApiClient().post<unknown>('/conversation/fork', {
+            conversation_id: conversationId,
+            message_id: messageId,
+        }, {params: {agency_id: agencyId}});
+        if (typeof response !== 'string' || !response.trim()) {
+            throw new Error('No conversation id was returned for the fork');
+        }
+        return response.trim();
     }
 
     /**
@@ -127,10 +146,10 @@ export class RemoteConversationService implements IConversationService {
     /**
      * Get a specific conversation by ID
      */
-    async getConversation(conversationId: string): Promise<Conversation | undefined> {
+    async getConversation(conversationId: string, agencyId?: string): Promise<Conversation | undefined> {
         const apiClient = this.getApiClient();
         return await apiClient.get('/conversation', {
-            params: {item_id: conversationId}
+            params: {item_id: conversationId, agency_id: agencyId}
         });
     }
 

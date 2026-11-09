@@ -77,6 +77,8 @@ export const el = {
       newMessageReceived: 'Λήφθηκε νέο μήνυμα',
       error: 'Ουπς! Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά αργότερα.',
       delete: 'Διαγραφή μηνύματος',
+      forkConversation: 'Διακλάδωση συνομιλίας',
+      forkingConversation: 'Δημιουργία διακλάδωσης συνομιλίας…',
       agent: 'Agent',
       executionTime: 'Χρόνος εκτέλεσης',
       like: 'Μου αρέσει',
@@ -120,6 +122,7 @@ export const el = {
     },
     errors: {
       failedToCreateConversation: 'Αποτυχία δημιουργίας συνομιλίας',
+      failedToForkConversation: 'Δεν ήταν δυνατή η διακλάδωση της συνομιλίας. Δοκιμάστε ξανά.',
       failedToLoadConversation: 'Αποτυχία φόρτωσης συνομιλίας',
       failedToDeleteConversation: 'Αποτυχία διαγραφής συνομιλίας',
       failedToSendMessage: 'Αποτυχία αποστολής μηνύματος',

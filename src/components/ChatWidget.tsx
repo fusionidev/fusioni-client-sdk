@@ -167,6 +167,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   const [isLoading, setIsLoading] = useState(false);
   const [responsePhase, setResponsePhase] = useState<'idle' | 'responding' | 'stopping'>('idle');
   const [stopError, setStopError] = useState(false);
+  const [forkingMessageId, setForkingMessageId] = useState<string | null>(null);
+  const [forkError, setForkError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isConversationListOpen, setIsConversationListOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -186,6 +188,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   const cancelledExecutionIdsRef = useRef(new Set<string>());
   const lastFailedExecutionIdRef = useRef<string>();
   const conversationLoadRef = useRef<ConversationLoad | null>(null);
+  const forkRequestRef = useRef<{selectOnComplete: boolean} | null>(null);
   const seenMessageIdsRef = useRef(new Set<string>());
   
   const translationDefault: Language =
@@ -705,9 +708,20 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     };
   }, [clearPendingExecution]);
 
+  useEffect(() => {
+    setForkingMessageId(null);
+    setForkError(false);
+    return () => {
+      forkRequestRef.current = null;
+    };
+  }, [activeAgencyId]);
+
   const resetConversationActivity = useCallback(() => {
     conversationLoadRef.current?.controller.abort();
     conversationLoadRef.current = null;
+    if (forkRequestRef.current) {
+      forkRequestRef.current.selectOnComplete = false;
+    }
     clearPendingExecution();
     lastFailedExecutionIdRef.current = undefined;
     seenMessageIdsRef.current.clear();
@@ -715,6 +729,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     setStreamMessages([]);
     setResponsePhase('idle');
     setStopError(false);
+    setForkError(false);
     setIsLoading(false);
   }, [clearMessages, clearPendingExecution, setStreamMessages]);
 
@@ -839,6 +854,51 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     setCurrentConversation,
     startPendingExecution,
   ]);
+
+  const handleForkConversation = useCallback(async (messageId: string) => {
+    const source = currentConversationRef.current;
+    if (!source?.id || source.agency_id !== activeAgencyId || forkRequestRef.current) return;
+
+    const request = {selectOnComplete: true};
+    forkRequestRef.current = request;
+    setForkingMessageId(messageId);
+    setForkError(false);
+
+    let fork: Conversation;
+    try {
+      const service = getConversationService();
+      const id = await service.forkConversation(activeAgencyId, source.id, messageId);
+      if (forkRequestRef.current !== request) return;
+
+      // The fork already exists even if loading its metadata fails.
+      const saved = await service.getConversation(id, activeAgencyId).catch(() => undefined);
+      if (forkRequestRef.current !== request) return;
+      fork = saved?.id === id && saved.agency_id === activeAgencyId ? saved : {
+        id,
+        agency_id: activeAgencyId,
+        title: source.title,
+        conversation_profile_id: source.conversation_profile_id,
+        created: new Date(),
+      };
+    } catch {
+      if (forkRequestRef.current === request && request.selectOnComplete) {
+        setForkError(true);
+        onError?.(new Error(t('chat.errors.failedToForkConversation')));
+      }
+      return;
+    } finally {
+      if (forkRequestRef.current === request) {
+        forkRequestRef.current = null;
+        setForkingMessageId(null);
+      }
+    }
+
+    addConversation(fork);
+    if (request.selectOnComplete && currentConversationRef.current === source) {
+      void handleSelectConversation(fork);
+    }
+    onConversationCreated?.(fork);
+  }, [activeAgencyId, addConversation, handleSelectConversation, onConversationCreated, onError, t]);
 
   useEffect(() => {
     if (!hasLoadedConversations || !activeAgencyId || currentConversation) {
@@ -1323,6 +1383,8 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                     showThoughts={mergedConfig.showThoughts === true}
                     onDeleteMessage={handleDeleteMessage}
                     onEditMessage={handleEditMessage}
+                    onForkConversation={handleForkConversation}
+                    forkingMessageId={forkingMessageId}
                     onConfirmation={handleConfirmation}
                     enableButtons={!isBusy}
                     apiBaseUrl={mergedConfig.apiBaseUrl}
@@ -1340,6 +1402,12 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                   {stopError && (
                     <div className="fusioni-chat-stop-error" role="alert">{t('chat.errors.failedToStopResponse')}</div>
                   )}
+                  {forkError && (
+                    <div className="fusioni-chat-fork-error" role="alert">{t('chat.errors.failedToForkConversation')}</div>
+                  )}
+                  <span className="fusioni-sr-only" role="status">
+                    {forkingMessageId && t('chat.messages.forkingConversation')}
+                  </span>
                   {mergedConfig.showContextUsage !== false && (
                     <ContextUsageMeter
                       key={currentConversation.id}

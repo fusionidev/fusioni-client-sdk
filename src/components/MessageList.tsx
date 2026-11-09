@@ -27,6 +27,8 @@ interface MessageListProps {
   showThoughts?: boolean;
   onDeleteMessage?: (messageId: string) => void;
   onEditMessage?: (payload: { messageId: string; content: string }) => void;
+  onForkConversation?: (messageId: string) => void;
+  forkingMessageId?: string | null;
   onConfirmation?: (result: { confirmed: 'Confirmed' | 'NotConfirmed'; key?: string }) => void;
   enableButtons?: boolean;
   apiBaseUrl?: string;
@@ -147,6 +149,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   showThoughts = false,
   onDeleteMessage,
   onEditMessage,
+  onForkConversation,
+  forkingMessageId,
   onConfirmation,
   enableButtons = true,
   apiBaseUrl,
@@ -371,8 +375,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     }
   }, [editingMessageId, editingContent]);
 
-  const renderMessageActions = (message: FusioniMemoryMessage) => {
-    if (!message.id) return null;
+  const renderMessageActions = (message: FusioniMemoryMessage, isOwnMessage: boolean) => {
+    const messageId = message.id;
+    if (!messageId) return null;
 
     if (message.role === 'user' && editingMessageId === message.id) {
       return (
@@ -398,7 +403,12 @@ export const MessageList: React.FC<MessageListProps> = ({
       );
     }
 
-    if (!onDeleteMessage && !(message.role === 'user' && onEditMessage)) return null;
+    const canFork = onForkConversation && !isOwnMessage && agencyId && conversationId &&
+      message.conversation_id === conversationId && !message.extra_data?.coder_transient;
+    const isForking = forkingMessageId === messageId;
+    const forkLabel = t(isForking ? 'chat.messages.forkingConversation' : 'chat.messages.forkConversation');
+
+    if (!onDeleteMessage && !(message.role === 'user' && onEditMessage) && !canFork) return null;
 
     return (
       <div className="fusioni-message-actions">
@@ -414,6 +424,26 @@ export const MessageList: React.FC<MessageListProps> = ({
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+          </button>
+        )}
+        {canFork && (
+          <button
+            type="button"
+            onClick={() => onForkConversation(messageId)}
+            disabled={Boolean(forkingMessageId)}
+            aria-busy={isForking}
+            className="fusioni-btn fusioni-btn-icon"
+            title={forkLabel}
+            aria-label={forkLabel}
+          >
+            {isForking ? <span className="fusioni-spinner" aria-hidden="true" /> : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="6" cy="5" r="2" />
+                <circle cx="18" cy="5" r="2" />
+                <circle cx="12" cy="19" r="2" />
+                <path d="M6 7v1a6 6 0 0 0 12 0V7m-6 7v3" strokeLinecap="round" />
+              </svg>
+            )}
           </button>
         )}
       </div>
@@ -478,7 +508,7 @@ export const MessageList: React.FC<MessageListProps> = ({
 
                     <div className="fusioni-message-content">
                       <div className="fusioni-message-bubble-row">
-                        {!message.loading && isUser && renderMessageActions(message)}
+                        {!message.loading && isUser && renderMessageActions(message, isUser)}
                         <div className="fusioni-message-body">
                           {isEditing ? (
                             <div
@@ -516,7 +546,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                             />
                           )}
                         </div>
-                        {!message.loading && !isUser && !message.has_error && renderMessageActions(message)}
+                        {!message.loading && !isUser && !message.has_error && renderMessageActions(message, isUser)}
                       </div>
 
                       {!message.loading && (
