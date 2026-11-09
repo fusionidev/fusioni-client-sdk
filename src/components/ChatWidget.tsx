@@ -1417,6 +1417,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                     />
                   )}
                   <ChatInput
+                    layout="stacked"
                     onSendMessage={handleSendMessage}
                     onStopResponse={responsePhase !== 'idle' ? handleStopResponse : undefined}
                     isStoppingResponse={isStoppingResponse}

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {ChatInputProps} from '../types';
 import {AudioRecorder} from './AudioRecorder';
 import {useTranslation} from '../hooks/useTranslation';
@@ -10,6 +10,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                                                  onFileUpload,
                                                  disabled = false,
                                                  placeholder,
+                                                 layout = 'inline',
                                                  enableAudioRecording = true,
                                                  enableFileUpload = true,
                                                  maxFileSize = 10,
@@ -20,6 +21,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                                                  maxAttachments = 1, onAttachmentsChange, onUploadingChange
                                              }) => {
     const {t} = useTranslation(currentLanguage);
+    const isStacked = layout === 'stacked';
     const [draft, setDraft] = useState('');
     const message = value ?? draft;
     const [audioPreview, setAudioPreview] = useState<string | null>(null);
@@ -52,19 +54,34 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
     const adjustTextareaHeight = useCallback(() => {
         const textarea = textareaRef.current;
-        if (textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
-        }
+        if (!textarea) return;
+
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
     }, []);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setMessage(e.target.value);
+    useLayoutEffect(() => {
         adjustTextareaHeight();
-    };
+    }, [adjustTextareaHeight, layout, message]);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea || typeof ResizeObserver === 'undefined') return;
+
+        let width = textarea.offsetWidth;
+        const observer = new ResizeObserver(() => {
+            const nextWidth = textarea.offsetWidth;
+            if (nextWidth === width) return;
+
+            width = nextWidth;
+            adjustTextareaHeight();
+        });
+        observer.observe(textarea);
+        return () => observer.disconnect();
+    }, [adjustTextareaHeight]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
             e.preventDefault();
             handleSendMessage();
         }
@@ -83,11 +100,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
         setAudioPreview(null);
         setShowAudioPreview(false);
         setImages([]);
-
-        // Reset textarea height
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-        }
     }, [message, audioPreview, imagePreviews, disabled, isUploading, onSendMessage, onStopResponse, clearOnSend, setMessage, setImages]);
 
     const handleFileSelect = useCallback(async (files: File[]) => {
@@ -167,13 +179,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
         }
     };
 
-    // Auto-adjust textarea height on mount
-    useEffect(() => {
-        adjustTextareaHeight();
-    }, [adjustTextareaHeight]);
-
     return (
-        <div className="fusioni-chat-input">
+        <div className={`fusioni-chat-input${isStacked ? ' fusioni-chat-input--stacked' : ''}`}>
             <span className="fusioni-sr-only" role="status">
                 {onStopResponse && isStoppingResponse ? actionLabel : ''}
             </span>
@@ -252,20 +259,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
             {/* Main Input */}
             <div className="fusioni-input-container">
                 <div className="fusioni-input-wrapper">
-          <textarea
-              id={inputId}
-              aria-label={ariaLabel || t('chat.input.placeholder')}
-              aria-invalid={ariaInvalid}
-              aria-describedby={ariaDescribedBy}
-              ref={textareaRef}
-              value={message}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              disabled={disabled}
-              className="fusioni-textarea"
-              rows={1}
-          />
+                    <textarea
+                        id={inputId}
+                        aria-label={ariaLabel || t('chat.input.placeholder')}
+                        aria-invalid={ariaInvalid}
+                        aria-describedby={ariaDescribedBy}
+                        ref={textareaRef}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        className="fusioni-textarea"
+                        rows={isStacked ? 2 : 1}
+                    />
 
                     <div className="fusioni-input-actions">
                         {/* File Upload */}
@@ -280,26 +287,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
                                 {isUploading ? (
                                     <div className="fusioni-spinner"/>
                                 ) : (
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path
-                                            d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                        <polyline
-                                            points="7,10 12,15 17,10"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                        <line
-                                            x1="12"
-                                            y1="15"
-                                            x2="12"
-                                            y2="3"
+                                            d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"
                                             stroke="currentColor"
                                             strokeWidth="2"
                                             strokeLinecap="round"
@@ -316,6 +306,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
                                 onRecordingComplete={handleAudioRecorded}
                                 disabled={disabled}
                             />
+                        )}
+
+                        {isStacked && (
+                            <span className="fusioni-input-shortcut">{t('chat.input.newLineHint')}</span>
                         )}
 
                         {/* Send or stop the active response */}

@@ -41,6 +41,7 @@ export const el = {
     },
     input: {
       placeholder: 'Πληκτρολογήστε το μήνυμά σας...',
+      newLineHint: 'Shift + Enter για νέα γραμμή',
       send: 'Αποστολή',
       stopResponse: 'Διακοπή απάντησης',
       stoppingResponse: 'Γίνεται διακοπή…',

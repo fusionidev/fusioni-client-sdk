@@ -230,6 +230,8 @@ export interface ChatInputProps {
   onFileUpload: (file: File) => Promise<string>;
   disabled?: boolean;
   placeholder?: string;
+  /** The stacked layout places the tools below a two-line writing area. */
+  layout?: 'inline' | 'stacked';
   enableAudioRecording?: boolean;
   enableFileUpload?: boolean;
   maxFileSize?: number;

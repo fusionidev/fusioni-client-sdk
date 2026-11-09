@@ -2002,6 +2002,7 @@
 
 .fusioni-textarea {
   flex: 1;
+  box-sizing: border-box;
   background: transparent;
   border: none;
   outline: none;
@@ -5483,6 +5484,105 @@
     linear-gradient(180deg, rgba(31, 41, 55, 0.98), rgba(24, 34, 48, 0.98));
   border-color: var(--fusioni-border);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.16), 0 12px 28px rgb(0 0 0 / 0.2);
+}
+
+.fusioni-chat-input.fusioni-chat-input--stacked {
+  flex-shrink: 0;
+  padding-top: 0.75rem;
+  background: var(--fusioni-bg-primary);
+  box-shadow: none;
+}
+
+.fusioni-chat-input--stacked::before {
+  content: none;
+}
+
+.fusioni-chat-input.fusioni-chat-input--stacked .fusioni-input-wrapper {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  border-color: var(--fusioni-border);
+  border-radius: var(--fusioni-radius-xl);
+  background: var(--fusioni-bg-primary);
+  box-shadow: var(--fusioni-shadow);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fusioni-chat-input--stacked .fusioni-input-wrapper:focus-within {
+  border-color: var(--fusioni-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fusioni-primary) 14%, transparent);
+}
+
+.fusioni-chat-input--stacked .fusioni-textarea {
+  flex: none;
+  width: 100%;
+  max-height: clamp(64px, 32vh, 208px);
+  max-height: clamp(64px, 32dvh, 208px);
+  padding: 0.375rem 0.625rem;
+  font-size: 16px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.fusioni-chat-input--stacked .fusioni-textarea::placeholder {
+  color: var(--fusioni-text-secondary);
+  font-size: inherit;
+}
+
+.fusioni-chat-input--stacked .fusioni-input-actions {
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--fusioni-border-light);
+}
+
+.fusioni-chat-input--stacked .fusioni-input-actions .fusioni-btn-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--fusioni-radius-md);
+}
+
+.fusioni-chat-input--stacked .fusioni-input-actions .fusioni-btn-icon:focus-visible {
+  outline: 2px solid var(--fusioni-primary);
+  outline-offset: 1px;
+}
+
+.fusioni-chat-input--stacked .fusioni-input-actions .fusioni-btn-send {
+  margin: 0;
+  margin-inline-start: auto;
+  border: 0;
+  box-shadow: none;
+}
+
+.fusioni-chat-input--stacked .fusioni-btn-send:not(:disabled) {
+  background: var(--fusioni-primary);
+}
+
+.fusioni-chat-input--stacked .fusioni-btn-send:hover:not(:disabled) {
+  background: var(--fusioni-primary-dark);
+  box-shadow: none;
+  transform: none;
+}
+
+.fusioni-input-shortcut {
+  flex: 1;
+  min-width: 0;
+  margin-inline: 0.5rem;
+  color: var(--fusioni-text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: end;
+}
+
+@media (pointer: coarse) {
+  .fusioni-chat-input--stacked .fusioni-input-actions .fusioni-btn-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .fusioni-input-shortcut {
+    display: none;
+  }
 }
 
 .fusioni-chat-widget.dark .fusioni-audio-preview {

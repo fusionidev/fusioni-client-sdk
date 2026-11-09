@@ -41,6 +41,7 @@ export const en = {
     },
     input: {
       placeholder: 'Type your message...',
+      newLineHint: 'Shift + Enter for a new line',
       send: 'Send',
       stopResponse: 'Stop response',
       stoppingResponse: 'Stopping…',
