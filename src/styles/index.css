@@ -1341,10 +1341,11 @@
 }
 
 .fusioni-message-bubble {
+  box-sizing: border-box;
   padding: 0.75rem 1rem;
   border-radius: var(--fusioni-radius-lg);
   max-width: 100%;
-  word-wrap: break-word;
+  overflow-wrap: anywhere;
   position: relative;
   transition: var(--fusioni-transition);
 }
@@ -1736,16 +1737,10 @@
   align-items: center;
   margin-left: auto;
   gap: 0.1rem;
-  opacity: 0;
-  transition: var(--fusioni-transition);
 }
 
 .fusioni-message-actions .fusioni-btn:hover {
   background: transparent;
-}
-
-.fusioni-message:hover .fusioni-message-actions {
-  opacity: 1;
 }
 
 .fusioni-message-error-indicator {
@@ -2840,11 +2835,6 @@
   
   .fusioni-message-bubble:hover {
     transform: scale(1.01);
-  }
-
-  .fusioni-message-bubble {
-    overflow-wrap: anywhere;
-    word-break: break-word;
   }
 
   .fusioni-message-list {
@@ -4668,7 +4658,7 @@
   background:
     linear-gradient(180deg, rgba(248, 250, 252, 0.84), rgba(255, 255, 255, 0.98)),
     var(--fusioni-bg-primary);
-  padding: 1.125rem;
+  padding: 1.125rem 1rem;
 }
 
 .fusioni-message-list-shell {
@@ -5257,11 +5247,6 @@
   border-radius: 999px;
 }
 
-.fusioni-message:hover .fusioni-message-actions,
-.fusioni-message:focus-within .fusioni-message-actions {
-  opacity: 1;
-}
-
 .fusioni-chat-widget.dark .fusioni-message-avatar {
   background:
     radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.12), transparent 42%),
@@ -5274,12 +5259,6 @@
   background:
     linear-gradient(180deg, rgba(31, 41, 55, 0.98), rgba(24, 34, 48, 0.98));
   border-color: var(--fusioni-border);
-}
-
-.fusioni-chat-widget.dark .fusioni-message-actions {
-  background: color-mix(in srgb, var(--fusioni-bg-secondary) 88%, transparent);
-  border-color: var(--fusioni-border);
-  box-shadow: 0 8px 18px rgb(0 0 0 / 0.22);
 }
 
 .fusioni-chat-input {
@@ -5879,7 +5858,7 @@
   flex: 0 1 auto;
   width: auto;
   min-width: 0;
-  max-width: min(calc(100% - 50px), 672px);
+  max-width: min(100%, 720px);
 }
 
 .fusioni-message.user .fusioni-message-content {
@@ -6086,13 +6065,12 @@
 .fusioni-message-actions {
   flex: 0 0 auto;
   gap: 4px;
-  margin: 4px 0 0;
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  opacity: 0.4;
 }
 
 .fusioni-message-actions .fusioni-btn-icon {
@@ -6101,7 +6079,7 @@
   padding: 0;
   border: 1px solid transparent;
   border-radius: 999px;
-  color: var(--fusioni-text-muted);
+  color: var(--fusioni-text-secondary);
   background: transparent;
 }
 
@@ -6119,15 +6097,17 @@
 
 .fusioni-message-footer,
 .fusioni-message.user .fusioni-message-footer {
+  box-sizing: border-box;
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: flex-start;
   align-items: center;
   width: 100%;
   max-width: 100%;
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   padding: 0 4px;
-  gap: 8px;
+  gap: 4px 8px;
 }
 
 .fusioni-message.user .fusioni-message-footer {
@@ -6347,10 +6327,5 @@
     width: 44px;
     height: 44px;
     flex-basis: 44px;
-  }
-
-  .fusioni-message-bubble {
-    padding-right: 20px;
-    padding-left: 20px;
   }
 }

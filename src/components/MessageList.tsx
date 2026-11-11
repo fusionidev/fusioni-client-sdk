@@ -508,7 +508,6 @@ export const MessageList: React.FC<MessageListProps> = ({
 
                     <div className="fusioni-message-content">
                       <div className="fusioni-message-bubble-row">
-                        {!message.loading && isUser && renderMessageActions(message, isUser)}
                         <div className="fusioni-message-body">
                           {isEditing ? (
                             <div
@@ -546,7 +545,6 @@ export const MessageList: React.FC<MessageListProps> = ({
                             />
                           )}
                         </div>
-                        {!message.loading && !isUser && !message.has_error && renderMessageActions(message, isUser)}
                       </div>
 
                       {!message.loading && (
@@ -590,6 +588,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                               </button>
                             </div>
                           )}
+                          {(isUser || !message.has_error) && renderMessageActions(message, isUser)}
                         </div>
                       )}
                     </div>
