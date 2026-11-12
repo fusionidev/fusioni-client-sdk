@@ -27,7 +27,7 @@ describe('Fusioni.init fluent browser API', () => {
       requests.push(request);
       const data = request.url === '/mini-app-catalog/by-position' ? [miniApp]
         : request.url === '/action/by_group_tags' ? [{id: 'report', key: 'report', agency_id: 'agency', title: 'Run report', show_results: true}]
-        : request.url === '/fusion_data/asearch' ? {body: [{name: 'Setup guide', url: '#guide', content: 'Setup'}], pagination: null}
+        : request.url === '/sdk-client/dasearch' ? {body: [{name: 'Setup guide', url: '#guide', content: 'Setup'}], pagination: null}
         : request.url === '/action/exec' ? {answer: ['Finished']} : [];
       return {data, config: request, headers: {}, status: 200, statusText: 'OK'};
     };
@@ -51,11 +51,11 @@ describe('Fusioni.init fluent browser API', () => {
     expect(document.querySelector('.fusioni-search-dropdown').textContent).toContain('Setup guide');
     await act(async () => sdk.getActionButtons('#actions').executeAction('report'));
     expect(sdk.getActionButtons('#actions').results[0].content).toBe('Finished');
-    expect(requests.map(request => request.url)).toEqual(expect.arrayContaining(['/mini-app-catalog/by-position', '/action/by_group_tags', '/fusion_data/asearch', '/action/exec']));
+    expect(requests.map(request => request.url)).toEqual(expect.arrayContaining(['/mini-app-catalog/by-position', '/action/by_group_tags', '/sdk-client/dasearch', '/action/exec']));
     for (const request of requests) {
       expect(request.baseURL).toBe(config.apiBaseUrl); expect(request.headers.get('Authorization')).toBe('ApiKey sdk-token');
       expect(request.params.agency_id).toBe('agency');
-      if (request.url === '/fusion_data/asearch') expect(JSON.parse(request.data).agency_id).toBe('agency');
+      if (request.url === '/sdk-client/dasearch') expect(JSON.parse(request.data).agency_id).toBe('agency');
     }
     await act(async () => sdk.unmount());
     expect(document.querySelector('.fusioni-search-dropdown')).toBeNull(); expect(document.querySelector('#site-search').hasAttribute('role')).toBe(false);

@@ -30,7 +30,7 @@ describe('Search API transport', () => {
   it('calls search_autocomplete and normalizes nullable payloads', async () => {
     response = {body: null, pagination: null};
     expect(await new SearchService(client).autocomplete('agency', 'guide')).toEqual({body: [], pagination: null});
-    expect(axios.getUri(requests[0])).toBe('https://fusion.test/api/fusion_data/asearch?page=0&size=25&agency_id=agency');
+    expect(axios.getUri(requests[0])).toBe('https://fusion.test/api/sdk-client/dasearch?page=0&size=25&agency_id=agency');
     response = null;
     expect(await new SearchService(client).search('agency', 'guide')).toEqual({body: [], pagination: null});
   });

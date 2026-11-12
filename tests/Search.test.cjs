@@ -34,7 +34,7 @@ describe('Search component', () => {
     await type('gu'); await tick(200); await type('guide'); await tick(249); expect(client.post).not.toHaveBeenCalled();
     await tick(1);
     expect(client.post).toHaveBeenCalledTimes(1);
-    expect(client.post).toHaveBeenCalledWith('/fusion_data/asearch', {agency_id: 'agency', inp: 'guide'}, expect.objectContaining({params: {page: 0, size: 25, agency_id: 'agency'}, signal: expect.any(AbortSignal)}));
+    expect(client.post).toHaveBeenCalledWith('/sdk-client/dasearch', {agency_id: 'agency', inp: 'guide'}, expect.objectContaining({params: {page: 0, size: 25, agency_id: 'agency'}, signal: expect.any(AbortSignal)}));
     const dropdown = document.querySelector('.fusioni-search-dropdown');
     expect(dropdown.textContent).toContain('Setup guide'); expect(dropdown.style.top).toBe('88px'); expect(dropdown.style.width).toBe('300px');
     expect(input().getAttribute('aria-expanded')).toBe('true'); expect(input().getAttribute('aria-controls')).toBe(dropdown.querySelector('[role="listbox"]').id);
