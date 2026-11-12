@@ -86,7 +86,7 @@ describe('Search component', () => {
     await render({mode: 'search', pageSize: 2});
     await type('guide'); await tick(); expect(client.post).not.toHaveBeenCalled();
     await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})));
-    expect(client.post.mock.calls[0][0]).toBe('/fusion_data/psearch'); expect(container.querySelector('[role="list"]')).not.toBeNull();
+    expect(client.post.mock.calls[0][0]).toBe('/sdk-client/dpsearch'); expect(container.querySelector('[role="list"]')).not.toBeNull();
     expect(container.querySelector('input').hasAttribute('role')).toBe(false);
     client.post.mockResolvedValueOnce({body: [item('Page two')], pagination: {page: 1, size: 2, last: true}});
     await act(async () => container.querySelector('nav button:last-child').click());

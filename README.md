@@ -276,7 +276,7 @@ const results = await search.search('your-agency-id', 'setup guide', {page: 0, s
 // Options also accept an AbortSignal as `signal`.
 ```
 
-Both methods POST `{agency_id, inp}` with `agency_id`, `page`, and `size` query parameters. Autocomplete uses `/fusion_data/asearch`; full search uses `/fusion_data/psearch`. Requests use the SDK's `ApiKey` authentication and require Fusion data-view access.
+Both methods POST `{agency_id, inp}` with `agency_id`, `page`, and `size` query parameters. Autocomplete uses `/sdk-client/dasearch`; full search uses `/sdk-client/dpsearch`. Requests use the SDK's `ApiKey` authentication and require Fusion data-view access.
 
 ### Changing language and theme after init
 

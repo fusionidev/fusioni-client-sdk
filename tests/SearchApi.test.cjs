@@ -20,7 +20,7 @@ describe('Search API transport', () => {
   it('calls search_paginated with the FusionSearchDTO, zero-based pagination and authentication', async () => {
     const signal = new AbortController().signal;
     expect(await new SearchService(client).search('agency', '  setup guide  ', {page: 2, size: 5, signal})).toEqual(response);
-    expect(axios.getUri(requests[0])).toBe('https://fusion.test/api/fusion_data/psearch?page=2&size=5&agency_id=agency');
+    expect(axios.getUri(requests[0])).toBe('https://fusion.test/api/sdk-client/dpsearch?page=2&size=5&agency_id=agency');
     expect(requests[0].method).toBe('post');
     expect(JSON.parse(requests[0].data)).toEqual({agency_id: 'agency', inp: 'setup guide'});
     expect(requests[0].headers.get('Authorization')).toBe('ApiKey search-token');
@@ -39,7 +39,7 @@ describe('Search API transport', () => {
     const shared = initializeApiClient('https://shared.test', 'shared-token');
     shared.client.defaults.adapter = client.client.defaults.adapter;
     await getSearchService().search('agency', 'guide');
-    expect(axios.getUri(requests[0])).toBe('https://shared.test/fusion_data/psearch?page=0&size=25&agency_id=agency');
+    expect(axios.getUri(requests[0])).toBe('https://shared.test/sdk-client/dpsearch?page=0&size=25&agency_id=agency');
     expect(requests[0].headers.get('Authorization')).toBe('ApiKey shared-token');
   });
 

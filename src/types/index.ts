@@ -146,6 +146,8 @@ export interface FusioniSDKConfig {
   ownerId?: string;
   /** Conversation profile used to scope the chat widget action suggestions. */
   conversationProfileId?: string | null;
+  /** Knowledgebase storage ids this client is allowed to search. */
+  searchStorages?: string[];
   theme?: 'light' | 'dark' | 'auto';
   showThemeToggle?: boolean;
   showFullscreenToggle?: boolean;

@@ -6,12 +6,12 @@ export class SearchService {
 
   /** Calls FusionDataResource.search_autocomplete. */
   autocomplete(agencyId: string, query: string, options: SearchRequestOptions = {}): Promise<SearchResponse> {
-    return this.request('/fusion_data/asearch', agencyId, query, options);
+    return this.request('/sdk-client/dasearch', agencyId, query, options);
   }
 
   /** Calls FusionDataResource.search_paginated. */
   search(agencyId: string, query: string, options: SearchRequestOptions = {}): Promise<SearchResponse> {
-    return this.request('/fusion_data/psearch', agencyId, query, options);
+    return this.request('/sdk-client/dpsearch', agencyId, query, options);
   }
 
   private async request(url: string, agencyId: string, query: string, options: SearchRequestOptions): Promise<SearchResponse> {
