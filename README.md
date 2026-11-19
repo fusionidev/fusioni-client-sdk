@@ -100,7 +100,7 @@ When including via `<script src="...">`, the SDK exposes a global `Fusioni` obje
   // sdk.getSearch('#search-widget').search('setup');
   // sdk.getMiniApp('#mini-apps').run();
   // sdk.getActionButtons('#actions').executeAction('report');
-  // sdk.getChatWidget().setLanguage('el');
+  // sdk.setLanguage('el').setTheme('dark');
   // sdk.unmount('#search-widget'); // Unmount one feature.
   // sdk.unmount();                 // Unmount all features belonging to this instance.
 </script>
@@ -112,7 +112,7 @@ Every backend API request includes `agency_id` in the query string, including PO
 
 `.chatWidget()` explicitly mounts the floating chat. Use `.chatWidget({theme: 'dark'})` for chat overrides or `.chatWidget('#my-chat', {theme: 'dark'})` for a specific container. The chainable `.mount()` method is also available as a chat alias. `.search()` and `.mountSearch()` are aliases on an initialized instance.
 
-**Migration:** `Fusioni.init(config)` previously mounted chat automatically. Use `Fusioni.init(config).chatWidget()` to retain that behavior. To access the chat's controls, use `sdk.getChatWidget()`; standalone `Fusioni.mount(container, config)` still returns the chat handle directly.
+**Migration:** `Fusioni.init(config)` previously mounted chat automatically. Use `Fusioni.init(config).chatWidget()` to retain that behavior. `sdk.setLanguage()` and `sdk.setTheme()` remain available directly on the initialized instance. Use `sdk.getChatWidget(container)` for a specific chat; standalone `Fusioni.mount(container, config)` still returns the chat handle directly.
 
 **Default placement (floating chat widget):**
 
@@ -168,7 +168,7 @@ Every backend API request includes `agency_id` in the query string, including PO
 | `Fusioni.mountActionButtons(container, props)` | Mounts Action Buttons and returns their handle. |
 | `Fusioni.version` | SDK version string. |
 
-An initialized instance provides `chatWidget`, `search`, `mountMiniApp`, and `mountActionButtons`, all returning the same instance. `getChatWidget`, `getSearch`, `getMiniApp`, and `getActionButtons` return the corresponding component handle, or `null` when this instance has no matching mount. `unmount(container?)` cleans up one or all mounts owned by the instance. Containers can be CSS selectors or DOM elements; a component handle becomes usable once its component has mounted.
+An initialized instance provides `chatWidget`, `search`, `mountMiniApp`, `mountActionButtons`, `setLanguage`, and `setTheme`, all returning the same instance. `getChatWidget`, `getSearch`, `getMiniApp`, and `getActionButtons` return the corresponding component handle, or `null` when this instance has no matching mount. `unmount(container?)` cleans up one or all mounts owned by the instance. Containers can be CSS selectors or DOM elements; chat language and theme changes can be called immediately after mounting, while other component controls become usable once their component has mounted.
 
 ### Search
 
@@ -280,7 +280,9 @@ Both methods POST `{agency_id, inp}` with `agency_id`, `page`, and `size` query 
 
 ### Changing language and theme after init
 
-The chat handle (in TypeScript: `FusioniMountResult`) includes **`setLanguage`** and **`setTheme`** so you can switch locale or appearance without remounting. Get it with `sdk.getChatWidget()` after `sdk.chatWidget()`, or directly from standalone `Fusioni.mount(container, config)`.
+Call **`sdk.setLanguage(language)`** or **`sdk.setTheme(theme)`** directly on an initialized instance to update all of its mounted chats without remounting. Both return the SDK instance for chaining and update defaults for future mounts. Existing Search, Mini App, and Action Buttons mounts keep their current settings. Calls immediately after mounting are retained until the chat is ready.
+
+The chat handle (in TypeScript: `FusioniMountResult`) also includes these methods for controlling one chat. Get it with `sdk.getChatWidget(container)` after `sdk.chatWidget(container)`, or directly from standalone `Fusioni.mount(container, config)`. Omit the container for the default floating chat.
 
 | Property / method | Description |
 |-------------------|-------------|
@@ -301,10 +303,10 @@ The chat handle (in TypeScript: `FusioniMountResult`) includes **`setLanguage`**
   }).chatWidget();
 
   document.getElementById('locale-el').addEventListener('click', () => {
-    sdk.getChatWidget().setLanguage('el');
+    sdk.setLanguage('el');
   });
   document.getElementById('theme-dark').addEventListener('click', () => {
-    sdk.getChatWidget().setTheme('dark');
+    sdk.setTheme('dark');
   });
 </script>
 ```
@@ -510,6 +512,8 @@ function Tools() {
 You can supply an `apiClient` instead of URL/token props, or use the SDK's initialized client. Tags are trimmed and deduplicated; both an agency and nonempty tags are needed to load actions. Shared values under `'*'` are overridden by the action's `key`. Only declared fields are sent. Supplied values hide their controls and must pass validation. `actionEnabledStates` disables actions only when their **key** maps to `false`.
 
 Profile forms support text, number, boolean, date, JSON, list, file, prompt and embedded chat fields, including defaults, localized labels and validation rules. Required fields are included even when the action selects a subset of the profile. File fields accept up to eight files and send data URLs through the execution request's `image` channel. Prompt fields reuse `ChatInput`, retain drafts after validation failure, and submit with Enter or Send. Embedded chat fields create a profile-linked conversation and reuse the SDK's chat input, messages, image gallery, journey execution and streaming progress.
+
+Embedded chat conversation titles use the profile's `labels` (`{language, text}`) for `currentLanguage`, falling back to the profile's `name` when the matching label is missing or blank. Regional language codes such as `el-GR` match their base language.
 
 Maintained actions have independent conversation histories and session-stored IDs scoped by page route and agency. `conversationStorageKey` customizes the storage prefix; the agency is always appended. History restoration emits no response event, and unavailable storage falls back to memory. `results_sort` controls turn ordering. Results include sanitized HTML, images with gallery previews, document links, execution time and output variables. `onResponse` receives accumulated results for actions with `show_results`, and the current execution's results otherwise.
 

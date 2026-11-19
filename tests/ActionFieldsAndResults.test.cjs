@@ -34,6 +34,19 @@ describe('profile field conversion and validation', () => {
     expect(fields.conversationFieldLabel(field, 'el')).toBe('Αριθμός');
     expect(fields.conversationFieldError(field, '2', 'en')).toContain('greater than 4');
   });
+  it.each(['el', 'el-GR', ' EL_gr '])('uses the conversation profile label matching %s', language => {
+    const profile = {name: 'Support', labels: [{language: 'en', text: 'Help'}, {language: 'el-GR', text: ' Υποστήριξη '}]};
+    expect(fields.conversationProfileTitle(profile, language)).toBe('Υποστήριξη');
+    expect(fields.conversationProfileTitle(profile, 'en')).toBe('Help');
+  });
+  it.each([
+    ['missing', undefined], ['null', null], ['empty', []],
+    ['untranslated', [{language: 'en', text: 'Help'}]],
+    ['blank', [{language: 'el', text: ''}, {language: 'en', text: 'Help'}]],
+    ['whitespace', [{language: 'el', text: '  '}, {language: 'en', text: 'Help'}]],
+  ])('falls back to the profile name when labels are %s', (_, labels) => {
+    expect(fields.conversationProfileTitle({name: 'Support', labels}, 'el')).toBe('Support');
+  });
 });
 
 describe('action result normalization', () => {

@@ -88,12 +88,11 @@ export class SDKClientService {
       showConversationList: typeof serverConfig.show_conversation_list === 'boolean'
         ? serverConfig.show_conversation_list 
         : userConfig.showConversationList,
-      enableAudioRecording: typeof serverConfig.enable_audio_recording === 'boolean'
-        ? serverConfig.enable_audio_recording 
-        : userConfig.enableAudioRecording,
-      enableFileUpload: typeof serverConfig.enable_file_upload === 'boolean'
-        ? serverConfig.enable_file_upload 
-        : userConfig.enableFileUpload,
+      // Fusion stores these switches as null until they are turned on, and its
+      // form renders null as "off". Treat only an explicit true as enabled so
+      // the widget matches what the Fusion admin sees.
+      enableAudioRecording: serverConfig.enable_audio_recording === true,
+      enableFileUpload: serverConfig.enable_file_upload === true,
       maxFileSize: serverConfig.max_file_size !== null && serverConfig.max_file_size !== undefined 
         ? serverConfig.max_file_size 
         : userConfig.maxFileSize,

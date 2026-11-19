@@ -7,7 +7,9 @@ describe('Initialized SDK defaults', () => {
     containers = Array.from({length: 4}, (_, index) => {
       const element = document.createElement('div'); element.id = `sdk-${index}`; document.body.appendChild(element); return element;
     });
-    mounting = Object.fromEntries(['mount', 'mountSearch', 'mountMiniApp', 'mountActionButtons'].map(name => [name, jest.fn(() => ({unmount: jest.fn()}))]));
+    mounting = Object.fromEntries(['mount', 'mountSearch', 'mountMiniApp', 'mountActionButtons'].map(name => [name, jest.fn(() => ({
+      unmount: jest.fn(), ...(name === 'mount' ? {setLanguage: jest.fn(), setTheme: jest.fn()} : {}),
+    }))]));
     config = {apiBaseUrl: 'https://fusion.test/api', agencyId: 'agency', accessToken: 'token', language: 'el', theme: 'dark'};
   });
   afterEach(() => {containers.forEach(element => element.remove()); document.getElementById('fusioni-chat-root')?.remove();});
@@ -46,6 +48,41 @@ describe('Initialized SDK defaults', () => {
     expect(sdk.mountSearch(containers[1], {mode: 'autocomplete'})).toBe(sdk);
     expect(mounting.mountSearch.mock.calls[0][1].mode).toBe('autocomplete');
     sdk.unmount();
+  });
+
+  it('chains language and theme changes before mounting and preserves them as defaults', () => {
+    const sdk = createSDKInstance(config, mounting);
+    expect(sdk.setLanguage('en').setTheme('light')).toBe(sdk);
+    expect(document.getElementById('fusioni-chat-root')).toBeNull();
+    Object.values(mounting).forEach(fn => expect(fn).not.toHaveBeenCalled());
+    sdk.chatWidget(containers[0]).search(containers[1]).mountMiniApp(containers[2]).mountActionButtons(containers[3]);
+    expect(mounting.mount).toHaveBeenLastCalledWith(containers[0], {...config, language: 'en', theme: 'light'});
+    expect(mounting.mountSearch.mock.calls[0][1]).toMatchObject({currentLanguage: 'en', theme: 'light'});
+    for (const name of ['mountMiniApp', 'mountActionButtons']) {
+      expect(mounting[name].mock.calls[0][1].currentLanguage).toBe('en');
+    }
+    expect(config).toMatchObject({language: 'el', theme: 'dark'});
+    sdk.unmount();
+  });
+
+  it('updates only mounted chats owned by the instance without remounting them', () => {
+    const sdk = createSDKInstance(config, mounting).chatWidget(containers[0]).chatWidget(containers[1]).search(containers[2]);
+    const first = sdk.getChatWidget(containers[0]); const second = sdk.getChatWidget(containers[1]);
+    const other = createSDKInstance(config, mounting).chatWidget(containers[3]);
+    const otherChat = other.getChatWidget(containers[3]);
+    expect(sdk.setLanguage('en').setTheme('auto')).toBe(sdk);
+    for (const chat of [first, second]) {
+      expect(chat.setLanguage).toHaveBeenCalledWith('en'); expect(chat.setTheme).toHaveBeenCalledWith('auto');
+    }
+    sdk.setLanguage('fr'); sdk.setTheme('invalid');
+    expect(first.setLanguage).toHaveBeenCalledTimes(1); expect(first.setTheme).toHaveBeenCalledTimes(1);
+    sdk.unmount(containers[0]);
+    sdk.setLanguage('el').setTheme('dark');
+    expect(first.setLanguage).toHaveBeenCalledTimes(1); expect(first.setTheme).toHaveBeenCalledTimes(1);
+    expect(second.setLanguage).toHaveBeenLastCalledWith('el'); expect(second.setTheme).toHaveBeenLastCalledWith('dark');
+    expect(otherChat.setLanguage).not.toHaveBeenCalled(); expect(otherChat.setTheme).not.toHaveBeenCalled();
+    expect(mounting.mount).toHaveBeenCalledTimes(3);
+    sdk.unmount(); other.unmount();
   });
 
   it('uses per-feature connection overrides without changing defaults and respects an injected client', () => {

@@ -70,6 +70,35 @@ describe('Fusioni.init fluent browser API', () => {
     expect(chat.getAttribute('data-theme')).toBe('light'); expect(chat.getAttribute('data-language')).toBe('en');
   });
 
+  it('restores language and theme controls directly on the initialized SDK', async () => {
+    await act(async () => sdk.chatWidget({theme: 'dark', language: 'el'}));
+    const chat = document.querySelector('#fusioni-chat-root [data-chat-widget]');
+    await act(async () => expect(sdk.setLanguage('en').setTheme('light')).toBe(sdk));
+    expect(chat.getAttribute('data-theme')).toBe('light'); expect(chat.getAttribute('data-language')).toBe('en');
+    expect(document.querySelector('#fusioni-chat-root [data-chat-widget]')).toBe(chat);
+  });
+
+  it('applies controls called in the same chain before React mounts the chat', async () => {
+    await act(async () => sdk.chatWidget({theme: 'dark', language: 'el'}).setLanguage('en').setTheme('light'));
+    const chat = document.querySelector('#fusioni-chat-root [data-chat-widget]');
+    expect(chat.getAttribute('data-theme')).toBe('light'); expect(chat.getAttribute('data-language')).toBe('en');
+  });
+
+  it('retains the latest standalone chat controls called before React mounts', async () => {
+    let chatHandle;
+    await act(async () => {
+      chatHandle = Fusioni.mount('#chat', {...config, theme: 'dark', language: 'el'});
+      chatHandle.setLanguage('el'); chatHandle.setTheme('dark');
+      chatHandle.setLanguage('en'); chatHandle.setTheme('light');
+    });
+    try {
+      const chat = document.querySelector('#chat [data-chat-widget]');
+      expect(chat.getAttribute('data-theme')).toBe('light'); expect(chat.getAttribute('data-language')).toBe('en');
+    } finally {
+      await act(async () => chatHandle.unmount());
+    }
+  });
+
   it('mounts chat in a chosen container and protects a replacement from stale cleanup', async () => {
     await act(async () => sdk.chatWidget('#chat', {theme: 'dark'})); const previous = sdk.getChatWidget('#chat');
     await act(async () => sdk.chatWidget(document.getElementById('chat'), {theme: 'light'}));

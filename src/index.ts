@@ -28,7 +28,7 @@ export type {
   FusioniMiniAppMountResult, FusioniActionButtonsMountResult, FusioniSearchOptions, FusioniActionButtonsOptions,
 } from './types/browser';
 export type { ActionButtonsProps, ActionButtonsHandle, ActionResult, ActionExecutionState, ActionInputFieldValues, ActionEnabledStates } from './types/actionButtons';
-export type { ConversationProfile, ConversationInputField, ConversationInputFieldType, ConversationInputFieldValue,
+export type { ConversationProfile, ConversationProfileLabel, ConversationInputField, ConversationInputFieldType, ConversationInputFieldValue,
   ConversationInputFieldData, ConversationInputFieldDraftValue, ConversationInputFieldLabel,
   ConversationInputFieldValidationRule, ConversationInputFieldValidationOperator } from './types/conversationProfile';
 export { ALL_ACTIONS_INPUT_FIELD_KEY } from './utils/conversationInputFields';

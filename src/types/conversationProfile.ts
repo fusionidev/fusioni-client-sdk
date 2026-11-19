@@ -17,6 +17,11 @@ export interface ConversationInputFieldLabel {
   language: string;
 }
 
+export interface ConversationProfileLabel {
+  text: string;
+  language: string;
+}
+
 export interface ConversationInputField {
   name: string;
   type: ConversationInputFieldType;
@@ -31,6 +36,8 @@ export interface ConversationProfile {
   id?: string | null;
   agency_id?: string | null;
   name: string;
+  /** Localized titles; name is used when the current language has no nonempty label. */
+  labels?: ConversationProfileLabel[];
   tags?: string[];
   support_type?: 'journey' | 'agentic';
   agent_ids?: string[];

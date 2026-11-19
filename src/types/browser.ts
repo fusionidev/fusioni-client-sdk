@@ -1,4 +1,5 @@
-import type {FusioniChatWidgetHandle, FusioniSDKConfig} from './index';
+import type {FusioniChatWidgetHandle, FusioniSDKConfig, Theme} from './index';
+import type {Language} from '../i18n';
 import type {MiniAppRendererHandle, MiniAppRendererProps} from './miniApp';
 import type {ActionButtonsHandle, ActionButtonsProps} from './actionButtons';
 import type {SearchHandle, SearchProps} from './search';
@@ -27,6 +28,10 @@ export type FusioniActionButtonsOptions = Omit<ActionButtonsProps, 'agencyId'> &
 
 /** Initialized SDK. Mount methods return this same instance so calls can be chained. */
 export interface FusioniSDKInstance {
+  /** Change every mounted chat's language and the default for future mounts. */
+  setLanguage(language: Language): FusioniSDKInstance;
+  /** Change every mounted chat's theme and the default for future mounts. */
+  setTheme(theme: Theme): FusioniSDKInstance;
   /** Mount the floating chat widget with optional configuration overrides. */
   chatWidget(config?: Partial<FusioniScriptConfig>): FusioniSDKInstance;
   /** Mount chat in a specific container. */

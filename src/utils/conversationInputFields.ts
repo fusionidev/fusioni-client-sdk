@@ -135,6 +135,12 @@ export function collectConversationInputFieldUploads(fields: readonly Conversati
   });
 }
 
+export function conversationProfileTitle(profile: Pick<ConversationProfile, 'name' | 'labels'>, language: string): string {
+  const normalizedLanguage = normalizeActionLanguage(language);
+  const text = profile.labels?.find(label => normalizeActionLanguage(label.language) === normalizedLanguage)?.text?.trim();
+  return text || profile.name;
+}
+
 export function conversationFieldLabel(field: ConversationInputField, language: string): string {
   return (field.labels?.find(label => normalizeActionLanguage(label.language) === normalizeActionLanguage(language))?.text
     || field.labels?.[0]?.text || field.name).trim();

@@ -15,7 +15,9 @@ import { MiniAppRenderer } from './components/MiniAppRenderer';
 import { ActionButtons } from './components/ActionButtons';
 import { Search } from './components/Search';
 import { ShadowDomRoot } from './components/ShadowDomRoot';
-import type { FusioniChatWidgetHandle } from './types';
+import type { FusioniChatWidgetHandle, Theme } from './types';
+import {isValidLanguage} from './i18n';
+import type {Language} from './i18n';
 import type { MiniAppRendererHandle, MiniAppRendererProps } from './types/miniApp';
 import type {ActionButtonsHandle, ActionButtonsProps} from './types/actionButtons';
 import type {SearchHandle, SearchProps} from './types/search';
@@ -48,8 +50,19 @@ function mount(
   mountedRoots.get(target)?.unmount();
   const root = createRoot(target);
   mountedRoots.set(target, root);
-  const widgetRef = React.createRef<FusioniChatWidgetHandle>();
-  root.render(React.createElement(ChatWidget, { config, ref: widgetRef }));
+  let widgetHandle: FusioniChatWidgetHandle | null = null;
+  let pendingLanguage: Language | undefined;
+  let pendingTheme: Theme | undefined;
+  root.render(React.createElement(ChatWidget, {config, ref: (handle: FusioniChatWidgetHandle | null) => {
+    widgetHandle = handle;
+    if (!handle) return;
+    // createRoot renders asynchronously; retain controls called before its ref is ready.
+    const language = pendingLanguage;
+    const theme = pendingTheme;
+    pendingLanguage = pendingTheme = undefined;
+    if (language !== undefined) handle.setLanguage(language);
+    if (theme !== undefined) handle.setTheme(theme);
+  }}));
 
   return {
     unmount() {
@@ -58,10 +71,14 @@ function mount(
       mountedRoots.delete(target);
     },
     setLanguage(language) {
-      widgetRef.current?.setLanguage(language);
+      if (!isValidLanguage(language)) return;
+      if (widgetHandle) widgetHandle.setLanguage(language);
+      else pendingLanguage = language;
     },
     setTheme(theme) {
-      widgetRef.current?.setTheme(theme);
+      if (theme !== 'light' && theme !== 'dark' && theme !== 'auto') return;
+      if (widgetHandle) widgetHandle.setTheme(theme);
+      else pendingTheme = theme;
     },
   };
 }

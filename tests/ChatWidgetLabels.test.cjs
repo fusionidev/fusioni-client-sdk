@@ -1,7 +1,6 @@
 const React = require('react');
 const {createRoot} = require('react-dom/client');
 const act = React.act ?? require('react-dom/test-utils').act;
-jest.mock('../src/hooks/useSSE', () => ({useSSE: () => {}}));
 jest.mock('../src/hooks/useIsMobileLayout', () => ({useIsMobileLayout: () => false}));
 jest.mock('../src/components/ShadowDomRoot', () => ({ShadowDomRoot: ({children}) => children}));
 const {ChatWidget} = require('../src/components/ChatWidget');
@@ -15,7 +14,7 @@ const english = {language: 'en', welcome_message: 'Welcome to our team', descrip
 const greek = {language: 'el', welcome_message: 'Καλώς ήρθατε στην ομάδα μας', description: 'Πώς μπορούμε να βοηθήσουμε;'};
 
 describe('chat widget initialization', () => {
-  let root, container, getConfig, ref;
+  let root, container, getConfig, connectToSSE, ref;
   beforeEach(() => {
     sessionStorage.clear();
     sessionStorage.setItem('fusioni:chatPanelOpen:agency', 'true');
@@ -24,7 +23,7 @@ describe('chat widget initialization', () => {
     root = createRoot(container);
     ref = React.createRef();
     getConfig = jest.spyOn(SDKClientService.prototype, 'getClientConfig');
-    jest.spyOn(api, 'initializeApiClient').mockImplementation(() => {});
+    connectToSSE = jest.spyOn(api.ApiClient.prototype, 'connectToSSE').mockImplementation(() => ({close: jest.fn()}));
     jest.spyOn(conversations, 'getConversationService').mockReturnValue({
       getConversationsByAgency: jest.fn().mockResolvedValue([]),
     });
@@ -46,6 +45,44 @@ describe('chat widget initialization', () => {
     expect(container.querySelector('.fusioni-chat-welcome p').textContent).toBe(description);
   }
 
+  it('opens the stream with the panel, closes it, and reconnects when reopened', async () => {
+    sessionStorage.removeItem('fusioni:chatPanelOpen:agency');
+    await render(null);
+    expect(connectToSSE).not.toHaveBeenCalled();
+
+    const launcher = container.querySelector('.fusioni-floating-button');
+    await act(async () => launcher.click());
+    expect(connectToSSE).toHaveBeenCalledTimes(1);
+    const firstStream = connectToSSE.mock.results[0].value;
+
+    const closeButton = container.querySelector('.fusioni-chat-toolbar-close-mobile');
+    await act(async () => closeButton.click());
+    expect(firstStream.close).toHaveBeenCalledTimes(1);
+    expect(connectToSSE).toHaveBeenCalledTimes(1);
+
+    await act(async () => launcher.click());
+    expect(connectToSSE).toHaveBeenCalledTimes(2);
+    const secondStream = connectToSSE.mock.results[1].value;
+    await act(async () => launcher.click());
+    expect(secondStream.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels a scheduled stream reconnect when the panel closes', async () => {
+    jest.useFakeTimers();
+    try {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      await render(null);
+      expect(connectToSSE).toHaveBeenCalledTimes(1);
+      const stream = connectToSSE.mock.results[0].value;
+      stream.onerror(new Event('error'));
+      await act(async () => container.querySelector('.fusioni-floating-button').click());
+      await act(async () => jest.advanceTimersByTime(3000));
+      expect(connectToSSE).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it.each([false, true])('hides the panel during a backend failure and restores it on a healthy remount (already open: %s)', async alreadyOpen => {
     const panel = () => container.querySelector('.fusioni-chat-panel');
     const launcher = () => container.querySelector('.fusioni-floating-button');
@@ -60,6 +97,10 @@ describe('chat widget initialization', () => {
 
     expect(panel()).toBeNull();
     expect(launcher()).toBeNull();
+    expect(connectToSSE).toHaveBeenCalledTimes(alreadyOpen ? 1 : 0);
+    if (alreadyOpen) {
+      expect(connectToSSE.mock.results[0].value.close).toHaveBeenCalledTimes(1);
+    }
     expect(sessionStorage.getItem('fusioni:chatPanelOpen:agency')).toBe('true');
 
     await act(async () => root.unmount());
@@ -67,6 +108,7 @@ describe('chat widget initialization', () => {
     await render(null);
     expect(panel()).not.toBeNull();
     expect(launcher()).not.toBeNull();
+    expect(connectToSSE).toHaveBeenCalledTimes(alreadyOpen ? 2 : 1);
   });
 
   it('selects the server language and updates labels when the language changes', async () => {
@@ -119,4 +161,14 @@ it('merges server labels while preserving local labels when the server has none'
   expect(service.mergeConfig(config, {labels: []}).labels).toEqual([]);
   expect(service.mergeConfig(config, {labels: null}).labels).toEqual([greek]);
   expect(service.mergeConfig(config, {}).labels).toEqual([greek]);
+});
+
+it.each([
+  [null, false], [undefined, false], [false, false], [true, true],
+])('treats the server upload and audio switches as authoritative (%p -> %p)', (value, expected) => {
+  const service = new SDKClientService();
+  const config = {agencyId: 'agency', enableFileUpload: true, enableAudioRecording: true};
+  const merged = service.mergeConfig(config, {enable_file_upload: value, enable_audio_recording: value});
+  expect(merged.enableFileUpload).toBe(expected);
+  expect(merged.enableAudioRecording).toBe(expected);
 });

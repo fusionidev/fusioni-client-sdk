@@ -1,4 +1,5 @@
 import {ApiClient, initializeApiClient} from '../services/ApiClient';
+import {isValidLanguage} from '../i18n';
 import type {MiniAppRendererProps} from '../types/miniApp';
 import type {ActionButtonsProps} from '../types/actionButtons';
 import type {SearchProps} from '../types/search';
@@ -73,6 +74,22 @@ export function createSDKInstance(config: FusioniScriptConfig, mounting: MountFu
   }
 
   const sdk: FusioniSDKInstance = {
+    setLanguage(language) {
+      if (!isValidLanguage(language)) return sdk;
+      defaults.language = language;
+      mounted.forEach(feature => {
+        if (feature.kind === 'chat') feature.handle.setLanguage(language);
+      });
+      return sdk;
+    },
+    setTheme(theme) {
+      if (theme !== 'light' && theme !== 'dark' && theme !== 'auto') return sdk;
+      defaults.theme = theme;
+      mounted.forEach(feature => {
+        if (feature.kind === 'chat') feature.handle.setTheme(theme);
+      });
+      return sdk;
+    },
     chatWidget(containerOrConfig?: FusioniContainer | Partial<FusioniScriptConfig>, overrides: Partial<FusioniScriptConfig> = {}) {
       if (typeof containerOrConfig === 'string' || containerOrConfig instanceof HTMLElement) {
         return sdk.mount(containerOrConfig, overrides);

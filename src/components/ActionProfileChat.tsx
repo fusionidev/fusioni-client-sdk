@@ -8,6 +8,7 @@ import {ApiClient, FusioniSSEMessage} from '../services/ApiClient';
 import {RemoteConversationService} from '../services/ConversationService';
 import {PipelineService} from '../services/PipelineService';
 import {buildActionMessages, mergeActionMessages} from '../utils/actionResults';
+import {conversationProfileTitle} from '../utils/conversationInputFields';
 import {readFileDataUrl} from '../utils/readFileDataUrl';
 import type {Language} from '../i18n';
 import type {FusioniMemoryMessage, PipelineResponse} from '../types';
@@ -52,7 +53,7 @@ export const ActionProfileChat: React.FC<{
     try {
       if (!conversationId.current) {
         conversationId.current = await new RemoteConversationService(apiClient).createConversation({
-          agency_id: agencyId, title: profile.name, conversation_profile_id: profile.id,
+          agency_id: agencyId, title: conversationProfileTitle(profile, currentLanguage), conversation_profile_id: profile.id,
         }, controller.signal);
       }
       if (controller.signal.aborted) return;

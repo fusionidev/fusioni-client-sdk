@@ -42,6 +42,15 @@ describe('React action buttons', () => {
     expect(container.querySelector('.fusioni-action-execution-time').textContent).toBe('1.00s');
   });
 
+  it('keeps action titles for buttons and forms when the conversation profile has labels', async () => {
+    profiles[0].labels = [{language: 'en', text: 'Localized report profile'}];
+    await render({fullscreen: true}); await clickAction();
+    expect(container.querySelector('.fusioni-action-card strong').textContent).toBe('Create report');
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog.getAttribute('aria-label')).toBe('Create report');
+    expect(dialog.querySelector('h3').textContent).toBe('Create report');
+  });
+
   it('preserves the exact input nodes and drafts when switching fullscreen, exposes side content, and handles Escape', async () => {
     const onFullscreenChange = jest.fn(); await render({sidePanel: React.createElement('p', null, 'Context panel'), onFullscreenChange}); await clickAction();
     const prompt = container.querySelector('textarea'); await change(prompt, 'Draft');

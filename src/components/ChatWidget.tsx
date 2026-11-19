@@ -692,11 +692,11 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
     t,
   ]);
 
-  // Connect on mount so live events can arrive during conversation restoration.
+  const canRenderWidget = isConfigReady && mergedConfig !== null && !hasConfigError;
   useSSE(
     activeAgencyId,
     handleSSEMessage,
-    Boolean(activeAgencyId),
+    isOpen && canRenderWidget && !error,
     mergedConfig?.accessToken || config.accessToken,
   );
 
@@ -1204,7 +1204,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
   }, [onError, t]);
 
   // Keep the saved open preference while the backend is unavailable.
-  if (!isConfigReady || !mergedConfig || hasConfigError) {
+  if (!canRenderWidget) {
     return null;
   }
 
@@ -1433,7 +1433,7 @@ const ChatWidgetInner = forwardRef<FusioniChatWidgetHandle, ChatWidgetProps>(fun
                   <div className="fusioni-chat-powered-by">
                     Powered by{' '}
                     <a
-                      href="https://fusioni.ai"
+                      href="https://fusioni.ai/en/platform"
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Fusioni Platform (opens in a new window)"

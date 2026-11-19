@@ -88,6 +88,27 @@ describe('reused inputs, uploads and profile chat', () => {
     await act(async () => root.unmount()); expect(close).toHaveBeenCalled();
   });
 
+  it.each([
+    ['localized', [{language: 'en', text: 'Help'}, {language: 'el-GR', text: ' Υποστήριξη '}], 'Υποστήριξη'],
+    ['empty', [], 'Support'],
+    ['blank', [{language: 'el', text: '  '}], 'Support'],
+    ['untranslated', [{language: 'en', text: 'Help'}], 'Support'],
+  ])('creates a profile chat using %s labels in the current language', async (_, labels, title) => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    const client = {connectToSSE: jest.fn(() => ({close: jest.fn()})),
+      post: jest.fn(async url => url === '/conversation' ? 'chat-id' : {answer: ['Answer']})};
+    const props = {agencyId: 'agency', profile: {id: 'profile', name: 'Support', labels, input_fields: []},
+      apiClient: client, getInputData: () => ({context: {}, uploads: []}), onResponse: jest.fn()};
+    await render(React.createElement(ActionProfileChat, {...props, currentLanguage: 'en'}));
+    await render(React.createElement(ActionProfileChat, {...props, currentLanguage: 'el'}));
+    const textarea = container.querySelector('textarea');
+    await act(async () => Simulate.change(textarea, {target: {value: 'Question'}}));
+    await act(async () => Simulate.keyDown(textarea, {key: 'Enter'}));
+    expect(client.post).toHaveBeenCalledWith('/conversation', {
+      agency_id: 'agency', title, conversation_profile_id: 'profile',
+    }, expect.objectContaining({signal: expect.any(AbortSignal)}));
+  });
+
   it('validates parent fields before chat creation and cancels an in-flight chat on unmount', async () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
     const pending = deferred(), onResponse = jest.fn();
